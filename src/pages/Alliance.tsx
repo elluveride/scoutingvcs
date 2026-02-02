@@ -8,24 +8,24 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Users, Crown, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { AllianceType } from '@/types/scouting';
+import type { MotifType } from '@/types/scouting';
 
 interface RankedTeam {
   teamNumber: number;
   score: number;
-  primaryRole: AllianceType;
+  primaryMotif: MotifType;
   autoScore: number;
   teleopScore: number;
   endgameScore: number;
 }
 
-const allianceFilters: AllianceType[] = ['PPG', 'PGP', 'GPP'];
+const motifFilters: MotifType[] = ['PPG', 'PGP', 'GPP'];
 
 export default function Alliance() {
   const { user } = useAuth();
   const { currentEvent } = useEvent();
   const [rankedTeams, setRankedTeams] = useState<RankedTeam[]>([]);
-  const [selectedFilter, setSelectedFilter] = useState<AllianceType | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<MotifType | null>(null);
   const [loading, setLoading] = useState(true);
 
   if (!user) {
@@ -77,18 +77,18 @@ export default function Alliance() {
         // Total weighted score
         const score = autoScore * 0.3 + teleopScore * 0.4 + endgameScore * 0.2;
         
-        // Determine primary role based on most common alliance type
-        const allianceCounts = entries.reduce((acc, e) => {
-          acc[e.alliance_type] = (acc[e.alliance_type] || 0) + 1;
+        // Determine primary motif based on most common motif type
+        const motifCounts = entries.reduce((acc, e) => {
+          acc[e.motif_type] = (acc[e.motif_type] || 0) + 1;
           return acc;
         }, {} as Record<string, number>);
         
-        const primaryRole = (Object.entries(allianceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'PPG') as AllianceType;
+        const primaryMotif = (Object.entries(motifCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'PPG') as MotifType;
         
         rankings.push({
           teamNumber,
           score: Math.round(score * 10) / 10,
-          primaryRole,
+          primaryMotif,
           autoScore: Math.round(autoScore * 10) / 10,
           teleopScore: Math.round(teleopScore * 10) / 10,
           endgameScore: Math.round(endgameScore * 10) / 10,
@@ -107,20 +107,20 @@ export default function Alliance() {
   }, [currentEvent.code]);
 
   const filteredTeams = selectedFilter
-    ? rankedTeams.filter(t => t.primaryRole === selectedFilter)
+    ? rankedTeams.filter(t => t.primaryMotif === selectedFilter)
     : rankedTeams;
 
-  // Check for role overlaps
-  const roleDistribution = rankedTeams.reduce((acc, t) => {
-    acc[t.primaryRole] = (acc[t.primaryRole] || 0) + 1;
+  // Check for motif distribution imbalance
+  const motifDistribution = rankedTeams.reduce((acc, t) => {
+    acc[t.primaryMotif] = (acc[t.primaryMotif] || 0) + 1;
     return acc;
-  }, {} as Record<AllianceType, number>);
+  }, {} as Record<MotifType, number>);
 
   return (
     <AppLayout>
       <PageHeader
-        title="Alliance Selection"
-        description="Rankings and compatibility analysis"
+        title="Team Rankings"
+        description="Rankings and motif compatibility analysis"
       />
 
       {/* Filters */}
@@ -131,7 +131,7 @@ export default function Alliance() {
         >
           All Teams
         </Button>
-        {allianceFilters.map((filter) => (
+        {motifFilters.map((filter) => (
           <Button
             key={filter}
             variant={selectedFilter === filter ? 'default' : 'outline'}
@@ -139,20 +139,20 @@ export default function Alliance() {
           >
             {filter}
             <span className="ml-2 text-xs opacity-70">
-              ({roleDistribution[filter] || 0})
+              ({motifDistribution[filter] || 0})
             </span>
           </Button>
         ))}
       </div>
 
-      {/* Role Distribution Alert */}
-      {Object.values(roleDistribution).some(count => count > rankedTeams.length * 0.5) && (
+      {/* Motif Distribution Alert */}
+      {Object.values(motifDistribution).some(count => count > rankedTeams.length * 0.5) && (
         <div className="bg-warning/10 border border-warning/20 rounded-lg p-4 mb-6 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-warning">Role Imbalance Detected</p>
+            <p className="font-medium text-warning">Motif Imbalance Detected</p>
             <p className="text-sm text-muted-foreground">
-              Some alliance roles have significantly more teams than others.
+              Some motif types have significantly more teams than others.
               Consider this when forming alliances.
             </p>
           </div>
@@ -194,11 +194,11 @@ export default function Alliance() {
                   <span className="text-2xl font-bold font-mono">{team.teamNumber}</span>
                   <span className={cn(
                     "px-2 py-0.5 rounded text-xs font-semibold",
-                    team.primaryRole === 'PPG' && "bg-alliance-red/20 text-red-400",
-                    team.primaryRole === 'PGP' && "bg-secondary/20 text-secondary",
-                    team.primaryRole === 'GPP' && "bg-primary/20 text-primary",
+                    team.primaryMotif === 'PPG' && "bg-alliance-red/20 text-red-400",
+                    team.primaryMotif === 'PGP' && "bg-secondary/20 text-secondary",
+                    team.primaryMotif === 'GPP' && "bg-primary/20 text-primary",
                   )}>
-                    {team.primaryRole}
+                    {team.primaryMotif}
                   </span>
                 </div>
               </div>

@@ -40,7 +40,6 @@ export type Database = {
       }
       match_entries: {
         Row: {
-          alliance_type: Database["public"]["Enums"]["alliance_type"]
           auto_artifacts: number
           auto_leave: boolean
           auto_motifs: number
@@ -48,6 +47,7 @@ export type Database = {
           event_code: string
           id: string
           match_number: number
+          motif_type: Database["public"]["Enums"]["motif_type"]
           park_status: Database["public"]["Enums"]["park_status"]
           scouter_id: string
           team_number: number
@@ -55,7 +55,6 @@ export type Database = {
           teleop_motifs: number
         }
         Insert: {
-          alliance_type?: Database["public"]["Enums"]["alliance_type"]
           auto_artifacts?: number
           auto_leave?: boolean
           auto_motifs?: number
@@ -63,6 +62,7 @@ export type Database = {
           event_code: string
           id?: string
           match_number: number
+          motif_type?: Database["public"]["Enums"]["motif_type"]
           park_status?: Database["public"]["Enums"]["park_status"]
           scouter_id: string
           team_number: number
@@ -70,7 +70,6 @@ export type Database = {
           teleop_motifs?: number
         }
         Update: {
-          alliance_type?: Database["public"]["Enums"]["alliance_type"]
           auto_artifacts?: number
           auto_leave?: boolean
           auto_motifs?: number
@@ -78,6 +77,7 @@ export type Database = {
           event_code?: string
           id?: string
           match_number?: number
+          motif_type?: Database["public"]["Enums"]["motif_type"]
           park_status?: Database["public"]["Enums"]["park_status"]
           scouter_id?: string
           team_number?: number
@@ -206,11 +206,11 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      alliance_type: "PPG" | "PGP" | "GPP"
       app_role: "admin" | "scout"
       auto_leave_status: "yes" | "sometimes" | "no"
       consistency_level: "low" | "medium" | "high"
       drive_type: "tank" | "mecanum" | "swerve" | "other"
+      motif_type: "PPG" | "PGP" | "GPP"
       park_status: "none" | "partial" | "full"
       user_status: "pending" | "approved" | "rejected"
     }
@@ -340,11 +340,11 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      alliance_type: ["PPG", "PGP", "GPP"],
       app_role: ["admin", "scout"],
       auto_leave_status: ["yes", "sometimes", "no"],
       consistency_level: ["low", "medium", "high"],
       drive_type: ["tank", "mecanum", "swerve", "other"],
+      motif_type: ["PPG", "PGP", "GPP"],
       park_status: ["none", "partial", "full"],
       user_status: ["pending", "approved", "rejected"],
     },

@@ -28,7 +28,7 @@ interface MatchRow {
   teleop_motifs: number;
   teleop_artifacts: number;
   park_status: string;
-  alliance_type: string;
+  motif_type: string;
   created_at: string;
 }
 
@@ -69,7 +69,7 @@ export default function Spreadsheet() {
         teleop_motifs: entry.teleop_motifs,
         teleop_artifacts: entry.teleop_artifacts,
         park_status: entry.park_status,
-        alliance_type: entry.alliance_type,
+        motif_type: entry.motif_type,
         created_at: entry.created_at,
       })));
     }
@@ -114,7 +114,7 @@ export default function Spreadsheet() {
       'TeleOp Motifs',
       'TeleOp Artifacts',
       'Park Status',
-      'Alliance Type',
+      'Motif Type',
       'Timestamp',
     ];
 
@@ -129,7 +129,7 @@ export default function Spreadsheet() {
       e.teleop_motifs,
       e.teleop_artifacts,
       e.park_status,
-      e.alliance_type,
+      e.motif_type,
       new Date(e.created_at).toLocaleString(),
     ]);
 
@@ -181,7 +181,7 @@ export default function Spreadsheet() {
                   <TableHead className="font-semibold text-center">Tel M</TableHead>
                   <TableHead className="font-semibold text-center">Tel A</TableHead>
                   <TableHead className="font-semibold text-center">Park</TableHead>
-                  <TableHead className="font-semibold text-center">Alliance</TableHead>
+                  <TableHead className="font-semibold text-center">Motif</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -200,7 +200,7 @@ export default function Spreadsheet() {
                     <TableCell className="text-center">{entry.teleop_motifs}</TableCell>
                     <TableCell className="text-center">{entry.teleop_artifacts}</TableCell>
                     <TableCell className="text-center capitalize">{entry.park_status}</TableCell>
-                    <TableCell className="text-center font-mono">{entry.alliance_type}</TableCell>
+                    <TableCell className="text-center font-mono">{entry.motif_type}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

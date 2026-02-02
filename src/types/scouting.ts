@@ -4,7 +4,7 @@ export type UserRole = 'admin' | 'scout';
 export type UserStatus = 'pending' | 'approved' | 'rejected';
 
 export type ParkStatus = 'none' | 'partial' | 'full';
-export type AllianceType = 'PPG' | 'PGP' | 'GPP';
+export type MotifType = 'PPG' | 'PGP' | 'GPP';
 export type DriveType = 'tank' | 'mecanum' | 'swerve' | 'other';
 export type ConsistencyLevel = 'low' | 'medium' | 'high';
 export type AutoLeaveStatus = 'yes' | 'sometimes' | 'no';
@@ -46,8 +46,8 @@ export interface MatchEntry {
   // Endgame
   parkStatus: ParkStatus;
   
-  // Alliance
-  allianceType: AllianceType;
+  // Motif Type
+  motifType: MotifType;
   
   timestamp: string;
 }

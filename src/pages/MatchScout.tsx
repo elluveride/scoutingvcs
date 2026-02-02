@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { AllianceType, ParkStatus } from '@/types/scouting';
+import type { MotifType, ParkStatus } from '@/types/scouting';
 
 const parkOptions: { value: ParkStatus; label: string }[] = [
   { value: 'none', label: 'None' },
@@ -21,7 +21,7 @@ const parkOptions: { value: ParkStatus; label: string }[] = [
   { value: 'full', label: 'Full' },
 ];
 
-const allianceOptions: { value: AllianceType; label: string }[] = [
+const motifOptions: { value: MotifType; label: string }[] = [
   { value: 'PPG', label: 'PPG' },
   { value: 'PGP', label: 'PGP' },
   { value: 'GPP', label: 'GPP' },
@@ -46,7 +46,7 @@ export default function MatchScout() {
   
   // Endgame
   const [parkStatus, setParkStatus] = useState<ParkStatus>('none');
-  const [allianceType, setAllianceType] = useState<AllianceType>('PPG');
+  const [motifType, setMotifType] = useState<MotifType>('PPG');
   
   const [saving, setSaving] = useState(false);
 
@@ -67,7 +67,7 @@ export default function MatchScout() {
     setTeleopMotifs(0);
     setTeleopArtifacts(0);
     setParkStatus('none');
-    setAllianceType('PPG');
+    setMotifType('PPG');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,7 +104,7 @@ export default function MatchScout() {
       teleop_motifs: teleopMotifs,
       teleop_artifacts: teleopArtifacts,
       park_status: parkStatus,
-      alliance_type: allianceType,
+      motif_type: motifType,
     });
 
     setSaving(false);
@@ -245,22 +245,22 @@ export default function MatchScout() {
               </div>
             </div>
             
-            {/* Alliance Type */}
+            {/* Motif Type */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-muted-foreground">
-                Alliance Type
+                Motif Type
               </label>
               <div className="flex gap-2">
-                {allianceOptions.map((option) => (
+                {motifOptions.map((option) => (
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setAllianceType(option.value)}
+                    onClick={() => setMotifType(option.value)}
                     className={cn(
                       "flex-1 h-14 rounded-xl font-semibold transition-all duration-150",
                       "flex items-center justify-center gap-2",
                       "active:scale-95 touch-manipulation",
-                      allianceType === option.value
+                      motifType === option.value
                         ? "bg-secondary text-secondary-foreground shadow-lg"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
                     )}
