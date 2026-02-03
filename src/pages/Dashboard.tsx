@@ -22,19 +22,55 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
-const defaultWeights: SortWeight[] = [
-  { id: 'autoClose', label: 'Auto Scored Close', weight: 3, enabled: true },
-  { id: 'autoFar', label: 'Auto Scored Far', weight: 4, enabled: true },
-  { id: 'launchLine', label: 'Launch Line %', weight: 1, enabled: true },
-  { id: 'teleopClose', label: 'TeleOp Scored Close', weight: 2, enabled: true },
-  { id: 'teleopFar', label: 'TeleOp Scored Far', weight: 3, enabled: true },
-  { id: 'defense', label: 'Defense Rating', weight: 2, enabled: false },
-  { id: 'lift', label: 'Lift %', weight: 5, enabled: true },
-  { id: 'fullReturn', label: 'Full Return %', weight: 3, enabled: true },
-  { id: 'fouls', label: 'Fouls (penalty)', weight: -2, enabled: true },
-  { id: 'penalties', label: 'Card/Dead (penalty)', weight: -5, enabled: true },
-  { id: 'variance', label: 'Consistency (lower is better)', weight: -1, enabled: true },
+// Grouped weight categories for intuitive configuration
+interface WeightCategory {
+  id: string;
+  label: string;
+  weights: SortWeight[];
+}
+
+const defaultCategories: WeightCategory[] = [
+  {
+    id: 'scoring',
+    label: 'Scoring',
+    weights: [
+      { id: 'autoClose', label: 'Auto Close', weight: 3, enabled: true },
+      { id: 'autoFar', label: 'Auto Far', weight: 4, enabled: true },
+      { id: 'teleopClose', label: 'TeleOp Close', weight: 2, enabled: true },
+      { id: 'teleopFar', label: 'TeleOp Far', weight: 3, enabled: true },
+    ],
+  },
+  {
+    id: 'auto',
+    label: 'Autonomous',
+    weights: [
+      { id: 'autoTotal', label: 'Auto Total', weight: 5, enabled: true },
+      { id: 'launchLine', label: 'Launch Line %', weight: 1, enabled: true },
+    ],
+  },
+  {
+    id: 'endgame',
+    label: 'Endgame',
+    weights: [
+      { id: 'lift', label: 'Lift %', weight: 5, enabled: true },
+      { id: 'fullReturn', label: 'Full Return %', weight: 3, enabled: true },
+    ],
+  },
+  {
+    id: 'other',
+    label: 'Other Factors',
+    weights: [
+      { id: 'defense', label: 'Defense Rating', weight: 2, enabled: false },
+      { id: 'fouls', label: 'Fouls (penalty)', weight: -2, enabled: true },
+      { id: 'penalties', label: 'Card/Dead (penalty)', weight: -5, enabled: true },
+      { id: 'variance', label: 'Consistency', weight: -1, enabled: true },
+    ],
+  },
 ];
+
+// Flatten categories to get all weights
+const getDefaultWeights = (): SortWeight[] => 
+  defaultCategories.flatMap(cat => cat.weights);
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -46,11 +82,11 @@ export default function Dashboard() {
   // Two independent sort configs
   const [config1, setConfig1] = useState<SortConfig>({
     name: 'List 1',
-    weights: JSON.parse(JSON.stringify(defaultWeights)),
+    weights: JSON.parse(JSON.stringify(getDefaultWeights())),
   });
   const [config2, setConfig2] = useState<SortConfig>({
     name: 'List 2', 
-    weights: JSON.parse(JSON.stringify(defaultWeights)),
+    weights: JSON.parse(JSON.stringify(getDefaultWeights())),
   });
 
   if (!user) {
@@ -145,13 +181,14 @@ export default function Dashboard() {
       switch (w.id) {
         case 'autoClose': score += team.avgAutoClose * w.weight; break;
         case 'autoFar': score += team.avgAutoFar * w.weight; break;
+        case 'autoTotal': score += team.autoTotalAvg * w.weight; break;
         case 'launchLine': score += (team.onLaunchLinePercent / 100) * w.weight * 10; break;
         case 'teleopClose': score += team.avgTeleopClose * w.weight; break;
         case 'teleopFar': score += team.avgTeleopFar * w.weight; break;
         case 'defense': score += team.avgDefense * w.weight * 10; break;
         case 'lift': score += (team.liftPercent / 100) * w.weight * 10; break;
         case 'fullReturn': score += (team.fullReturnPercent / 100) * w.weight * 10; break;
-        case 'fouls': score += (team.avgFoulsMinor + team.avgFoulsMajor * 2) * w.weight; break;
+        case 'fouls': score += team.avgFoulsMinor * w.weight; break;
         case 'penalties': score += (team.penaltyRate / 100) * w.weight * 10; break;
         case 'variance': score += team.varianceScore * w.weight; break;
       }
@@ -187,44 +224,68 @@ export default function Dashboard() {
     }));
   };
 
-  const ConfigPanel = ({ config, setConfig }: { config: SortConfig; setConfig: React.Dispatch<React.SetStateAction<SortConfig>> }) => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>List Name</Label>
-        <Input 
-          value={config.name} 
-          onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
-          className="h-10"
-        />
-      </div>
-      <div className="space-y-3">
-        {config.weights.map(w => (
-          <div key={w.id} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Switch 
-                  checked={w.enabled} 
-                  onCheckedChange={() => toggleWeight(setConfig, w.id)}
-                />
-                <span className={cn("text-sm", !w.enabled && "text-muted-foreground")}>{w.label}</span>
-              </div>
-              <span className="text-sm font-mono w-8 text-right">{w.weight}</span>
+  // Get weights organized by category for display
+  const getWeightsByCategory = (weights: SortWeight[]) => {
+    return defaultCategories.map(cat => ({
+      ...cat,
+      weights: cat.weights.map(defaultW => 
+        weights.find(w => w.id === defaultW.id) || defaultW
+      ),
+    }));
+  };
+
+  const ConfigPanel = ({ config, setConfig }: { config: SortConfig; setConfig: React.Dispatch<React.SetStateAction<SortConfig>> }) => {
+    const categorizedWeights = getWeightsByCategory(config.weights);
+    
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label>List Name</Label>
+          <Input 
+            value={config.name} 
+            onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
+            className="h-10"
+          />
+        </div>
+        <div className="space-y-6">
+          {categorizedWeights.map(category => (
+            <div key={category.id} className="space-y-3">
+              <h4 className="text-sm font-semibold text-primary border-b border-border pb-1">
+                {category.label}
+              </h4>
+              {category.weights.map(w => (
+                <div key={w.id} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Switch 
+                        checked={w.enabled} 
+                        onCheckedChange={() => toggleWeight(setConfig, w.id)}
+                      />
+                      <span className={cn("text-sm", !w.enabled && "text-muted-foreground")}>{w.label}</span>
+                    </div>
+                    <span className={cn(
+                      "text-sm font-mono w-8 text-right",
+                      w.weight > 0 ? "text-green-500" : w.weight < 0 ? "text-red-500" : "text-muted-foreground"
+                    )}>{w.weight > 0 ? `+${w.weight}` : w.weight}</span>
+                  </div>
+                  {w.enabled && (
+                    <Slider
+                      value={[w.weight]}
+                      onValueChange={([v]) => updateWeight(setConfig, w.id, v)}
+                      min={-10}
+                      max={10}
+                      step={1}
+                      className="w-full"
+                    />
+                  )}
+                </div>
+              ))}
             </div>
-            {w.enabled && (
-              <Slider
-                value={[w.weight]}
-                onValueChange={([v]) => updateWeight(setConfig, w.id, v)}
-                min={-10}
-                max={10}
-                step={1}
-                className="w-full"
-              />
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const TeamCard = ({ team }: { team: TeamStats }) => (
     <div className="data-card">

@@ -48,8 +48,6 @@ export default function MatchScout() {
   // Autonomous
   const [autoScoredClose, setAutoScoredClose] = useState(0);
   const [autoScoredFar, setAutoScoredFar] = useState(0);
-  const [autoFoulsMinor, setAutoFoulsMinor] = useState(0);
-  const [autoFoulsMajor, setAutoFoulsMajor] = useState(0);
   const [onLaunchLine, setOnLaunchLine] = useState(false);
   
   // TeleOp
@@ -60,6 +58,9 @@ export default function MatchScout() {
   // Endgame
   const [endgameReturn, setEndgameReturn] = useState<EndgameReturnStatus>('not_returned');
   const [penaltyStatus, setPenaltyStatus] = useState<PenaltyStatus>('none');
+  
+  // General counters
+  const [fouls, setFouls] = useState(0);
   
   const [saving, setSaving] = useState(false);
 
@@ -83,14 +84,13 @@ export default function MatchScout() {
       setMatchNumber(data.match_number.toString());
       setAutoScoredClose(data.auto_scored_close);
       setAutoScoredFar(data.auto_scored_far);
-      setAutoFoulsMinor(data.auto_fouls_minor);
-      setAutoFoulsMajor(data.auto_fouls_major);
       setOnLaunchLine(data.on_launch_line);
       setTeleopScoredClose(data.teleop_scored_close);
       setTeleopScoredFar(data.teleop_scored_far);
       setDefenseRating(data.defense_rating);
       setEndgameReturn(data.endgame_return as EndgameReturnStatus);
       setPenaltyStatus(data.penalty_status as PenaltyStatus);
+      setFouls(data.auto_fouls_minor + data.auto_fouls_major);
       setEditingEntry({ id: data.id, scouterId: data.scouter_id });
     } else {
       toast({
@@ -116,14 +116,13 @@ export default function MatchScout() {
     setMatchNumber('');
     setAutoScoredClose(0);
     setAutoScoredFar(0);
-    setAutoFoulsMinor(0);
-    setAutoFoulsMajor(0);
     setOnLaunchLine(false);
     setTeleopScoredClose(0);
     setTeleopScoredFar(0);
     setDefenseRating(0);
     setEndgameReturn('not_returned');
     setPenaltyStatus('none');
+    setFouls(0);
     setEditingEntry(null);
     setSearchParams({});
   };
@@ -157,8 +156,8 @@ export default function MatchScout() {
       match_number: parseInt(matchNumber),
       auto_scored_close: autoScoredClose,
       auto_scored_far: autoScoredFar,
-      auto_fouls_minor: autoFoulsMinor,
-      auto_fouls_major: autoFoulsMajor,
+      auto_fouls_minor: fouls, // Store general fouls in minor field
+      auto_fouls_major: 0,
       on_launch_line: onLaunchLine,
       teleop_scored_close: teleopScoredClose,
       teleop_scored_far: teleopScoredFar,
@@ -299,26 +298,6 @@ export default function MatchScout() {
               />
             </div>
           </div>
-          
-          {/* Fouls Section */}
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="w-4 h-4 text-destructive" />
-              <span className="text-sm font-medium text-muted-foreground">Fouls</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <IntegerStepper
-                value={autoFoulsMinor}
-                onChange={setAutoFoulsMinor}
-                label="Minor Fouls"
-              />
-              <IntegerStepper
-                value={autoFoulsMajor}
-                onChange={setAutoFoulsMajor}
-                label="Major Fouls"
-              />
-            </div>
-          </div>
         </div>
 
         {/* TeleOp */}
@@ -428,6 +407,19 @@ export default function MatchScout() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Fouls Section - General Counter */}
+        <div className="data-card">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-destructive" />
+            Fouls
+          </h2>
+          <IntegerStepper
+            value={fouls}
+            onChange={setFouls}
+            label="Total Fouls"
+          />
         </div>
 
         {/* Actions */}
