@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -11,44 +11,97 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag } from 'lucide-react';
+import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { MotifType, ParkStatus } from '@/types/scouting';
+import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
 
-const parkOptions: { value: ParkStatus; label: string }[] = [
-  { value: 'none', label: 'None' },
+const endgameOptions: { value: EndgameReturnStatus; label: string }[] = [
+  { value: 'not_returned', label: 'Not Returned' },
   { value: 'partial', label: 'Partial' },
-  { value: 'full', label: 'Full' },
+  { value: 'full', label: 'Full Return' },
+  { value: 'lift', label: 'Lift' },
 ];
 
-const motifOptions: { value: MotifType; label: string }[] = [
-  { value: 'PPG', label: 'PPG' },
-  { value: 'PGP', label: 'PGP' },
-  { value: 'GPP', label: 'GPP' },
+const penaltyOptions: { value: PenaltyStatus; label: string; color?: string }[] = [
+  { value: 'none', label: 'None' },
+  { value: 'dead', label: 'Dead' },
+  { value: 'yellow_card', label: 'Yellow Card', color: 'bg-yellow-500' },
+  { value: 'red_card', label: 'Red Card', color: 'bg-red-500' },
 ];
+
+const defenseLabels = ['None', 'Partial', 'Full Bad', 'Full Good'];
 
 export default function MatchScout() {
   const { user, profile, isApproved } = useAuth();
   const { currentEvent } = useEvent();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  const isAdmin = profile?.role === 'admin';
+  const editId = searchParams.get('edit');
 
   const [teamNumber, setTeamNumber] = useState('');
   const [matchNumber, setMatchNumber] = useState('');
+  const [editingEntry, setEditingEntry] = useState<{ id: string; scouterId: string } | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   
   // Autonomous
-  const [autoMotifs, setAutoMotifs] = useState(0);
-  const [autoArtifacts, setAutoArtifacts] = useState(0);
-  const [autoLeave, setAutoLeave] = useState(false);
+  const [autoScoredClose, setAutoScoredClose] = useState(0);
+  const [autoScoredFar, setAutoScoredFar] = useState(0);
+  const [autoFoulsMinor, setAutoFoulsMinor] = useState(0);
+  const [autoFoulsMajor, setAutoFoulsMajor] = useState(0);
+  const [onLaunchLine, setOnLaunchLine] = useState(false);
   
   // TeleOp
-  const [teleopMotifs, setTeleopMotifs] = useState(0);
-  const [teleopArtifacts, setTeleopArtifacts] = useState(0);
+  const [teleopScoredClose, setTeleopScoredClose] = useState(0);
+  const [teleopScoredFar, setTeleopScoredFar] = useState(0);
+  const [defenseRating, setDefenseRating] = useState(0);
   
   // Endgame
-  const [parkStatus, setParkStatus] = useState<ParkStatus>('none');
-  const [motifType, setMotifType] = useState<MotifType>('PPG');
+  const [endgameReturn, setEndgameReturn] = useState<EndgameReturnStatus>('not_returned');
+  const [penaltyStatus, setPenaltyStatus] = useState<PenaltyStatus>('none');
   
   const [saving, setSaving] = useState(false);
+
+  // Load entry for editing (admin only)
+  useEffect(() => {
+    if (editId && isAdmin && currentEvent) {
+      loadEntryForEdit(editId);
+    }
+  }, [editId, isAdmin, currentEvent]);
+
+  const loadEntryForEdit = async (id: string) => {
+    setLoadingEdit(true);
+    const { data, error } = await supabase
+      .from('match_entries')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    
+    if (data && !error) {
+      setTeamNumber(data.team_number.toString());
+      setMatchNumber(data.match_number.toString());
+      setAutoScoredClose(data.auto_scored_close);
+      setAutoScoredFar(data.auto_scored_far);
+      setAutoFoulsMinor(data.auto_fouls_minor);
+      setAutoFoulsMajor(data.auto_fouls_major);
+      setOnLaunchLine(data.on_launch_line);
+      setTeleopScoredClose(data.teleop_scored_close);
+      setTeleopScoredFar(data.teleop_scored_far);
+      setDefenseRating(data.defense_rating);
+      setEndgameReturn(data.endgame_return as EndgameReturnStatus);
+      setPenaltyStatus(data.penalty_status as PenaltyStatus);
+      setEditingEntry({ id: data.id, scouterId: data.scouter_id });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Could not load entry for editing.',
+        variant: 'destructive',
+      });
+      setSearchParams({});
+    }
+    setLoadingEdit(false);
+  };
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -61,13 +114,18 @@ export default function MatchScout() {
   const resetForm = () => {
     setTeamNumber('');
     setMatchNumber('');
-    setAutoMotifs(0);
-    setAutoArtifacts(0);
-    setAutoLeave(false);
-    setTeleopMotifs(0);
-    setTeleopArtifacts(0);
-    setParkStatus('none');
-    setMotifType('PPG');
+    setAutoScoredClose(0);
+    setAutoScoredFar(0);
+    setAutoFoulsMinor(0);
+    setAutoFoulsMajor(0);
+    setOnLaunchLine(false);
+    setTeleopScoredClose(0);
+    setTeleopScoredFar(0);
+    setDefenseRating(0);
+    setEndgameReturn('not_returned');
+    setPenaltyStatus('none');
+    setEditingEntry(null);
+    setSearchParams({});
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,48 +151,91 @@ export default function MatchScout() {
 
     setSaving(true);
 
-    // Use UPSERT to avoid duplicate key errors
-    // (unique on event_code + team_number + match_number + scouter_id)
-    const { error } = await supabase.from('match_entries').upsert(
-      {
-        event_code: currentEvent.code,
-        team_number: parseInt(teamNumber),
-        match_number: parseInt(matchNumber),
-        scouter_id: user.id,
-        auto_motifs: autoMotifs,
-        auto_artifacts: autoArtifacts,
-        auto_leave: autoLeave,
-        teleop_motifs: teleopMotifs,
-        teleop_artifacts: teleopArtifacts,
-        park_status: parkStatus,
-        motif_type: motifType,
-      },
-      { onConflict: 'event_code,team_number,match_number,scouter_id' }
-    );
+    const entryData = {
+      event_code: currentEvent.code,
+      team_number: parseInt(teamNumber),
+      match_number: parseInt(matchNumber),
+      auto_scored_close: autoScoredClose,
+      auto_scored_far: autoScoredFar,
+      auto_fouls_minor: autoFoulsMinor,
+      auto_fouls_major: autoFoulsMajor,
+      on_launch_line: onLaunchLine,
+      teleop_scored_close: teleopScoredClose,
+      teleop_scored_far: teleopScoredFar,
+      defense_rating: defenseRating,
+      endgame_return: endgameReturn,
+      penalty_status: penaltyStatus,
+    };
+
+    let error;
+
+    if (editingEntry && isAdmin) {
+      // Admin editing someone else's entry - update by ID
+      const { error: updateError } = await supabase
+        .from('match_entries')
+        .update(entryData)
+        .eq('id', editingEntry.id);
+      error = updateError;
+    } else {
+      // Normal upsert for new entries or own entries
+      const { error: upsertError } = await supabase.from('match_entries').upsert(
+        {
+          ...entryData,
+          scouter_id: user.id,
+        },
+        { onConflict: 'event_code,team_number,match_number,scouter_id' }
+      );
+      error = upsertError;
+    }
 
     setSaving(false);
 
     if (error) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save match data. Please try again.',
+        description: error.message || 'Failed to save match data.',
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Saved!',
-        description: `Match ${matchNumber} data for Team ${teamNumber} saved successfully.`,
+        title: editingEntry ? 'Updated!' : 'Saved!',
+        description: `Match ${matchNumber} data for Team ${teamNumber} ${editingEntry ? 'updated' : 'saved'}.`,
       });
       resetForm();
     }
   };
 
+  if (loadingEdit) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <PageHeader
-        title="Match Scouting"
-        description="Record match performance data"
+        title={editingEntry ? "Edit Match Entry" : "Match Scouting"}
+        description={editingEntry ? "Editing existing entry (Admin)" : "Record match performance data"}
       />
+
+      {editingEntry && (
+        <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-center gap-2">
+          <Pencil className="w-4 h-4 text-yellow-500" />
+          <span className="text-sm">Editing existing entry. Changes will update the original record.</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="ml-auto"
+            onClick={resetForm}
+          >
+            Cancel Edit
+          </Button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Match Info */}
@@ -177,23 +278,46 @@ export default function MatchScout() {
             <Bot className="w-5 h-5 text-primary" />
             Autonomous
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <IntegerStepper
-              value={autoMotifs}
-              onChange={setAutoMotifs}
-              max={3}
-              label="Motifs Scored"
+              value={autoScoredClose}
+              onChange={setAutoScoredClose}
+              label="Scored Close"
             />
             <IntegerStepper
-              value={autoArtifacts}
-              onChange={setAutoArtifacts}
-              label="Artifacts Scored"
+              value={autoScoredFar}
+              onChange={setAutoScoredFar}
+              label="Scored Far"
             />
-            <ToggleButton
-              value={autoLeave}
-              onChange={setAutoLeave}
-              label="Autonomous Leave"
-            />
+            <div className="col-span-2 md:col-span-1">
+              <ToggleButton
+                value={onLaunchLine}
+                onChange={setOnLaunchLine}
+                label="Launch Line"
+                onLabel="ON"
+                offLabel="OFF"
+              />
+            </div>
+          </div>
+          
+          {/* Fouls Section */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <span className="text-sm font-medium text-muted-foreground">Fouls</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <IntegerStepper
+                value={autoFoulsMinor}
+                onChange={setAutoFoulsMinor}
+                label="Minor Fouls"
+              />
+              <IntegerStepper
+                value={autoFoulsMajor}
+                onChange={setAutoFoulsMajor}
+                label="Major Fouls"
+              />
+            </div>
           </div>
         </div>
 
@@ -203,17 +327,44 @@ export default function MatchScout() {
             <Gamepad2 className="w-5 h-5 text-secondary" />
             TeleOp
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <IntegerStepper
-              value={teleopMotifs}
-              onChange={setTeleopMotifs}
-              label="Motifs Scored"
+              value={teleopScoredClose}
+              onChange={setTeleopScoredClose}
+              label="Scored Close"
             />
             <IntegerStepper
-              value={teleopArtifacts}
-              onChange={setTeleopArtifacts}
-              label="Artifacts Scored"
+              value={teleopScoredFar}
+              onChange={setTeleopScoredFar}
+              label="Scored Far"
             />
+          </div>
+          
+          {/* Defense Rating */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-muted-foreground">
+              Defense Rating
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {[0, 1, 2, 3].map((rating) => (
+                <button
+                  key={rating}
+                  type="button"
+                  onClick={() => setDefenseRating(rating)}
+                  className={cn(
+                    "h-14 rounded-xl font-semibold transition-all duration-150",
+                    "flex flex-col items-center justify-center gap-1",
+                    "active:scale-95 touch-manipulation",
+                    defenseRating === rating
+                      ? "bg-secondary text-secondary-foreground shadow-lg"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  <span className="text-lg font-mono">{rating}</span>
+                  <span className="text-[10px] opacity-75">{defenseLabels[rating]}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -223,57 +374,58 @@ export default function MatchScout() {
             <Flag className="w-5 h-5 text-accent" />
             Endgame
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Park Status */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-muted-foreground">
-                Park Status
-              </label>
-              <div className="flex gap-2">
-                {parkOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setParkStatus(option.value)}
-                    className={cn(
-                      "flex-1 h-14 rounded-xl font-semibold transition-all duration-150",
-                      "flex items-center justify-center gap-2",
-                      "active:scale-95 touch-manipulation",
-                      parkStatus === option.value
-                        ? "bg-secondary text-secondary-foreground shadow-lg"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+          
+          {/* Return Status */}
+          <div className="flex flex-col gap-2 mb-4">
+            <label className="text-sm font-medium text-muted-foreground">
+              Return Status
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {endgameOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setEndgameReturn(option.value)}
+                  className={cn(
+                    "h-14 rounded-xl font-semibold transition-all duration-150",
+                    "flex items-center justify-center text-center px-2",
+                    "active:scale-95 touch-manipulation text-sm",
+                    endgameReturn === option.value
+                      ? "bg-secondary text-secondary-foreground shadow-lg"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
-            
-            {/* Motif Type */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-muted-foreground">
-                Motif Type
-              </label>
-              <div className="flex gap-2">
-                {motifOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setMotifType(option.value)}
-                    className={cn(
-                      "flex-1 h-14 rounded-xl font-semibold transition-all duration-150",
-                      "flex items-center justify-center gap-2",
-                      "active:scale-95 touch-manipulation",
-                      motifType === option.value
-                        ? "bg-secondary text-secondary-foreground shadow-lg"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+          </div>
+          
+          {/* Penalty Status */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-muted-foreground">
+              Penalty / Robot Status
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {penaltyOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setPenaltyStatus(option.value)}
+                  className={cn(
+                    "h-14 rounded-xl font-semibold transition-all duration-150",
+                    "flex items-center justify-center text-center px-2",
+                    "active:scale-95 touch-manipulation text-sm",
+                    penaltyStatus === option.value
+                      ? option.color 
+                        ? `${option.color} text-white shadow-lg`
+                        : "bg-secondary text-secondary-foreground shadow-lg"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

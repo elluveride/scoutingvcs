@@ -3,11 +3,11 @@
 export type UserRole = 'admin' | 'scout';
 export type UserStatus = 'pending' | 'approved' | 'rejected';
 
-export type ParkStatus = 'none' | 'partial' | 'full';
-export type MotifType = 'PPG' | 'PGP' | 'GPP';
 export type DriveType = 'tank' | 'mecanum' | 'swerve' | 'other';
 export type ConsistencyLevel = 'low' | 'medium' | 'high';
 export type AutoLeaveStatus = 'yes' | 'sometimes' | 'no';
+export type EndgameReturnStatus = 'not_returned' | 'partial' | 'full' | 'lift';
+export type PenaltyStatus = 'none' | 'dead' | 'yellow_card' | 'red_card';
 
 export interface User {
   id: string;
@@ -35,19 +35,20 @@ export interface MatchEntry {
   scouterId: string;
   
   // Autonomous
-  autoMotifs: number; // max 3
-  autoArtifacts: number;
-  autoLeave: boolean;
+  autoScoredClose: number;
+  autoScoredFar: number;
+  autoFoulsMinor: number;
+  autoFoulsMajor: number;
+  onLaunchLine: boolean;
   
   // TeleOp
-  teleopMotifs: number;
-  teleopArtifacts: number;
+  teleopScoredClose: number;
+  teleopScoredFar: number;
+  defenseRating: number; // 0-3
   
   // Endgame
-  parkStatus: ParkStatus;
-  
-  // Motif Type
-  motifType: MotifType;
+  endgameReturn: EndgameReturnStatus;
+  penaltyStatus: PenaltyStatus;
   
   timestamp: string;
 }
@@ -102,14 +103,33 @@ export interface PathMarker {
 export interface TeamStats {
   teamNumber: number;
   matchesPlayed: number;
-  avgAutoMotifs: number;
-  avgAutoArtifacts: number;
-  autoLeavePercent: number;
-  avgTeleopMotifs: number;
-  avgTeleopArtifacts: number;
-  fullParkPercent: number;
-  partialParkPercent: number;
+  avgAutoClose: number;
+  avgAutoFar: number;
+  autoTotalAvg: number;
+  avgTeleopClose: number;
+  avgTeleopFar: number;
+  teleopTotalAvg: number;
+  avgFoulsMinor: number;
+  avgFoulsMajor: number;
+  onLaunchLinePercent: number;
+  avgDefense: number;
+  liftPercent: number;
+  fullReturnPercent: number;
+  partialReturnPercent: number;
+  penaltyRate: number;
   varianceScore: number;
-  failureRate: number;
   selectionScore: number;
+}
+
+// For configurable dashboard sorting
+export interface SortWeight {
+  id: string;
+  label: string;
+  weight: number;
+  enabled: boolean;
+}
+
+export interface SortConfig {
+  name: string;
+  weights: SortWeight[];
 }

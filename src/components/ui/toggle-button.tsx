@@ -6,6 +6,8 @@ interface ToggleButtonProps {
   value: boolean;
   onChange: (value: boolean) => void;
   label?: string;
+  onLabel?: string;
+  offLabel?: string;
   className?: string;
 }
 
@@ -13,6 +15,8 @@ export function ToggleButton({
   value,
   onChange,
   label,
+  onLabel = "Yes",
+  offLabel = "No",
   className,
 }: ToggleButtonProps) {
   return (
@@ -36,7 +40,7 @@ export function ToggleButton({
           )}
         >
           <Check className="w-5 h-5" />
-          Yes
+          {onLabel}
         </button>
         <button
           type="button"
@@ -51,7 +55,7 @@ export function ToggleButton({
           )}
         >
           <X className="w-5 h-5" />
-          No
+          {offLabel}
         </button>
       </div>
     </div>
