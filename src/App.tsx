@@ -13,7 +13,7 @@ import MatchScout from "./pages/MatchScout";
 import PitScout from "./pages/PitScout";
 import Spreadsheet from "./pages/Spreadsheet";
 import Dashboard from "./pages/Dashboard";
-import Alliance from "./pages/Alliance";
+
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -53,11 +53,6 @@ const App = () => (
               <Route path="/dashboard" element={
                 <ApprovalGate>
                   <Dashboard />
-                </ApprovalGate>
-              } />
-              <Route path="/alliance" element={
-                <ApprovalGate>
-                  <Alliance />
                 </ApprovalGate>
               } />
               <Route path="/admin" element={

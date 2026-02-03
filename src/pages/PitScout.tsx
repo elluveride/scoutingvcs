@@ -157,10 +157,28 @@ export default function PitScout() {
     return <Navigate to="/event-select" replace />;
   }
 
+  const resetForm = () => {
+    setTeamName('');
+    setExistingId(null);
+    setLastEditInfo(null);
+    setDriveType('tank');
+    setScoresMotifs(false);
+    setScoresArtifacts(false);
+    setHasAutonomous(false);
+    setAutoConsistency('low');
+    setReliableAutoLeave('no');
+    setPartialParkCapable(false);
+    setFullParkCapable(false);
+    setEndgameConsistency('low');
+  };
+
   const loadTeamData = async () => {
     if (!teamNumber) return;
     
     setLoading(true);
+    
+    // Reset form first to clear any previous data
+    resetForm();
     
     const { data, error } = await supabase
       .from('pit_entries')
@@ -185,9 +203,6 @@ export default function PitScout() {
       const editorName = (data.profiles as any)?.name || 'Unknown';
       const editDate = new Date(data.last_edited_at).toLocaleString();
       setLastEditInfo(`Last edited by ${editorName} on ${editDate}`);
-    } else {
-      setExistingId(null);
-      setLastEditInfo(null);
     }
     
     setLoading(false);
