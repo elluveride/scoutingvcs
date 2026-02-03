@@ -234,7 +234,8 @@ export default function Dashboard() {
     }));
   };
 
-  const ConfigPanel = ({ config, setConfig }: { config: SortConfig; setConfig: React.Dispatch<React.SetStateAction<SortConfig>> }) => {
+  // Render config panel content inline to prevent focus loss on re-render
+  const renderConfigPanel = (config: SortConfig, setConfig: React.Dispatch<React.SetStateAction<SortConfig>>) => {
     const categorizedWeights = getWeightsByCategory(config.weights);
     
     return (
@@ -378,13 +379,13 @@ export default function Dashboard() {
                     Configure
                   </Button>
                 </SheetTrigger>
-                <SheetContent>
+                <SheetContent className="overflow-y-auto">
                   <SheetHeader>
                     <SheetTitle>Configure {config1.name}</SheetTitle>
                     <SheetDescription>Adjust weights for each metric</SheetDescription>
                   </SheetHeader>
-                  <div className="mt-6">
-                    <ConfigPanel config={config1} setConfig={setConfig1} />
+                  <div className="mt-6 pb-6">
+                    {renderConfigPanel(config1, setConfig1)}
                   </div>
                 </SheetContent>
               </Sheet>
@@ -412,13 +413,13 @@ export default function Dashboard() {
                     Configure
                   </Button>
                 </SheetTrigger>
-                <SheetContent>
+                <SheetContent className="overflow-y-auto">
                   <SheetHeader>
                     <SheetTitle>Configure {config2.name}</SheetTitle>
                     <SheetDescription>Adjust weights for each metric</SheetDescription>
                   </SheetHeader>
-                  <div className="mt-6">
-                    <ConfigPanel config={config2} setConfig={setConfig2} />
+                  <div className="mt-6 pb-6">
+                    {renderConfigPanel(config2, setConfig2)}
                   </div>
                 </SheetContent>
               </Sheet>
