@@ -49,20 +49,37 @@ export default function Spreadsheet() {
   const loadEntries = async () => {
     setLoading(true);
     
+    // NOTE: We can't do `profiles:scouter_id(name)` because there's no FK relationship
+    // in the DB schema cache; that causes a PGRST200 error and yields no data.
     const { data, error } = await supabase
       .from('match_entries')
-      .select('*, profiles:scouter_id(name)')
+      .select('*')
       .eq('event_code', currentEvent.code)
       .order('match_number', { ascending: true })
       .order('team_number', { ascending: true });
 
     if (data && !error) {
+      const scouterIds = Array.from(
+        new Set((data as any[]).map((e) => e.scouter_id).filter(Boolean))
+      ) as string[];
+
+      const { data: profileRows } = scouterIds.length
+        ? await supabase
+            .from('profiles')
+            .select('id,name')
+            .in('id', scouterIds)
+        : { data: [] as any[] };
+
+      const nameById = new Map<string, string>(
+        (profileRows || []).map((p: any) => [p.id, p.name])
+      );
+
       setEntries(data.map(entry => ({
         id: entry.id,
         event_code: entry.event_code,
         match_number: entry.match_number,
         team_number: entry.team_number,
-        scouter_name: (entry.profiles as any)?.name || 'Unknown',
+        scouter_name: nameById.get(entry.scouter_id) || 'Unknown',
         auto_motifs: entry.auto_motifs,
         auto_artifacts: entry.auto_artifacts,
         auto_leave: entry.auto_leave,
