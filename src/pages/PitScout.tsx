@@ -185,7 +185,7 @@ export default function PitScout() {
       .select('*, profiles:last_edited_by(name)')
       .eq('event_code', currentEvent.code)
       .eq('team_number', parseInt(teamNumber))
-      .single();
+      .maybeSingle();
     
     if (data && !error) {
       setExistingId(data.id);
