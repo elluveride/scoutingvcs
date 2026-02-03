@@ -174,20 +174,27 @@ export default function PitScout() {
 
   const loadTeamData = async () => {
     if (!teamNumber) return;
-    
+
     setLoading(true);
-    
+
     // Reset form first to clear any previous data
     resetForm();
-    
+
+    // NOTE: We cannot do `profiles:last_edited_by(name)` here because there's no FK
+    // relationship in the DB schema cache; that causes a PGRST200 error.
     const { data, error } = await supabase
       .from('pit_entries')
-      .select('*, profiles:last_edited_by(name)')
+      .select('*')
       .eq('event_code', currentEvent.code)
       .eq('team_number', parseInt(teamNumber))
       .maybeSingle();
-    
-    if (data && !error) {
+
+    if (error) {
+      setLoading(false);
+      return;
+    }
+
+    if (data) {
       setExistingId(data.id);
       setTeamName(data.team_name);
       setDriveType(data.drive_type as DriveType);
@@ -199,12 +206,20 @@ export default function PitScout() {
       setPartialParkCapable(data.partial_park_capable);
       setFullParkCapable(data.full_park_capable);
       setEndgameConsistency(data.endgame_consistency as ConsistencyLevel);
-      
-      const editorName = (data.profiles as any)?.name || 'Unknown';
-      const editDate = new Date(data.last_edited_at).toLocaleString();
-      setLastEditInfo(`Last edited by ${editorName} on ${editDate}`);
+
+      if (data.last_edited_by) {
+        const { data: editor } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', data.last_edited_by)
+          .maybeSingle();
+
+        const editorName = editor?.name || 'Unknown';
+        const editDate = new Date(data.last_edited_at).toLocaleString();
+        setLastEditInfo(`Last edited by ${editorName} on ${editDate}`);
+      }
     }
-    
+
     setLoading(false);
   };
 
@@ -248,30 +263,25 @@ export default function PitScout() {
       last_edited_at: new Date().toISOString(),
     };
 
-    let error;
-    
-    if (existingId) {
-      const result = await supabase
-        .from('pit_entries')
-        .update(pitData)
-        .eq('id', existingId);
-      error = result.error;
-    } else {
-      const result = await supabase
-        .from('pit_entries')
-        .insert(pitData);
-      error = result.error;
-    }
+    // Use UPSERT to avoid duplicate key errors (unique on event_code + team_number)
+    const result = await supabase
+      .from('pit_entries')
+      .upsert(pitData, { onConflict: 'event_code,team_number' })
+      .select('id')
+      .single();
+
+    const error = result.error;
 
     setSaving(false);
 
     if (error) {
       toast({
         title: 'Error',
-        description: 'Failed to save pit data. Please try again.',
+        description: error.message || 'Failed to save pit data. Please try again.',
         variant: 'destructive',
       });
     } else {
+      if (result.data?.id) setExistingId(result.data.id);
       toast({
         title: 'Saved!',
         description: `Pit data for Team ${teamNumber} saved successfully.`,

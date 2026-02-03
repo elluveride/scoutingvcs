@@ -93,26 +93,31 @@ export default function MatchScout() {
 
     setSaving(true);
 
-    const { error } = await supabase.from('match_entries').insert({
-      event_code: currentEvent.code,
-      team_number: parseInt(teamNumber),
-      match_number: parseInt(matchNumber),
-      scouter_id: user.id,
-      auto_motifs: autoMotifs,
-      auto_artifacts: autoArtifacts,
-      auto_leave: autoLeave,
-      teleop_motifs: teleopMotifs,
-      teleop_artifacts: teleopArtifacts,
-      park_status: parkStatus,
-      motif_type: motifType,
-    });
+    // Use UPSERT to avoid duplicate key errors
+    // (unique on event_code + team_number + match_number + scouter_id)
+    const { error } = await supabase.from('match_entries').upsert(
+      {
+        event_code: currentEvent.code,
+        team_number: parseInt(teamNumber),
+        match_number: parseInt(matchNumber),
+        scouter_id: user.id,
+        auto_motifs: autoMotifs,
+        auto_artifacts: autoArtifacts,
+        auto_leave: autoLeave,
+        teleop_motifs: teleopMotifs,
+        teleop_artifacts: teleopArtifacts,
+        park_status: parkStatus,
+        motif_type: motifType,
+      },
+      { onConflict: 'event_code,team_number,match_number,scouter_id' }
+    );
 
     setSaving(false);
 
     if (error) {
       toast({
         title: 'Error',
-        description: 'Failed to save match data. Please try again.',
+        description: error.message || 'Failed to save match data. Please try again.',
         variant: 'destructive',
       });
     } else {
