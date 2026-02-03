@@ -40,49 +40,58 @@ export type Database = {
       }
       match_entries: {
         Row: {
-          auto_artifacts: number
-          auto_leave: boolean
-          auto_motifs: number
+          auto_fouls_major: number
+          auto_fouls_minor: number
+          auto_scored_close: number
+          auto_scored_far: number
           created_at: string
+          defense_rating: number
+          endgame_return: Database["public"]["Enums"]["endgame_return_status"]
           event_code: string
           id: string
           match_number: number
-          motif_type: Database["public"]["Enums"]["motif_type"]
-          park_status: Database["public"]["Enums"]["park_status"]
+          on_launch_line: boolean
+          penalty_status: Database["public"]["Enums"]["penalty_status"]
           scouter_id: string
           team_number: number
-          teleop_artifacts: number
-          teleop_motifs: number
+          teleop_scored_close: number
+          teleop_scored_far: number
         }
         Insert: {
-          auto_artifacts?: number
-          auto_leave?: boolean
-          auto_motifs?: number
+          auto_fouls_major?: number
+          auto_fouls_minor?: number
+          auto_scored_close?: number
+          auto_scored_far?: number
           created_at?: string
+          defense_rating?: number
+          endgame_return?: Database["public"]["Enums"]["endgame_return_status"]
           event_code: string
           id?: string
           match_number: number
-          motif_type?: Database["public"]["Enums"]["motif_type"]
-          park_status?: Database["public"]["Enums"]["park_status"]
+          on_launch_line?: boolean
+          penalty_status?: Database["public"]["Enums"]["penalty_status"]
           scouter_id: string
           team_number: number
-          teleop_artifacts?: number
-          teleop_motifs?: number
+          teleop_scored_close?: number
+          teleop_scored_far?: number
         }
         Update: {
-          auto_artifacts?: number
-          auto_leave?: boolean
-          auto_motifs?: number
+          auto_fouls_major?: number
+          auto_fouls_minor?: number
+          auto_scored_close?: number
+          auto_scored_far?: number
           created_at?: string
+          defense_rating?: number
+          endgame_return?: Database["public"]["Enums"]["endgame_return_status"]
           event_code?: string
           id?: string
           match_number?: number
-          motif_type?: Database["public"]["Enums"]["motif_type"]
-          park_status?: Database["public"]["Enums"]["park_status"]
+          on_launch_line?: boolean
+          penalty_status?: Database["public"]["Enums"]["penalty_status"]
           scouter_id?: string
           team_number?: number
-          teleop_artifacts?: number
-          teleop_motifs?: number
+          teleop_scored_close?: number
+          teleop_scored_far?: number
         }
         Relationships: []
       }
@@ -210,8 +219,10 @@ export type Database = {
       auto_leave_status: "yes" | "sometimes" | "no"
       consistency_level: "low" | "medium" | "high"
       drive_type: "tank" | "mecanum" | "swerve" | "other"
+      endgame_return_status: "not_returned" | "partial" | "full" | "lift"
       motif_type: "PPG" | "PGP" | "GPP"
       park_status: "none" | "partial" | "full"
+      penalty_status: "none" | "dead" | "yellow_card" | "red_card"
       user_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -344,8 +355,10 @@ export const Constants = {
       auto_leave_status: ["yes", "sometimes", "no"],
       consistency_level: ["low", "medium", "high"],
       drive_type: ["tank", "mecanum", "swerve", "other"],
+      endgame_return_status: ["not_returned", "partial", "full", "lift"],
       motif_type: ["PPG", "PGP", "GPP"],
       park_status: ["none", "partial", "full"],
+      penalty_status: ["none", "dead", "yellow_card", "red_card"],
       user_status: ["pending", "approved", "rejected"],
     },
   },
