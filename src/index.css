@@ -9,6 +9,12 @@
 
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
+@import url("https://fonts.googleapis.com/css2?family=Inter&display=swap");
+
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap");
+
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap");
+
 @layer base {
   :root {
     /* Dark mode only - competition environment */
@@ -22,11 +28,11 @@
     --popover-foreground: 210 20% 95%;
 
     /* Primary: Electric Green - scoring/success */
-    --primary: 142 70% 50%;
+    --primary: 199 88.664% 48.4314%;
     --primary-foreground: 220 20% 6%;
 
     /* Secondary: Deep Blue - navigation/info */
-    --secondary: 217 70% 50%;
+    --secondary: 0 84.2365% 60.1961%;
     --secondary-foreground: 210 20% 98%;
 
     /* Muted: Subtle grays for secondary elements */
@@ -34,7 +40,7 @@
     --muted-foreground: 215 15% 55%;
 
     /* Accent: Cyan for highlights */
-    --accent: 190 80% 45%;
+    --accent: 221 83.1933% 53.3333%;
     --accent-foreground: 220 20% 6%;
 
     /* Destructive: Warning red */
@@ -79,10 +85,17 @@
     --shadow-glow: 0 0 20px hsl(142 70% 50% / 0.3);
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
     --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.5);
+    --font-sans: Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+    --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
   }
 
   .dark {
     /* Same as root - dark mode only app */
+    --font-sans: Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+    --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
+    --radius: 0.75rem
   }
 }
 
