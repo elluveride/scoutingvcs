@@ -15,24 +15,19 @@ export default {
   	extend: {
 		fontFamily: {
 			sans: [
-				'Rajdhani',
-				'ui-sans-serif',
-				'system-ui',
-				'sans-serif'
+				'"JetBrains Mono"',
+				'ui-monospace',
+				'monospace'
 			],
 			display: [
-				'Orbitron',
+				'Audiowide',
 				'ui-sans-serif',
 				'system-ui',
 				'sans-serif'
 			],
 			mono: [
-				'JetBrains Mono',
+				'"JetBrains Mono"',
 				'ui-monospace',
-				'SFMono-Regular',
-				'Menlo',
-				'Monaco',
-				'Consolas',
 				'monospace'
 			]
 		},

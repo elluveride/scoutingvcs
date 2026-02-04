@@ -3,7 +3,6 @@ import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { IntegerStepper } from '@/components/ui/integer-stepper';
 import { ToggleButton } from '@/components/ui/toggle-button';
 import { Button } from '@/components/ui/button';
@@ -11,25 +10,32 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useFTCMatches } from '@/hooks/useFTCMatches';
 import { MatchInfoSection } from '@/components/match-scout/MatchInfoSection';
-import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil } from 'lucide-react';
+import { PitSection } from '@/components/match-scout/PitSection';
+import { OptionSelector } from '@/components/match-scout/OptionSelector';
+import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil, Crosshair } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
 
 const endgameOptions: { value: EndgameReturnStatus; label: string }[] = [
-  { value: 'not_returned', label: 'Not Returned' },
+  { value: 'not_returned', label: 'None' },
   { value: 'partial', label: 'Partial' },
-  { value: 'full', label: 'Full Return' },
+  { value: 'full', label: 'Full' },
   { value: 'lift', label: 'Lift' },
 ];
 
 const penaltyOptions: { value: PenaltyStatus; label: string; color?: string }[] = [
   { value: 'none', label: 'None' },
   { value: 'dead', label: 'Dead' },
-  { value: 'yellow_card', label: 'Yellow Card', color: 'bg-yellow-500' },
-  { value: 'red_card', label: 'Red Card', color: 'bg-red-500' },
+  { value: 'yellow_card', label: 'Yellow', color: '#eab308' },
+  { value: 'red_card', label: 'Red', color: '#ef4444' },
 ];
 
-const defenseLabels = ['None', 'Partial', 'Full Bad', 'Full Good'];
+const defenseOptions = [
+  { value: 0, label: '0', sublabel: 'None' },
+  { value: 1, label: '1', sublabel: 'Partial' },
+  { value: 2, label: '2', sublabel: 'Bad' },
+  { value: 3, label: '3', sublabel: 'Good' },
+];
 
 export default function MatchScout() {
   const { user, profile, isApproved } = useAuth();
@@ -175,7 +181,7 @@ export default function MatchScout() {
       match_number: parseInt(matchNumber),
       auto_scored_close: autoScoredClose,
       auto_scored_far: autoScoredFar,
-      auto_fouls_minor: fouls, // Store general fouls in minor field
+      auto_fouls_minor: fouls,
       auto_fouls_major: 0,
       on_launch_line: onLaunchLine,
       teleop_scored_close: teleopScoredClose,
@@ -188,14 +194,12 @@ export default function MatchScout() {
     let error;
 
     if (editingEntry && isAdmin) {
-      // Admin editing someone else's entry - update by ID
       const { error: updateError } = await supabase
         .from('match_entries')
         .update(entryData)
         .eq('id', editingEntry.id);
       error = updateError;
     } else {
-      // Normal upsert for new entries or own entries
       const { error: upsertError } = await supabase.from('match_entries').upsert(
         {
           ...entryData,
@@ -235,33 +239,34 @@ export default function MatchScout() {
 
   return (
     <AppLayout>
-      <PageHeader
-        title={editingEntry ? "Edit Match Entry" : "Match Scouting"}
-        description={editingEntry ? "Editing existing entry (Admin)" : "Record match performance data"}
-      />
+      {/* Header */}
+      <div className="mb-4">
+        <h1 className="font-display text-2xl tracking-wide text-glow">
+          {editingEntry ? "Edit Entry" : "Match Scout"}
+        </h1>
+        <p className="text-sm text-muted-foreground font-mono mt-1">
+          {currentEvent.name}
+        </p>
+      </div>
 
       {editingEntry && (
-        <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-center gap-2">
-          <Pencil className="w-4 h-4 text-yellow-500" />
-          <span className="text-sm">Editing existing entry. Changes will update the original record.</span>
+        <div className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg flex items-center gap-2">
+          <Pencil className="w-4 h-4 text-warning" />
+          <span className="text-sm font-mono">Editing existing entry</span>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="ml-auto"
+            className="ml-auto h-8"
             onClick={resetForm}
           >
-            Cancel Edit
+            Cancel
           </Button>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Match Info with FTC API Integration */}
-        <div className="data-card">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Gamepad2 className="w-5 h-5 text-secondary" />
-            Match Info
-          </h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Match Info */}
+        <PitSection title="Match Info" icon={Crosshair}>
           <MatchInfoSection
             matchType={matchType}
             matchNumber={matchNumber}
@@ -275,173 +280,101 @@ export default function MatchScout() {
             onTeamNumberChange={setTeamNumber}
             onRefresh={() => refetchMatches(matchType)}
           />
-        </div>
+        </PitSection>
 
         {/* Autonomous */}
-        <div className="data-card">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Bot className="w-5 h-5 text-primary" />
-            Autonomous
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <PitSection title="Autonomous" icon={Bot} variant="blue">
+          <div className="grid grid-cols-2 gap-4">
             <IntegerStepper
               value={autoScoredClose}
               onChange={setAutoScoredClose}
-              label="Scored Close"
+              label="Close"
             />
             <IntegerStepper
               value={autoScoredFar}
               onChange={setAutoScoredFar}
-              label="Scored Far"
+              label="Far"
             />
-            <div className="col-span-2 md:col-span-1">
-              <ToggleButton
-                value={onLaunchLine}
-                onChange={setOnLaunchLine}
-                label="Launch Line"
-                onLabel="ON"
-                offLabel="OFF"
-              />
-            </div>
           </div>
-        </div>
+          <div className="mt-4">
+            <ToggleButton
+              value={onLaunchLine}
+              onChange={setOnLaunchLine}
+              label="Launch Line"
+              onLabel="ON"
+              offLabel="OFF"
+            />
+          </div>
+        </PitSection>
 
         {/* TeleOp */}
-        <div className="data-card">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Gamepad2 className="w-5 h-5 text-secondary" />
-            TeleOp
-          </h2>
+        <PitSection title="TeleOp" icon={Gamepad2} variant="red">
           <div className="grid grid-cols-2 gap-4 mb-4">
             <IntegerStepper
               value={teleopScoredClose}
               onChange={setTeleopScoredClose}
-              label="Scored Close"
+              label="Close"
             />
             <IntegerStepper
               value={teleopScoredFar}
               onChange={setTeleopScoredFar}
-              label="Scored Far"
+              label="Far"
             />
           </div>
           
-          {/* Defense Rating */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-muted-foreground">
-              Defense Rating
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {[0, 1, 2, 3].map((rating) => (
-                <button
-                  key={rating}
-                  type="button"
-                  onClick={() => setDefenseRating(rating)}
-                  className={cn(
-                    "h-14 rounded-xl font-semibold transition-all duration-150",
-                    "flex flex-col items-center justify-center gap-1",
-                    "active:scale-95 touch-manipulation",
-                    defenseRating === rating
-                      ? "bg-secondary text-secondary-foreground shadow-lg"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  <span className="text-lg font-mono">{rating}</span>
-                  <span className="text-[10px] opacity-75">{defenseLabels[rating]}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+          <OptionSelector
+            label="Defense Rating"
+            options={defenseOptions}
+            value={defenseRating}
+            onChange={setDefenseRating}
+            columns={4}
+          />
+        </PitSection>
 
         {/* Endgame */}
-        <div className="data-card">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Flag className="w-5 h-5 text-accent" />
-            Endgame
-          </h2>
-          
-          {/* Return Status */}
-          <div className="flex flex-col gap-2 mb-4">
-            <label className="text-sm font-medium text-muted-foreground">
-              Return Status
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {endgameOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setEndgameReturn(option.value)}
-                  className={cn(
-                    "h-14 rounded-xl font-semibold transition-all duration-150",
-                    "flex items-center justify-center text-center px-2",
-                    "active:scale-95 touch-manipulation text-sm",
-                    endgameReturn === option.value
-                      ? "bg-secondary text-secondary-foreground shadow-lg"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+        <PitSection title="Endgame" icon={Flag}>
+          <div className="space-y-4">
+            <OptionSelector
+              label="Return Status"
+              options={endgameOptions}
+              value={endgameReturn}
+              onChange={setEndgameReturn}
+              columns={4}
+            />
+            
+            <OptionSelector
+              label="Penalty / Robot Status"
+              options={penaltyOptions}
+              value={penaltyStatus}
+              onChange={setPenaltyStatus}
+              columns={4}
+            />
           </div>
-          
-          {/* Penalty Status */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-muted-foreground">
-              Penalty / Robot Status
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {penaltyOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setPenaltyStatus(option.value)}
-                  className={cn(
-                    "h-14 rounded-xl font-semibold transition-all duration-150",
-                    "flex items-center justify-center text-center px-2",
-                    "active:scale-95 touch-manipulation text-sm",
-                    penaltyStatus === option.value
-                      ? option.color 
-                        ? `${option.color} text-white shadow-lg`
-                        : "bg-secondary text-secondary-foreground shadow-lg"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        </PitSection>
 
-        {/* Fouls Section - General Counter */}
-        <div className="data-card">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-destructive" />
-            Fouls
-          </h2>
+        {/* Fouls */}
+        <PitSection title="Fouls" icon={AlertTriangle} variant="warning">
           <IntegerStepper
             value={fouls}
             onChange={setFouls}
             label="Total Fouls"
           />
-        </div>
+        </PitSection>
 
         {/* Actions */}
-        <div className="flex gap-4">
+        <div className="flex gap-3 pt-2 pb-8">
           <Button
             type="button"
             variant="outline"
             onClick={resetForm}
-            className="flex-1 h-14 text-lg gap-2"
+            className="flex-1 h-14 text-base gap-2 font-mono"
           >
             <RotateCcw className="w-5 h-5" />
             Reset
           </Button>
           <Button
             type="submit"
-            className="flex-1 h-14 text-lg gap-2"
+            className="flex-1 h-14 text-base gap-2 font-display bg-glow"
             disabled={saving || !isApproved}
           >
             {saving ? (

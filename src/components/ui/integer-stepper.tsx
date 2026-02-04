@@ -33,11 +33,11 @@ export function IntegerStepper({
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       {label && (
-        <label className="text-sm font-medium text-muted-foreground">
+        <label className="pit-counter-label text-center">
           {label}
         </label>
       )}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={decrement}
@@ -45,14 +45,14 @@ export function IntegerStepper({
           className={cn(
             "stepper-button bg-muted text-foreground",
             atMin && "opacity-30 cursor-not-allowed",
-            !atMin && "hover:bg-destructive hover:text-destructive-foreground"
+            !atMin && "hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
           )}
         >
-          <Minus className="w-6 h-6 mx-auto" />
+          <Minus className="w-5 h-5 mx-auto" />
         </button>
         
-        <div className="flex-1 text-center">
-          <span className="stat-value text-foreground">{value}</span>
+        <div className="flex-1 pit-counter min-w-[80px]">
+          <span className="pit-counter-value">{value}</span>
         </div>
         
         <button
@@ -62,17 +62,12 @@ export function IntegerStepper({
           className={cn(
             "stepper-button bg-muted text-foreground",
             atMax && "opacity-30 cursor-not-allowed",
-            !atMax && "hover:bg-primary hover:text-primary-foreground"
+            !atMax && "hover:bg-primary hover:text-primary-foreground hover:border-primary"
           )}
         >
-          <Plus className="w-6 h-6 mx-auto" />
+          <Plus className="w-5 h-5 mx-auto" />
         </button>
       </div>
-      {max < 999 && (
-        <span className="text-xs text-muted-foreground text-center">
-          Max: {max}
-        </span>
-      )}
     </div>
   );
 }

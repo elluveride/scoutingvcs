@@ -49,19 +49,29 @@ export function MatchInfoSection({
     (m) => m.matchNumber === parseInt(matchNumber)
   );
 
+  const getPositionButtonClass = (pos: MatchPosition) => {
+    const isRed = pos.position.startsWith('R');
+    const isSelected = selectedPosition === pos.position;
+    
+    if (isSelected) {
+      return isRed ? 'pit-button-red' : 'pit-button-blue';
+    }
+    return 'pit-button-muted';
+  };
+
   return (
     <div className="space-y-4">
       {/* Match Type Toggle */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <Label>Match Type</Label>
+          <span className="pit-counter-label">Match Type</span>
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={onRefresh}
             disabled={loading}
-            className="h-8 px-2"
+            className="h-8 w-8 p-0"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -75,11 +85,8 @@ export function MatchInfoSection({
             type="button"
             onClick={() => onMatchTypeChange('Q')}
             className={cn(
-              "h-12 rounded-xl font-semibold transition-all duration-150",
-              "active:scale-95 touch-manipulation",
-              matchType === 'Q'
-                ? "bg-primary text-primary-foreground shadow-lg"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+              "pit-button",
+              matchType === 'Q' ? "pit-button-active" : "pit-button-muted"
             )}
           >
             Qualification
@@ -88,11 +95,8 @@ export function MatchInfoSection({
             type="button"
             onClick={() => onMatchTypeChange('P')}
             className={cn(
-              "h-12 rounded-xl font-semibold transition-all duration-150",
-              "active:scale-95 touch-manipulation",
-              matchType === 'P'
-                ? "bg-primary text-primary-foreground shadow-lg"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+              "pit-button",
+              matchType === 'P' ? "pit-button-active" : "pit-button-muted"
             )}
           >
             Playoff
@@ -102,14 +106,14 @@ export function MatchInfoSection({
 
       {/* Match Number */}
       <div className="space-y-2">
-        <Label htmlFor="matchNumber">Match Number</Label>
+        <span className="pit-counter-label block text-center">Match Number</span>
         <Input
           id="matchNumber"
           type="number"
           value={matchNumber}
           onChange={(e) => onMatchNumberChange(e.target.value)}
-          placeholder="e.g., 1"
-          className="h-14 text-xl font-mono text-center"
+          placeholder="1"
+          className="h-16 text-3xl font-display text-center bg-muted/50 border-border/50"
           required
         />
       </div>
@@ -117,7 +121,10 @@ export function MatchInfoSection({
       {/* Alliance Position Selector */}
       {matchNumber && (
         <div className="space-y-2">
-          <Label>Alliance Position {loading && <Loader2 className="inline w-3 h-3 animate-spin ml-1" />}</Label>
+          <span className="pit-counter-label block text-center">
+            Alliance Position 
+            {loading && <Loader2 className="inline w-3 h-3 animate-spin ml-2" />}
+          </span>
           {currentMatch ? (
             <div className="grid grid-cols-2 gap-2">
               {currentMatch.positions.map((pos) => (
@@ -126,25 +133,22 @@ export function MatchInfoSection({
                   type="button"
                   onClick={() => onPositionSelect(pos.position, pos.teamNumber)}
                   className={cn(
-                    "h-16 rounded-xl font-semibold transition-all duration-150 flex flex-col items-center justify-center gap-1",
-                    "active:scale-95 touch-manipulation",
-                    selectedPosition === pos.position
-                      ? `${getPositionColor(pos.position)} text-white shadow-lg`
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    "pit-button h-20 flex flex-col items-center justify-center gap-1",
+                    getPositionButtonClass(pos)
                   )}
                 >
-                  <span className="text-lg font-display">{pos.teamNumber}</span>
-                  <span className="text-xs opacity-75">{getPositionLabel(pos.position)}</span>
+                  <span className="text-2xl font-display">{pos.teamNumber}</span>
+                  <span className="text-xs opacity-80 font-mono">{getPositionLabel(pos.position)}</span>
                 </button>
               ))}
             </div>
           ) : matches.length > 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Match {matchNumber} not found in schedule
+            <p className="text-sm text-muted-foreground text-center py-4 font-mono">
+              Match {matchNumber} not found
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              {loading ? 'Loading schedule...' : 'No schedule available'}
+            <p className="text-sm text-muted-foreground text-center py-4 font-mono">
+              {loading ? 'Loading...' : 'No schedule available'}
             </p>
           )}
         </div>
@@ -152,21 +156,21 @@ export function MatchInfoSection({
 
       {/* Team Number (manual override or display) */}
       <div className="space-y-2">
-        <Label htmlFor="teamNumber">
+        <span className="pit-counter-label block text-center">
           Team Number
           {selectedPosition && (
-            <span className="text-xs text-muted-foreground ml-2">
-              (auto-filled from {getPositionLabel(selectedPosition)})
+            <span className="text-primary ml-2">
+              ({getPositionLabel(selectedPosition)})
             </span>
           )}
-        </Label>
+        </span>
         <Input
           id="teamNumber"
           type="number"
           value={teamNumber}
           onChange={(e) => onTeamNumberChange(e.target.value)}
-          placeholder="e.g., 12345"
-          className="h-14 text-xl font-mono text-center"
+          placeholder="12345"
+          className="h-16 text-3xl font-display text-center bg-muted/50 border-border/50"
           required
         />
       </div>
