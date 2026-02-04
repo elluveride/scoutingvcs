@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   Zap,
+  Radio,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -22,6 +23,7 @@ const navItems = [
   { to: '/pit', icon: Wrench, label: 'Pit Scout' },
   { to: '/spreadsheet', icon: Table, label: 'Spreadsheet' },
   { to: '/dashboard', icon: BarChart3, label: 'Dashboard' },
+  { to: '/live-stats', icon: Radio, label: 'Live Stats' },
 ];
 
 export function AppLayout({ children }: AppLayoutProps) {
