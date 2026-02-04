@@ -7,10 +7,10 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { IntegerStepper } from '@/components/ui/integer-stepper';
 import { ToggleButton } from '@/components/ui/toggle-button';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useFTCMatches } from '@/hooks/useFTCMatches';
+import { MatchInfoSection } from '@/components/match-scout/MatchInfoSection';
 import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
@@ -36,10 +36,14 @@ export default function MatchScout() {
   const { currentEvent } = useEvent();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { matches, loading: matchesLoading, refetch: refetchMatches } = useFTCMatches();
   
   const isAdmin = profile?.role === 'admin';
   const editId = searchParams.get('edit');
 
+  // Match selection
+  const [matchType, setMatchType] = useState<'Q' | 'P'>('Q');
+  const [selectedPosition, setSelectedPosition] = useState('');
   const [teamNumber, setTeamNumber] = useState('');
   const [matchNumber, setMatchNumber] = useState('');
   const [editingEntry, setEditingEntry] = useState<{ id: string; scouterId: string } | null>(null);
@@ -63,6 +67,19 @@ export default function MatchScout() {
   const [fouls, setFouls] = useState(0);
   
   const [saving, setSaving] = useState(false);
+
+  // Handle match type change - refetch schedule
+  const handleMatchTypeChange = (type: 'Q' | 'P') => {
+    setMatchType(type);
+    setSelectedPosition('');
+    refetchMatches(type);
+  };
+
+  // Handle position selection - auto-fill team number
+  const handlePositionSelect = (position: string, team: number) => {
+    setSelectedPosition(position);
+    setTeamNumber(team.toString());
+  };
 
   // Load entry for editing (admin only)
   useEffect(() => {
@@ -112,6 +129,8 @@ export default function MatchScout() {
   }
 
   const resetForm = () => {
+    setMatchType('Q');
+    setSelectedPosition('');
     setTeamNumber('');
     setMatchNumber('');
     setAutoScoredClose(0);
@@ -237,38 +256,25 @@ export default function MatchScout() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Match Info */}
+        {/* Match Info with FTC API Integration */}
         <div className="data-card">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Gamepad2 className="w-5 h-5 text-secondary" />
             Match Info
           </h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="teamNumber">Team Number</Label>
-              <Input
-                id="teamNumber"
-                type="number"
-                value={teamNumber}
-                onChange={(e) => setTeamNumber(e.target.value)}
-                placeholder="e.g., 12345"
-                className="h-14 text-xl font-mono text-center"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="matchNumber">Match Number</Label>
-              <Input
-                id="matchNumber"
-                type="number"
-                value={matchNumber}
-                onChange={(e) => setMatchNumber(e.target.value)}
-                placeholder="e.g., 1"
-                className="h-14 text-xl font-mono text-center"
-                required
-              />
-            </div>
-          </div>
+          <MatchInfoSection
+            matchType={matchType}
+            matchNumber={matchNumber}
+            selectedPosition={selectedPosition}
+            teamNumber={teamNumber}
+            matches={matches}
+            loading={matchesLoading}
+            onMatchTypeChange={handleMatchTypeChange}
+            onMatchNumberChange={setMatchNumber}
+            onPositionSelect={handlePositionSelect}
+            onTeamNumberChange={setTeamNumber}
+            onRefresh={() => refetchMatches(matchType)}
+          />
         </div>
 
         {/* Autonomous */}
