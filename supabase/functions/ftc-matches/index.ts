@@ -52,12 +52,31 @@ serve(async (req) => {
     // Create Basic Auth header
     const authString = btoa(`${FTC_USERNAME}:${FTC_TOKEN}`);
     
-    // FTC season is the year the season STARTS (e.g., 2024-2025 season = 2024)
-    // If we're past September, use current year, otherwise use previous year
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const defaultSeason = now.getMonth() >= 8 ? currentYear : currentYear - 1;
-    const ftcSeason = season || defaultSeason;
+    // Get the current season from the FTC API if not specified
+    let ftcSeason = season;
+    if (!ftcSeason) {
+      const apiIndexUrl = `${FTC_API_BASE}`;
+      console.log(`Fetching FTC API index to get current season: ${apiIndexUrl}`);
+      
+      const indexResponse = await fetch(apiIndexUrl, {
+        headers: {
+          "Authorization": `Basic ${authString}`,
+          "Accept": "application/json",
+        },
+      });
+      
+      if (indexResponse.ok) {
+        const indexData = await indexResponse.json();
+        ftcSeason = indexData.currentSeason;
+        console.log(`Using current season from FTC API: ${ftcSeason}`);
+      } else {
+        // Fallback to calculated season if API index fails
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        ftcSeason = now.getMonth() >= 8 ? currentYear : currentYear - 1;
+        console.log(`Fallback to calculated season: ${ftcSeason}`);
+      }
+    }
     
     // Determine tournament level: qual or playoff
     const tournamentLevel = matchType === 'P' ? 'playoff' : 'qual';
