@@ -59,8 +59,8 @@ serve(async (req) => {
     const defaultSeason = now.getMonth() >= 8 ? currentYear : currentYear - 1;
     const ftcSeason = season || defaultSeason;
     
-    // Determine tournament level: qual (0) or playoff (1)
-    const tournamentLevel = matchType === 'P' ? 1 : 0;
+    // Determine tournament level: qual or playoff (FTC API expects string values)
+    const tournamentLevel = matchType === 'P' ? 'playoff' : 'qual';
     
     // Fetch schedule from FTC Events API
     const scheduleUrl = `${FTC_API_BASE}/${ftcSeason}/schedule/${eventCode}?tournamentLevel=${tournamentLevel}`;
