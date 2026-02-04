@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, Search, Wrench, Bot, Flag, User } from 'lucide-react';
+import { Loader2, Save, Search, Wrench, Bot, Flag, User, Camera, X, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DriveType, ConsistencyLevel, AutoLeaveStatus } from '@/types/scouting';
 
@@ -146,6 +146,11 @@ export default function PitScout() {
   const [fullParkCapable, setFullParkCapable] = useState(false);
   const [endgameConsistency, setEndgameConsistency] = useState<ConsistencyLevel>('low');
   
+  // Photo
+  const [robotPhotoUrl, setRobotPhotoUrl] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -170,6 +175,7 @@ export default function PitScout() {
     setPartialParkCapable(false);
     setFullParkCapable(false);
     setEndgameConsistency('low');
+    setRobotPhotoUrl(null);
   };
 
   const loadTeamData = async () => {
@@ -206,6 +212,7 @@ export default function PitScout() {
       setPartialParkCapable(data.partial_park_capable);
       setFullParkCapable(data.full_park_capable);
       setEndgameConsistency(data.endgame_consistency as ConsistencyLevel);
+      setRobotPhotoUrl((data as any).robot_photo_url || null);
 
       if (data.last_edited_by) {
         const { data: editor } = await supabase
@@ -221,6 +228,69 @@ export default function PitScout() {
     }
 
     setLoading(false);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !teamNumber) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please select an image file.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploadingPhoto(true);
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${currentEvent.code}/${teamNumber}.${fileExt}`;
+
+    // Delete old photo if exists
+    if (robotPhotoUrl) {
+      const oldPath = robotPhotoUrl.split('/robot-photos/')[1];
+      if (oldPath) {
+        await supabase.storage.from('robot-photos').remove([oldPath]);
+      }
+    }
+
+    const { error: uploadError } = await supabase.storage
+      .from('robot-photos')
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+      toast({
+        title: 'Upload Failed',
+        description: uploadError.message,
+        variant: 'destructive',
+      });
+      setUploadingPhoto(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('robot-photos')
+      .getPublicUrl(fileName);
+
+    setRobotPhotoUrl(urlData.publicUrl);
+    setUploadingPhoto(false);
+
+    toast({
+      title: 'Photo Uploaded',
+      description: 'Robot photo uploaded successfully. Save to persist.',
+    });
+  };
+
+  const removePhoto = async () => {
+    if (!robotPhotoUrl) return;
+
+    const path = robotPhotoUrl.split('/robot-photos/')[1];
+    if (path) {
+      await supabase.storage.from('robot-photos').remove([path]);
+    }
+    setRobotPhotoUrl(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -259,6 +329,7 @@ export default function PitScout() {
       partial_park_capable: partialParkCapable,
       full_park_capable: fullParkCapable,
       endgame_consistency: endgameConsistency,
+      robot_photo_url: robotPhotoUrl,
       last_edited_by: user.id,
       last_edited_at: new Date().toISOString(),
     };
@@ -423,6 +494,58 @@ export default function PitScout() {
               label="Endgame Consistency"
             />
           </div>
+        </div>
+
+        {/* Robot Photo */}
+        <div className="data-card">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Camera className="w-5 h-5 text-primary" />
+            Robot Photo
+          </h2>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoUpload}
+            className="hidden"
+          />
+          {robotPhotoUrl ? (
+            <div className="relative">
+              <img
+                src={robotPhotoUrl}
+                alt="Robot"
+                className="w-full max-w-md rounded-lg border border-border object-cover"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={removePhoto}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-32 w-full max-w-md flex flex-col gap-2 border-dashed"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto || !teamNumber}
+            >
+              {uploadingPhoto ? (
+                <Loader2 className="w-8 h-8 animate-spin" />
+              ) : (
+                <>
+                  <Image className="w-8 h-8 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    {teamNumber ? 'Click to upload robot photo' : 'Enter team number first'}
+                  </span>
+                </>
+              )}
+            </Button>
+          )}
         </div>
 
         {/* Actions */}
