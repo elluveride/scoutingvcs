@@ -1,1 +1,4 @@
 project_id = "aigdnfpfcixaeyxaefmt"
+
+[functions.ftc-matches]
+verify_jwt = false
