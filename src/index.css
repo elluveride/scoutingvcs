@@ -7,95 +7,93 @@
    Inspired by F1 pit wall displays and esports analytics
 */
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
-
-@import url("https://fonts.googleapis.com/css2?family=Inter&display=swap");
-
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap");
-
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap");
+/* F1 Pit Display inspired fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    /* Dark mode only - competition environment */
-    --background: 220 20% 6%;
-    --foreground: 210 20% 95%;
+    /* Dark mode only - F1 pit wall inspired */
+    --background: 225 25% 4%;
+    --foreground: 210 20% 96%;
 
-    --card: 220 18% 10%;
-    --card-foreground: 210 20% 95%;
+    --card: 225 20% 8%;
+    --card-foreground: 210 20% 96%;
 
-    --popover: 220 18% 10%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 225 20% 8%;
+    --popover-foreground: 210 20% 96%;
 
-    /* Primary: Electric Green - scoring/success */
-    --primary: 199 88.664% 48.4314%;
-    --primary-foreground: 220 20% 6%;
+    /* Primary: Electric Cyan - F1 timing display style */
+    --primary: 185 100% 50%;
+    --primary-foreground: 225 25% 4%;
 
-    /* Secondary: Deep Blue - navigation/info */
-    --secondary: 0 84.2365% 60.1961%;
+    /* Secondary: Hot alliance red for action elements */
+    --secondary: 0 85% 58%;
     --secondary-foreground: 210 20% 98%;
 
-    /* Muted: Subtle grays for secondary elements */
-    --muted: 220 15% 15%;
-    --muted-foreground: 215 15% 55%;
+    /* Muted: Carbon fiber dark grays */
+    --muted: 225 15% 12%;
+    --muted-foreground: 220 10% 50%;
 
-    /* Accent: Cyan for highlights */
-    --accent: 221 83.1933% 53.3333%;
-    --accent-foreground: 220 20% 6%;
+    /* Accent: Alliance blue for highlights */
+    --accent: 215 90% 55%;
+    --accent-foreground: 225 25% 4%;
 
-    /* Destructive: Warning red */
-    --destructive: 0 70% 55%;
+    /* Destructive: Intense red */
+    --destructive: 0 80% 50%;
     --destructive-foreground: 210 20% 98%;
 
-    /* Warning: Amber */
-    --warning: 38 92% 50%;
-    --warning-foreground: 220 20% 6%;
+    /* Warning: Safety amber */
+    --warning: 40 95% 55%;
+    --warning-foreground: 225 25% 4%;
 
-    /* Success: Bright green */
-    --success: 142 76% 45%;
-    --success-foreground: 220 20% 6%;
+    /* Success: Sector green (like F1 timing) */
+    --success: 150 80% 45%;
+    --success-foreground: 225 25% 4%;
 
-    /* Alliance colors */
-    --alliance-red: 0 75% 55%;
-    --alliance-blue: 217 85% 55%;
+    /* FTC Alliance colors - vibrant and distinct */
+    --alliance-red: 0 85% 55%;
+    --alliance-blue: 215 90% 55%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 12%;
-    --ring: 142 70% 50%;
+    --border: 225 15% 16%;
+    --input: 225 20% 10%;
+    --ring: 185 100% 50%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* Sidebar */
-    --sidebar-background: 220 18% 8%;
-    --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 142 70% 50%;
-    --sidebar-primary-foreground: 220 20% 6%;
-    --sidebar-accent: 220 15% 15%;
+    /* Sidebar - darker carbon style */
+    --sidebar-background: 225 25% 5%;
+    --sidebar-foreground: 210 15% 85%;
+    --sidebar-primary: 185 100% 50%;
+    --sidebar-primary-foreground: 225 25% 4%;
+    --sidebar-accent: 225 15% 12%;
     --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 220 15% 15%;
-    --sidebar-ring: 142 70% 50%;
+    --sidebar-border: 225 15% 12%;
+    --sidebar-ring: 185 100% 50%;
 
-    /* Custom gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(142 70% 50%), hsl(160 70% 40%));
-    --gradient-secondary: linear-gradient(135deg, hsl(217 70% 50%), hsl(230 70% 45%));
-    --gradient-dark: linear-gradient(180deg, hsl(220 18% 10%), hsl(220 20% 6%));
-    --gradient-glow: radial-gradient(circle at center, hsl(142 70% 50% / 0.15), transparent 70%);
+    /* Custom gradients - F1 inspired */
+    --gradient-primary: linear-gradient(135deg, hsl(185 100% 50%), hsl(195 90% 40%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 85% 55%), hsl(15 90% 45%));
+    --gradient-alliance-blue: linear-gradient(135deg, hsl(215 90% 55%), hsl(230 85% 45%));
+    --gradient-dark: linear-gradient(180deg, hsl(225 20% 8%), hsl(225 25% 4%));
+    --gradient-glow: radial-gradient(circle at center, hsl(185 100% 50% / 0.15), transparent 70%);
 
-    /* Shadows */
-    --shadow-glow: 0 0 20px hsl(142 70% 50% / 0.3);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
-    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.5);
-    --font-sans: Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
-    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-    --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
+    /* Shadows - deeper for pit wall contrast */
+    --shadow-glow: 0 0 25px hsl(185 100% 50% / 0.4);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.5);
+    --shadow-elevated: 0 8px 40px hsl(0 0% 0% / 0.6);
+    
+    /* F1 Pit Display Fonts */
+    --font-sans: Rajdhani, ui-sans-serif, system-ui, sans-serif;
+    --font-display: Orbitron, ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 
   .dark {
     /* Same as root - dark mode only app */
-    --font-sans: Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
-    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-    --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
-    --radius: 0.75rem
+    --font-sans: Rajdhani, ui-sans-serif, system-ui, sans-serif;
+    --font-display: Orbitron, ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --radius: 0.5rem;
   }
 }
 
