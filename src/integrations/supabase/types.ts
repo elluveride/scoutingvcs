@@ -109,6 +109,7 @@ export type Database = {
           last_edited_by: string | null
           partial_park_capable: boolean
           reliable_auto_leave: Database["public"]["Enums"]["auto_leave_status"]
+          robot_photo_url: string | null
           scores_artifacts: boolean
           scores_motifs: boolean
           team_name: string
@@ -127,6 +128,7 @@ export type Database = {
           last_edited_by?: string | null
           partial_park_capable?: boolean
           reliable_auto_leave?: Database["public"]["Enums"]["auto_leave_status"]
+          robot_photo_url?: string | null
           scores_artifacts?: boolean
           scores_motifs?: boolean
           team_name: string
@@ -145,6 +147,7 @@ export type Database = {
           last_edited_by?: string | null
           partial_park_capable?: boolean
           reliable_auto_leave?: Database["public"]["Enums"]["auto_leave_status"]
+          robot_photo_url?: string | null
           scores_artifacts?: boolean
           scores_motifs?: boolean
           team_name?: string
