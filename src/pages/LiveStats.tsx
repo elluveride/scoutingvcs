@@ -130,21 +130,21 @@ export default function LiveStats() {
                 {/* Stats */}
                 <div className="hidden sm:flex items-center gap-6 text-right">
                   <div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Qual Avg</div>
-                    <div className="font-display text-lg font-bold text-primary">
-                      {team.qualAverage.toFixed(1)}
-                    </div>
-                  </div>
-                  <div>
                     <div className="text-xs text-muted-foreground uppercase tracking-wider">RP</div>
-                    <div className="font-display text-lg font-bold">
-                      {team.rankingPoints}
+                    <div className="font-display text-lg font-bold text-primary">
+                      {team.rankingPoints.toFixed(1)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">TB1</div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider">TBP</div>
+                    <div className="font-display text-lg font-bold">
+                      {team.tieBreaker1.toFixed(1)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider">TB2</div>
                     <div className="font-mono text-sm">
-                      {team.tieBreaker1}
+                      {team.tieBreaker2}
                     </div>
                   </div>
                 </div>
@@ -153,10 +153,10 @@ export default function LiveStats() {
                 <div className="sm:hidden text-right">
                   <div className="flex items-center gap-1 text-primary">
                     <TrendingUp className="w-4 h-4" />
-                    <span className="font-display font-bold">{team.qualAverage.toFixed(1)}</span>
+                    <span className="font-display font-bold">{team.rankingPoints.toFixed(1)} RP</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {team.rankingPoints} RP
+                    {team.tieBreaker1.toFixed(1)} TBP
                   </div>
                 </div>
               </div>

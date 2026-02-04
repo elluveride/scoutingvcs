@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useFTCRankings } from '@/hooks/useFTCRankings';
 import { Loader2, Save, Search, Wrench, Bot, Flag, User, Camera, X, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DriveType, ConsistencyLevel, AutoLeaveStatus } from '@/types/scouting';
@@ -125,6 +126,7 @@ export default function PitScout() {
   const { user, isApproved } = useAuth();
   const { currentEvent } = useEvent();
   const { toast } = useToast();
+  const { rankings } = useFTCRankings();
 
   const [teamNumber, setTeamNumber] = useState('');
   const [teamName, setTeamName] = useState('');
@@ -186,13 +188,20 @@ export default function PitScout() {
     // Reset form first to clear any previous data
     resetForm();
 
+    // Try to get team name from FTC API rankings first
+    const teamNum = parseInt(teamNumber);
+    const apiTeam = rankings.find(r => r.teamNumber === teamNum);
+    if (apiTeam) {
+      setTeamName(apiTeam.teamName);
+    }
+
     // NOTE: We cannot do `profiles:last_edited_by(name)` here because there's no FK
     // relationship in the DB schema cache; that causes a PGRST200 error.
     const { data, error } = await supabase
       .from('pit_entries')
       .select('*')
       .eq('event_code', currentEvent.code)
-      .eq('team_number', parseInt(teamNumber))
+      .eq('team_number', teamNum)
       .maybeSingle();
 
     if (error) {
