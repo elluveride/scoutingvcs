@@ -7,8 +7,8 @@
    Inspired by F1 pit wall displays and esports analytics
 */
 
-/* F1 Pit Display inspired fonts */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+/* Pit Screen Display fonts - Audiowide for display, JetBrains Mono for data */
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -82,17 +82,17 @@
     --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.5);
     --shadow-elevated: 0 8px 40px hsl(0 0% 0% / 0.6);
     
-    /* F1 Pit Display Fonts */
-    --font-sans: Rajdhani, ui-sans-serif, system-ui, sans-serif;
-    --font-display: Orbitron, ui-sans-serif, system-ui, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    /* Pit Screen Display Fonts */
+    --font-sans: "JetBrains Mono", ui-monospace, monospace;
+    --font-display: Audiowide, ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
   }
 
   .dark {
     /* Same as root - dark mode only app */
-    --font-sans: Rajdhani, ui-sans-serif, system-ui, sans-serif;
-    --font-display: Orbitron, ui-sans-serif, system-ui, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-sans: "JetBrains Mono", ui-monospace, monospace;
+    --font-display: Audiowide, ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
     --radius: 0.5rem;
   }
 }
@@ -135,6 +135,14 @@
     text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
   }
 
+  .text-glow-red {
+    text-shadow: 0 0 20px hsl(var(--alliance-red) / 0.6);
+  }
+
+  .text-glow-blue {
+    text-shadow: 0 0 20px hsl(var(--alliance-blue) / 0.6);
+  }
+
   .bg-glow {
     box-shadow: var(--shadow-glow);
   }
@@ -143,9 +151,85 @@
     @apply bg-card/80 backdrop-blur-lg border border-border/50;
   }
 
-  .stepper-button {
-    @apply w-14 h-14 rounded-xl text-xl font-bold transition-all duration-150;
+  /* Pit Screen Section Panel */
+  .pit-section {
+    @apply relative rounded-lg border border-border bg-card overflow-hidden;
+    box-shadow: var(--shadow-card);
+  }
+
+  .pit-section::before {
+    content: '';
+    @apply absolute left-0 top-0 bottom-0 w-1;
+    background: hsl(var(--primary));
+    box-shadow: 0 0 12px hsl(var(--primary) / 0.6);
+  }
+
+  .pit-section-red::before {
+    background: hsl(var(--alliance-red));
+    box-shadow: 0 0 12px hsl(var(--alliance-red) / 0.6);
+  }
+
+  .pit-section-blue::before {
+    background: hsl(var(--alliance-blue));
+    box-shadow: 0 0 12px hsl(var(--alliance-blue) / 0.6);
+  }
+
+  .pit-section-warning::before {
+    background: hsl(var(--warning));
+    box-shadow: 0 0 12px hsl(var(--warning) / 0.6);
+  }
+
+  .pit-section-header {
+    @apply flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30;
+  }
+
+  .pit-section-content {
+    @apply p-4;
+  }
+
+  /* Pit Screen Counter Display */
+  .pit-counter {
+    @apply flex flex-col items-center justify-center gap-1 p-3 rounded-lg bg-muted/50 border border-border/30;
+  }
+
+  .pit-counter-value {
+    @apply text-4xl font-display tracking-tight text-foreground;
+  }
+
+  .pit-counter-label {
+    @apply text-xs uppercase tracking-widest text-muted-foreground font-mono;
+  }
+
+  /* Pit Screen Buttons */
+  .pit-button {
+    @apply h-14 rounded-lg font-mono text-sm font-medium transition-all duration-150;
     @apply active:scale-95 touch-manipulation;
+    @apply border border-transparent;
+  }
+
+  .pit-button-active {
+    @apply bg-primary text-primary-foreground border-primary;
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.4);
+  }
+
+  .pit-button-red {
+    @apply bg-alliance-red text-white border-alliance-red;
+    box-shadow: 0 0 15px hsl(var(--alliance-red) / 0.4);
+  }
+
+  .pit-button-blue {
+    @apply bg-alliance-blue text-white border-alliance-blue;
+    box-shadow: 0 0 15px hsl(var(--alliance-blue) / 0.4);
+  }
+
+  .pit-button-muted {
+    @apply bg-muted text-muted-foreground hover:bg-muted/80;
+  }
+
+  .stepper-button {
+    @apply w-14 h-14 rounded-lg text-xl font-bold transition-all duration-150;
+    @apply active:scale-95 touch-manipulation;
+    @apply border border-border/50;
   }
 
   .data-card {
@@ -163,24 +247,37 @@
   }
 
   .stat-value {
-    @apply text-3xl font-bold font-mono tracking-tight;
+    @apply text-3xl font-display tracking-tight;
   }
 
   .stat-label {
-    @apply text-xs uppercase tracking-wider text-muted-foreground;
+    @apply text-xs uppercase tracking-widest text-muted-foreground font-mono;
   }
 
   .alliance-red {
-    @apply bg-[hsl(var(--alliance-red))] text-white;
+    @apply bg-alliance-red text-white;
   }
 
   .alliance-blue {
-    @apply bg-[hsl(var(--alliance-blue))] text-white;
+    @apply bg-alliance-blue text-white;
   }
 
   .field-grid {
     @apply grid gap-0.5;
     grid-template-columns: repeat(6, 1fr);
     grid-template-rows: repeat(6, 1fr);
+  }
+
+  /* Scan line effect for extra pit screen vibe */
+  .scanlines::after {
+    content: '';
+    @apply absolute inset-0 pointer-events-none opacity-[0.03];
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      hsl(var(--foreground)) 2px,
+      hsl(var(--foreground)) 4px
+    );
   }
 }
