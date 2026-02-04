@@ -374,7 +374,7 @@ export default function MatchScout() {
           </Button>
           <Button
             type="submit"
-            className="flex-1 h-14 text-base gap-2 font-display bg-glow"
+            className="flex-1 h-14 text-base gap-2 font-display bg-primary text-primary-foreground hover:bg-primary/90 bg-glow"
             disabled={saving || !isApproved}
           >
             {saving ? (
