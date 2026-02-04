@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2 } from 'lucide-react';
+import { useFTCRankings } from '@/hooks/useFTCRankings';
+import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TeamStats, SortWeight, SortConfig } from '@/types/scouting';
 import {
@@ -66,6 +67,15 @@ const defaultCategories: WeightCategory[] = [
       { id: 'variance', label: 'Consistency', weight: -1, enabled: true },
     ],
   },
+  {
+    id: 'api',
+    label: 'Official Stats (API)',
+    weights: [
+      { id: 'apiRank', label: 'Official Rank (inverted)', weight: 0, enabled: false },
+      { id: 'apiQualAvg', label: 'Qual Average', weight: 0, enabled: false },
+      { id: 'apiWinRate', label: 'Win Rate %', weight: 0, enabled: false },
+    ],
+  },
 ];
 
 // Flatten categories to get all weights
@@ -79,6 +89,9 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   
+  // Fetch official rankings from FTC API
+  const { rankings: apiRankings, getRankForTeam, getRecordForTeam } = useFTCRankings();
+  
   // Two independent sort configs
   const [config1, setConfig1] = useState<SortConfig>({
     name: 'List 1',
@@ -88,6 +101,13 @@ export default function Dashboard() {
     name: 'List 2', 
     weights: JSON.parse(JSON.stringify(getDefaultWeights())),
   });
+
+  // All hooks must be called before any early returns
+  useEffect(() => {
+    if (currentEvent?.code) {
+      calculateStats();
+    }
+  }, [currentEvent?.code]);
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -176,6 +196,9 @@ export default function Dashboard() {
 
   const calculateScore = (team: TeamStats, weights: SortWeight[]): number => {
     let score = 0;
+    const apiData = getApiDataForTeam(team.teamNumber);
+    const totalTeams = apiRankings.length || 1;
+    
     weights.forEach(w => {
       if (!w.enabled) return;
       switch (w.id) {
@@ -191,6 +214,16 @@ export default function Dashboard() {
         case 'fouls': score += team.avgFoulsMinor * w.weight; break;
         case 'penalties': score += (team.penaltyRate / 100) * w.weight * 10; break;
         case 'variance': score += team.varianceScore * w.weight; break;
+        // API-based metrics
+        case 'apiRank': 
+          if (apiData) score += ((totalTeams - apiData.rank + 1) / totalTeams) * w.weight * 10; 
+          break;
+        case 'apiQualAvg': 
+          if (apiData) score += (apiData.qualAverage / 100) * w.weight * 10; 
+          break;
+        case 'apiWinRate': 
+          if (apiData) score += (apiData.winRate / 100) * w.weight * 10; 
+          break;
       }
     });
     return Math.round(score * 10) / 10;
@@ -206,9 +239,18 @@ export default function Dashboard() {
       .sort((a, b) => b.selectionScore - a.selectionScore);
   };
 
-  useEffect(() => {
-    calculateStats();
-  }, [currentEvent.code]);
+  // Helper to get API data for a team
+  const getApiDataForTeam = (teamNumber: number) => {
+    const ranking = apiRankings.find(r => r.teamNumber === teamNumber);
+    if (!ranking) return null;
+    return {
+      rank: ranking.rank,
+      qualAverage: ranking.qualAverage,
+      winRate: ranking.matchesPlayed > 0 
+        ? (ranking.wins / ranking.matchesPlayed) * 100 
+        : 0,
+    };
+  };
 
   const updateWeight = (configSetter: React.Dispatch<React.SetStateAction<SortConfig>>, id: string, value: number) => {
     configSetter(prev => ({
@@ -266,7 +308,7 @@ export default function Dashboard() {
                     </div>
                     <span className={cn(
                       "text-sm font-mono w-8 text-right",
-                      w.weight > 0 ? "text-green-500" : w.weight < 0 ? "text-red-500" : "text-muted-foreground"
+                      w.weight > 0 ? "text-accent" : w.weight < 0 ? "text-secondary" : "text-muted-foreground"
                     )}>{w.weight > 0 ? `+${w.weight}` : w.weight}</span>
                   </div>
                   {w.enabled && (
@@ -288,55 +330,68 @@ export default function Dashboard() {
     );
   };
 
-  const TeamCard = ({ team }: { team: TeamStats }) => (
-    <div className="data-card">
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <h3 className="text-xl font-bold font-mono">{team.teamNumber}</h3>
-          <p className="text-xs text-muted-foreground">{team.matchesPlayed} matches</p>
+  const TeamCard = ({ team }: { team: TeamStats }) => {
+    const officialRank = getRankForTeam(team.teamNumber);
+    
+    return (
+      <div className="data-card">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div>
+              <h3 className="text-xl font-bold font-mono">{team.teamNumber}</h3>
+              <p className="text-xs text-muted-foreground">{team.matchesPlayed} matches</p>
+            </div>
+            {/* Official Rank Badge */}
+            {officialRank !== null && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-accent/20 border border-accent/30">
+                <Trophy className="w-3 h-3 text-accent" />
+                <span className="text-xs font-mono font-semibold text-accent">#{officialRank}</span>
+              </div>
+            )}
+          </div>
+          <div className="text-right">
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-4 h-4 text-primary" />
+              <span className="text-lg font-bold text-primary">{team.selectionScore}</span>
+            </div>
+          </div>
         </div>
-        <div className="text-right">
-          <div className="flex items-center gap-1">
-            <TrendingUp className="w-4 h-4 text-primary" />
-            <span className="text-lg font-bold text-primary">{team.selectionScore}</span>
+
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <div className="bg-muted/50 rounded p-2">
+            <div className="flex items-center gap-1 mb-1">
+              <Bot className="w-3 h-3 text-primary" />
+              <span className="text-muted-foreground">Auto</span>
+            </div>
+            <div className="font-mono font-semibold">
+              {team.autoTotalAvg} <span className="text-muted-foreground">({team.avgAutoClose}C/{team.avgAutoFar}F)</span>
+            </div>
+            <div className="text-muted-foreground">Line: {team.onLaunchLinePercent}%</div>
+          </div>
+
+          <div className="bg-muted/50 rounded p-2">
+            <div className="flex items-center gap-1 mb-1">
+              <Gamepad2 className="w-3 h-3 text-secondary" />
+              <span className="text-muted-foreground">TeleOp</span>
+            </div>
+            <div className="font-mono font-semibold">
+              {team.teleopTotalAvg} <span className="text-muted-foreground">({team.avgTeleopClose}C/{team.avgTeleopFar}F)</span>
+            </div>
+            <div className="text-muted-foreground">Def: {team.avgDefense}</div>
+          </div>
+
+          <div className="bg-muted/50 rounded p-2">
+            <div className="flex items-center gap-1 mb-1">
+              <Flag className="w-3 h-3 text-accent" />
+              <span className="text-muted-foreground">End</span>
+            </div>
+            <div className="font-mono font-semibold">Lift: {team.liftPercent}%</div>
+            <div className="text-muted-foreground">Full: {team.fullReturnPercent}%</div>
           </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-3 gap-2 text-xs">
-        <div className="bg-muted/50 rounded p-2">
-          <div className="flex items-center gap-1 mb-1">
-            <Bot className="w-3 h-3 text-primary" />
-            <span className="text-muted-foreground">Auto</span>
-          </div>
-          <div className="font-mono font-semibold">
-            {team.autoTotalAvg} <span className="text-muted-foreground">({team.avgAutoClose}C/{team.avgAutoFar}F)</span>
-          </div>
-          <div className="text-muted-foreground">Line: {team.onLaunchLinePercent}%</div>
-        </div>
-
-        <div className="bg-muted/50 rounded p-2">
-          <div className="flex items-center gap-1 mb-1">
-            <Gamepad2 className="w-3 h-3 text-secondary" />
-            <span className="text-muted-foreground">TeleOp</span>
-          </div>
-          <div className="font-mono font-semibold">
-            {team.teleopTotalAvg} <span className="text-muted-foreground">({team.avgTeleopClose}C/{team.avgTeleopFar}F)</span>
-          </div>
-          <div className="text-muted-foreground">Def: {team.avgDefense}</div>
-        </div>
-
-        <div className="bg-muted/50 rounded p-2">
-          <div className="flex items-center gap-1 mb-1">
-            <Flag className="w-3 h-3 text-accent" />
-            <span className="text-muted-foreground">End</span>
-          </div>
-          <div className="font-mono font-semibold">Lift: {team.liftPercent}%</div>
-          <div className="text-muted-foreground">Full: {team.fullReturnPercent}%</div>
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const list1Teams = getSortedTeams(config1.weights);
   const list2Teams = getSortedTeams(config2.weights);

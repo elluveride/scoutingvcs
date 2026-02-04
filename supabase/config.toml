@@ -2,3 +2,6 @@ project_id = "aigdnfpfcixaeyxaefmt"
 
 [functions.ftc-matches]
 verify_jwt = false
+
+[functions.ftc-rankings]
+verify_jwt = false

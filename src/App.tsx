@@ -13,6 +13,7 @@ import MatchScout from "./pages/MatchScout";
 import PitScout from "./pages/PitScout";
 import Spreadsheet from "./pages/Spreadsheet";
 import Dashboard from "./pages/Dashboard";
+import LiveStats from "./pages/LiveStats";
 
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -53,6 +54,11 @@ const App = () => (
               <Route path="/dashboard" element={
                 <ApprovalGate>
                   <Dashboard />
+                </ApprovalGate>
+              } />
+              <Route path="/live-stats" element={
+                <ApprovalGate>
+                  <LiveStats />
                 </ApprovalGate>
               } />
               <Route path="/admin" element={
