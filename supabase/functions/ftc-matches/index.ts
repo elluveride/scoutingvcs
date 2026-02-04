@@ -59,11 +59,11 @@ serve(async (req) => {
     const defaultSeason = now.getMonth() >= 8 ? currentYear : currentYear - 1;
     const ftcSeason = season || defaultSeason;
     
-    // Determine tournament level: qual or playoff (FTC API expects string values)
+    // Determine tournament level: qual or playoff
     const tournamentLevel = matchType === 'P' ? 'playoff' : 'qual';
     
-    // Fetch schedule from FTC Events API
-    const scheduleUrl = `${FTC_API_BASE}/${ftcSeason}/schedule/${eventCode}?tournamentLevel=${tournamentLevel}`;
+    // Fetch hybrid schedule from FTC Events API (tournamentLevel is a path parameter)
+    const scheduleUrl = `${FTC_API_BASE}/${ftcSeason}/schedule/${eventCode}/${tournamentLevel}/hybrid`;
     console.log(`Fetching FTC schedule: ${scheduleUrl}`);
     
     const response = await fetch(scheduleUrl, {
