@@ -131,8 +131,11 @@ function RippleElement({ ripple }: RippleElementProps) {
         top: ripple.y,
         transform: "translate(-50%, -50%)",
         clipPath,
-        background: "currentColor",
-        opacity: 0.12,
+        background: `
+          radial-gradient(circle at 2px 2px, currentColor 1px, transparent 1px)
+        `,
+        backgroundSize: "8px 8px",
+        opacity: 0.18,
       }}
     />
   );
