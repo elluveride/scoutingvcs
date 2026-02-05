@@ -2,98 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
-/* FTC DECODE Scouting App Design System
-   Dark mode competition-grade interface
-   Inspired by F1 pit wall displays and esports analytics
+/* Material Design 3 / Pixel OS Dark Theme
+   Following Google's Material You design system
 */
 
-/* Pit Screen Display fonts - Audiowide for display, JetBrains Mono for data */
-@import url('https://fonts.googleapis.com/css2?family=Audiowide&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+/* Google Sans for display, Roboto for body text */
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap');
 
 @layer base {
   :root {
-    /* Dark mode only - F1 pit wall inspired */
-    --background: 225 25% 4%;
-    --foreground: 210 20% 96%;
+    /* Material 3 Dark Theme - Pixel OS inspired */
+    --background: 210 15% 7%;
+    --foreground: 210 20% 98%;
 
-    --card: 225 20% 8%;
-    --card-foreground: 210 20% 96%;
+    --card: 210 12% 10%;
+    --card-foreground: 210 20% 98%;
 
-    --popover: 225 20% 8%;
-    --popover-foreground: 210 20% 96%;
+    --popover: 210 12% 12%;
+    --popover-foreground: 210 20% 98%;
 
-    /* Primary: Electric Cyan - F1 timing display style */
-    --primary: 185 100% 50%;
-    --primary-foreground: 225 25% 4%;
+    /* Primary: Material teal/cyan */
+    --primary: 174 100% 40%;
+    --primary-foreground: 210 15% 7%;
 
-    /* Secondary: Hot alliance red for action elements */
-    --secondary: 0 85% 58%;
+    /* Secondary: Material pink accent */
+    --secondary: 340 80% 55%;
     --secondary-foreground: 210 20% 98%;
 
-    /* Muted: Carbon fiber dark grays */
-    --muted: 225 15% 12%;
-    --muted-foreground: 220 10% 50%;
+    /* Muted: Material surface tones */
+    --muted: 210 10% 14%;
+    --muted-foreground: 210 10% 60%;
 
-    /* Accent: Alliance blue for highlights */
-    --accent: 215 90% 55%;
-    --accent-foreground: 225 25% 4%;
+    /* Accent: Material tertiary */
+    --accent: 260 70% 65%;
+    --accent-foreground: 210 15% 7%;
 
-    /* Destructive: Intense red */
-    --destructive: 0 80% 50%;
+    /* Destructive: Material error */
+    --destructive: 0 75% 55%;
     --destructive-foreground: 210 20% 98%;
 
-    /* Warning: Safety amber */
-    --warning: 40 95% 55%;
-    --warning-foreground: 225 25% 4%;
+    /* Warning: Material warning */
+    --warning: 35 100% 50%;
+    --warning-foreground: 210 15% 7%;
 
-    /* Success: Sector green (like F1 timing) */
-    --success: 150 80% 45%;
-    --success-foreground: 225 25% 4%;
+    /* Success: Material success */
+    --success: 145 65% 42%;
+    --success-foreground: 210 15% 7%;
 
-    /* FTC Alliance colors - vibrant and distinct */
-    --alliance-red: 0 85% 55%;
-    --alliance-blue: 215 90% 55%;
+    /* FTC Alliance colors */
+    --alliance-red: 0 80% 55%;
+    --alliance-blue: 215 85% 55%;
 
-    --border: 225 15% 16%;
-    --input: 225 20% 10%;
-    --ring: 185 100% 50%;
+    --border: 210 10% 18%;
+    --input: 210 12% 12%;
+    --ring: 174 100% 40%;
 
-    --radius: 0.5rem;
+    /* Material 3 uses larger radius */
+    --radius: 1rem;
 
-    /* Sidebar - darker carbon style */
-    --sidebar-background: 225 25% 5%;
-    --sidebar-foreground: 210 15% 85%;
-    --sidebar-primary: 185 100% 50%;
-    --sidebar-primary-foreground: 225 25% 4%;
-    --sidebar-accent: 225 15% 12%;
+    /* Sidebar - Material surface container */
+    --sidebar-background: 210 12% 8%;
+    --sidebar-foreground: 210 15% 90%;
+    --sidebar-primary: 174 100% 40%;
+    --sidebar-primary-foreground: 210 15% 7%;
+    --sidebar-accent: 210 10% 14%;
     --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 225 15% 12%;
-    --sidebar-ring: 185 100% 50%;
+    --sidebar-border: 210 10% 14%;
+    --sidebar-ring: 174 100% 40%;
 
-    /* Custom gradients - F1 inspired */
-    --gradient-primary: linear-gradient(135deg, hsl(185 100% 50%), hsl(195 90% 40%));
-    --gradient-secondary: linear-gradient(135deg, hsl(0 85% 55%), hsl(15 90% 45%));
-    --gradient-alliance-blue: linear-gradient(135deg, hsl(215 90% 55%), hsl(230 85% 45%));
-    --gradient-dark: linear-gradient(180deg, hsl(225 20% 8%), hsl(225 25% 4%));
-    --gradient-glow: radial-gradient(circle at center, hsl(185 100% 50% / 0.15), transparent 70%);
+    /* Material 3 elevation through tonal surfaces */
+    --surface-dim: 210 12% 6%;
+    --surface-bright: 210 10% 18%;
+    --surface-container-lowest: 210 12% 4%;
+    --surface-container-low: 210 12% 8%;
+    --surface-container: 210 12% 10%;
+    --surface-container-high: 210 10% 14%;
+    --surface-container-highest: 210 10% 18%;
 
-    /* Shadows - deeper for pit wall contrast */
-    --shadow-glow: 0 0 25px hsl(185 100% 50% / 0.4);
-    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.5);
-    --shadow-elevated: 0 8px 40px hsl(0 0% 0% / 0.6);
-    
-    /* Pit Screen Display Fonts */
-    --font-sans: "JetBrains Mono", ui-monospace, monospace;
-    --font-display: Audiowide, ui-sans-serif, system-ui, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    /* Material Design fonts */
+    --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Google Sans", "Roboto", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "Roboto Mono", ui-monospace, monospace;
+
+    /* Material 3 motion curves */
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+    --ease-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+    --ease-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
   }
 
   .dark {
-    /* Same as root - dark mode only app */
-    --font-sans: "JetBrains Mono", ui-monospace, monospace;
-    --font-display: Audiowide, ui-sans-serif, system-ui, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, monospace;
-    --radius: 0.5rem;
+    --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Google Sans", "Roboto", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "Roboto Mono", ui-monospace, monospace;
+    --radius: 1rem;
   }
 }
 
@@ -104,180 +106,289 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: "kern" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Touch target optimization */
+  /* Touch target optimization - Material recommends 48px */
   button, 
   [role="button"],
   input,
   select,
   textarea {
-    @apply min-h-[44px] touch-manipulation;
+    @apply min-h-[48px] touch-manipulation;
   }
 
-  /* Scrollbar styling */
+  /* Material-style scrollbar */
   ::-webkit-scrollbar {
     @apply w-2 h-2;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-muted rounded-full;
+    @apply bg-transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+    @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40;
   }
 }
 
 @layer utilities {
-  .text-glow {
-    text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+  /* Material 3 State Layers */
+  .state-layer {
+    @apply relative overflow-hidden;
   }
 
-  .text-glow-red {
-    text-shadow: 0 0 20px hsl(var(--alliance-red) / 0.6);
+  .state-layer::after {
+    content: '';
+    @apply absolute inset-0 pointer-events-none transition-opacity duration-200;
+    background: currentColor;
+    opacity: 0;
   }
 
-  .text-glow-blue {
-    text-shadow: 0 0 20px hsl(var(--alliance-blue) / 0.6);
+  .state-layer:hover::after {
+    opacity: 0.08;
   }
 
-  .bg-glow {
-    box-shadow: var(--shadow-glow);
+  .state-layer:focus-visible::after {
+    opacity: 0.12;
   }
 
-  .glass {
-    @apply bg-card/80 backdrop-blur-lg border border-border/50;
+  .state-layer:active::after {
+    opacity: 0.12;
   }
 
-  /* Pit Screen Section Panel */
+  /* Material ripple effect placeholder */
+  .ripple {
+    @apply relative overflow-hidden;
+  }
+
+  /* Surface elevations via tonal colors */
+  .surface-dim {
+    background: hsl(var(--surface-dim));
+  }
+
+  .surface-container {
+    background: hsl(var(--surface-container));
+  }
+
+  .surface-container-high {
+    background: hsl(var(--surface-container-high));
+  }
+
+  .surface-container-highest {
+    background: hsl(var(--surface-container-highest));
+  }
+
+  /* Material 3 Cards */
+  .m3-card {
+    @apply rounded-2xl border border-border bg-card p-4;
+    transition: all 300ms var(--ease-standard);
+  }
+
+  .m3-card:hover {
+    @apply bg-muted/50;
+  }
+
+  /* Pixel-style section panels */
   .pit-section {
-    @apply relative rounded-lg border border-border bg-card overflow-hidden;
-    box-shadow: var(--shadow-card);
+    @apply relative rounded-2xl border border-border bg-card overflow-hidden;
+    transition: all 300ms var(--ease-standard);
   }
 
   .pit-section::before {
     content: '';
-    @apply absolute left-0 top-0 bottom-0 w-1;
+    @apply absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl;
     background: hsl(var(--primary));
-    box-shadow: 0 0 12px hsl(var(--primary) / 0.6);
   }
 
   .pit-section-red::before {
     background: hsl(var(--alliance-red));
-    box-shadow: 0 0 12px hsl(var(--alliance-red) / 0.6);
   }
 
   .pit-section-blue::before {
     background: hsl(var(--alliance-blue));
-    box-shadow: 0 0 12px hsl(var(--alliance-blue) / 0.6);
   }
 
   .pit-section-warning::before {
     background: hsl(var(--warning));
-    box-shadow: 0 0 12px hsl(var(--warning) / 0.6);
   }
 
   .pit-section-header {
-    @apply flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30;
+    @apply flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-muted/20;
   }
 
   .pit-section-content {
     @apply p-4;
   }
 
-  /* Pit Screen Counter Display */
+  /* Material Counter Display */
   .pit-counter {
-    @apply flex flex-col items-center justify-center gap-1 p-3 rounded-lg bg-muted/50 border border-border/30;
+    @apply flex flex-col items-center justify-center gap-1 p-4 rounded-2xl bg-muted/30 border border-border/30;
+    transition: all 200ms var(--ease-standard);
   }
 
   .pit-counter-value {
-    @apply text-4xl font-display tracking-tight text-foreground;
+    @apply text-4xl font-display font-medium tracking-tight text-foreground;
   }
 
   .pit-counter-label {
-    @apply text-xs uppercase tracking-widest text-muted-foreground font-mono;
+    @apply text-xs uppercase tracking-wider text-muted-foreground font-medium;
   }
 
-  /* Pit Screen Buttons */
+  /* Material 3 Buttons */
   .pit-button {
-    @apply h-14 rounded-lg font-mono text-sm font-medium transition-all duration-150;
-    @apply active:scale-95 touch-manipulation;
+    @apply h-14 rounded-2xl font-medium text-sm transition-all;
+    @apply active:scale-[0.98] touch-manipulation;
     @apply border border-transparent;
+    transition: all 200ms var(--ease-standard);
   }
 
   .pit-button-active {
-    @apply bg-primary text-primary-foreground border-primary;
-    box-shadow: 0 0 15px hsl(var(--primary) / 0.4);
+    @apply bg-primary text-primary-foreground;
   }
 
   .pit-button-red {
-    @apply bg-alliance-red text-white border-alliance-red;
-    box-shadow: 0 0 15px hsl(var(--alliance-red) / 0.4);
-  }
-
-  .pit-button-blue {
-    @apply bg-alliance-blue text-white border-alliance-blue;
-    box-shadow: 0 0 15px hsl(var(--alliance-blue) / 0.4);
-  }
-
-  .pit-button-muted {
-    @apply bg-muted text-muted-foreground hover:bg-muted/80;
-  }
-
-  .stepper-button {
-    @apply w-14 h-14 rounded-lg text-xl font-bold transition-all duration-150;
-    @apply active:scale-95 touch-manipulation;
-    @apply border border-border/50;
-  }
-
-  .data-card {
-    @apply rounded-xl border border-border bg-card p-4;
-    box-shadow: var(--shadow-card);
-  }
-
-  .nav-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-colors;
-    @apply hover:bg-muted active:bg-muted/80;
-  }
-
-  .nav-item-active {
-    @apply bg-primary/10 text-primary border-l-2 border-primary;
-  }
-
-  .stat-value {
-    @apply text-3xl font-display tracking-tight;
-  }
-
-  .stat-label {
-    @apply text-xs uppercase tracking-widest text-muted-foreground font-mono;
-  }
-
-  .alliance-red {
     @apply bg-alliance-red text-white;
   }
 
-  .alliance-blue {
+  .pit-button-blue {
     @apply bg-alliance-blue text-white;
   }
 
+  .pit-button-muted {
+    @apply bg-muted text-muted-foreground;
+  }
+
+  .pit-button-muted:hover {
+    @apply bg-muted/80;
+  }
+
+  .stepper-button {
+    @apply w-14 h-14 rounded-2xl text-xl font-medium transition-all;
+    @apply active:scale-[0.96] touch-manipulation;
+    @apply border border-border/30;
+    transition: all 200ms var(--ease-standard);
+  }
+
+  /* Material Data Cards */
+  .data-card {
+    @apply rounded-2xl border border-border bg-card p-4;
+    transition: all 300ms var(--ease-standard);
+  }
+
+  /* Material Navigation Items */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-2xl transition-all;
+    transition: all 200ms var(--ease-standard);
+  }
+
+  .nav-item:hover {
+    @apply bg-muted;
+  }
+
+  .nav-item:active {
+    @apply bg-muted/80;
+  }
+
+  .nav-item-active {
+    @apply bg-primary/15 text-primary;
+  }
+
+  /* Stats Display */
+  .stat-value {
+    @apply text-3xl font-display font-medium tracking-tight;
+  }
+
+  .stat-label {
+    @apply text-xs uppercase tracking-wider text-muted-foreground font-medium;
+  }
+
+  /* Alliance Badges */
+  .alliance-red {
+    @apply bg-alliance-red text-white rounded-xl;
+  }
+
+  .alliance-blue {
+    @apply bg-alliance-blue text-white rounded-xl;
+  }
+
+  /* Field Grid */
   .field-grid {
     @apply grid gap-0.5;
     grid-template-columns: repeat(6, 1fr);
     grid-template-rows: repeat(6, 1fr);
   }
 
-  /* Scan line effect for extra pit screen vibe */
-  .scanlines::after {
-    content: '';
-    @apply absolute inset-0 pointer-events-none opacity-[0.03];
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      hsl(var(--foreground)) 2px,
-      hsl(var(--foreground)) 4px
-    );
+  /* Smooth Material transitions */
+  .m3-transition {
+    transition: all 300ms var(--ease-standard);
   }
+
+  .m3-transition-fast {
+    transition: all 200ms var(--ease-standard);
+  }
+
+  /* Remove old glow effects - Material uses tonal elevation instead */
+  .text-glow {
+    @apply text-primary;
+  }
+
+  .bg-glow {
+    /* Subtle elevation instead of glow */
+  }
+
+  .glass {
+    @apply bg-card/90 backdrop-blur-md border border-border/50 rounded-2xl;
+  }
+}
+
+/* Material 3 Animation Keyframes */
+@keyframes m3-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes m3-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes m3-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes m3-slide-out-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.animate-m3-fade-in {
+  animation: m3-fade-in 300ms var(--ease-emphasized-decelerate);
+}
+
+.animate-m3-slide-up {
+  animation: m3-slide-up 400ms var(--ease-emphasized-decelerate);
 }
