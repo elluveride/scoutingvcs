@@ -43,12 +43,12 @@ export function IntegerStepper({
           onClick={decrement}
           disabled={atMin}
           className={cn(
-            "stepper-button bg-muted text-foreground min-w-[56px] min-h-[56px] md:min-w-[48px] md:min-h-[48px] touch-manipulation",
+            "stepper-button bg-muted text-foreground min-w-[48px] min-h-[48px] touch-manipulation",
             atMin && "opacity-30 cursor-not-allowed",
             !atMin && "hover:bg-destructive hover:text-destructive-foreground hover:border-destructive active:scale-95"
           )}
         >
-          <Minus className="w-6 h-6 md:w-5 md:h-5 mx-auto" />
+          <Minus className="w-5 h-5 mx-auto" />
         </button>
         
         <div className="flex-1 pit-counter min-w-[80px]">
@@ -60,12 +60,12 @@ export function IntegerStepper({
           onClick={increment}
           disabled={atMax}
           className={cn(
-            "stepper-button bg-muted text-foreground min-w-[56px] min-h-[56px] md:min-w-[48px] md:min-h-[48px] touch-manipulation",
+            "stepper-button bg-muted text-foreground min-w-[48px] min-h-[48px] touch-manipulation",
             atMax && "opacity-30 cursor-not-allowed",
             !atMax && "hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95"
           )}
         >
-          <Plus className="w-6 h-6 md:w-5 md:h-5 mx-auto" />
+          <Plus className="w-5 h-5 mx-auto" />
         </button>
       </div>
     </div>
