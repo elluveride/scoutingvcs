@@ -135,7 +135,9 @@ function RippleElement({ ripple }: RippleElementProps) {
           radial-gradient(circle at 2px 2px, currentColor 1px, transparent 1px)
         `,
         backgroundSize: "8px 8px",
-        opacity: 0.18,
+        opacity: 0.2,
+        filter: "blur(1px)",
+        boxShadow: "0 0 12px 4px currentColor",
       }}
     />
   );
