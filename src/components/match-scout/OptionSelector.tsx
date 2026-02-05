@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Ripple } from '@/components/ui/ripple';
 
 interface Option<T> {
   value: T;
@@ -57,21 +58,22 @@ export function OptionSelector<T>({
           }
 
           return (
-            <button
-              key={String(option.value)}
-              type="button"
-              onClick={() => onChange(option.value)}
-              className={cn(
-                "pit-button flex flex-col items-center justify-center gap-0.5 px-2",
-                buttonClass
-              )}
-              style={buttonStyle}
-            >
-              <span className="text-sm font-medium">{option.label}</span>
-              {option.sublabel && (
-                <span className="text-[10px] opacity-70">{option.sublabel}</span>
-              )}
-            </button>
+            <Ripple key={String(option.value)} className="rounded-2xl">
+              <button
+                type="button"
+                onClick={() => onChange(option.value)}
+                className={cn(
+                  "pit-button flex flex-col items-center justify-center gap-0.5 px-2 w-full",
+                  buttonClass
+                )}
+                style={buttonStyle}
+              >
+                <span className="text-sm font-medium">{option.label}</span>
+                {option.sublabel && (
+                  <span className="text-[10px] opacity-70">{option.sublabel}</span>
+                )}
+              </button>
+            </Ripple>
           );
         })}
       </div>
