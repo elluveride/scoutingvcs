@@ -11,73 +11,77 @@
 
 @layer base {
   :root {
-    /* Material 3 Dark Theme - Pixel OS inspired */
-    --background: 210 15% 7%;
-    --foreground: 210 20% 98%;
+    /* Google Material 3 Baseline Dark Theme */
+    --background: 0 0% 6%;
+    --foreground: 0 0% 90%;
 
-    --card: 210 12% 10%;
-    --card-foreground: 210 20% 98%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 90%;
 
-    --popover: 210 12% 12%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 90%;
 
-    /* Primary: Material teal/cyan */
-    --primary: 174 100% 40%;
-    --primary-foreground: 210 15% 7%;
+    /* Primary: Google Blue (baseline M3) */
+    --primary: 210 100% 70%;
+    --primary-foreground: 210 100% 10%;
 
-    /* Secondary: Material pink accent */
-    --secondary: 340 80% 55%;
-    --secondary-foreground: 210 20% 98%;
+    /* Secondary: Google Purple */
+    --secondary: 280 70% 75%;
+    --secondary-foreground: 280 100% 10%;
+
+    /* Tertiary: Google Teal */
+    --tertiary: 174 60% 70%;
+    --tertiary-foreground: 174 100% 10%;
 
     /* Muted: Material surface tones */
-    --muted: 210 10% 14%;
-    --muted-foreground: 210 10% 60%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 60%;
 
-    /* Accent: Material tertiary */
-    --accent: 260 70% 65%;
-    --accent-foreground: 210 15% 7%;
+    /* Accent: Material tertiary purple */
+    --accent: 280 50% 70%;
+    --accent-foreground: 280 100% 10%;
 
-    /* Destructive: Material error */
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 210 20% 98%;
+    /* Destructive: Material error red */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Warning: Material warning */
-    --warning: 35 100% 50%;
-    --warning-foreground: 210 15% 7%;
+    /* Warning: Material warning orange */
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 100% 10%;
 
-    /* Success: Material success */
-    --success: 145 65% 42%;
-    --success-foreground: 210 15% 7%;
+    /* Success: Material success green */
+    --success: 142 70% 45%;
+    --success-foreground: 142 100% 10%;
 
     /* FTC Alliance colors */
-    --alliance-red: 0 80% 55%;
-    --alliance-blue: 215 85% 55%;
+    --alliance-red: 0 84% 60%;
+    --alliance-blue: 210 100% 55%;
 
-    --border: 210 10% 18%;
-    --input: 210 12% 12%;
-    --ring: 174 100% 40%;
+    --border: 0 0% 18%;
+    --input: 0 0% 14%;
+    --ring: 210 100% 70%;
 
     /* Material 3 uses larger radius */
     --radius: 1rem;
 
     /* Sidebar - Material surface container */
-    --sidebar-background: 210 12% 8%;
-    --sidebar-foreground: 210 15% 90%;
-    --sidebar-primary: 174 100% 40%;
-    --sidebar-primary-foreground: 210 15% 7%;
-    --sidebar-accent: 210 10% 14%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 210 10% 14%;
-    --sidebar-ring: 174 100% 40%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 88%;
+    --sidebar-primary: 210 100% 70%;
+    --sidebar-primary-foreground: 210 100% 10%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 14%;
+    --sidebar-ring: 210 100% 70%;
 
     /* Material 3 elevation through tonal surfaces */
-    --surface-dim: 210 12% 6%;
-    --surface-bright: 210 10% 18%;
-    --surface-container-lowest: 210 12% 4%;
-    --surface-container-low: 210 12% 8%;
-    --surface-container: 210 12% 10%;
-    --surface-container-high: 210 10% 14%;
-    --surface-container-highest: 210 10% 18%;
+    --surface-dim: 0 0% 6%;
+    --surface-bright: 0 0% 20%;
+    --surface-container-lowest: 0 0% 4%;
+    --surface-container-low: 0 0% 8%;
+    --surface-container: 0 0% 10%;
+    --surface-container-high: 0 0% 14%;
+    --surface-container-highest: 0 0% 18%;
 
     /* Material Design fonts */
     --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
@@ -383,6 +387,27 @@
   to {
     transform: translateX(100%);
   }
+}
+
+/* Pixel OS Polygon Ripple Effect */
+@keyframes ripple-expand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.24;
+  }
+  50% {
+    opacity: 0.16;
+  }
+  100% {
+    width: 500px;
+    height: 500px;
+    opacity: 0;
+  }
+}
+
+.animate-ripple-expand {
+  animation: ripple-expand 600ms var(--ease-emphasized-decelerate) forwards;
 }
 
 .animate-m3-fade-in {

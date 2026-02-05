@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Minus, Plus } from "lucide-react";
+import { Ripple } from "@/components/ui/ripple";
 
 interface IntegerStepperProps {
   value: number;
@@ -38,35 +39,39 @@ export function IntegerStepper({
         </label>
       )}
       <div className="flex flex-col md:flex-row items-center gap-2">
-        <button
-          type="button"
-          onClick={increment}
-          disabled={atMax}
-          className={cn(
-            "stepper-button bg-muted text-foreground w-full md:w-auto min-h-[44px] md:min-w-[48px] md:min-h-[48px] touch-manipulation",
-            atMax && "opacity-30 cursor-not-allowed",
-            !atMax && "hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95"
-          )}
-        >
-          <Plus className="w-5 h-5 mx-auto" />
-        </button>
+        <Ripple className="w-full md:w-auto rounded-2xl">
+          <button
+            type="button"
+            onClick={increment}
+            disabled={atMax}
+            className={cn(
+              "stepper-button bg-muted text-foreground w-full md:w-auto min-h-[44px] md:min-w-[48px] md:min-h-[48px] touch-manipulation",
+              atMax && "opacity-30 cursor-not-allowed",
+              !atMax && "hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95"
+            )}
+          >
+            <Plus className="w-5 h-5 mx-auto" />
+          </button>
+        </Ripple>
         
         <div className="flex-1 pit-counter min-w-[80px] w-full md:w-auto">
           <span className="pit-counter-value">{value}</span>
         </div>
         
-        <button
-          type="button"
-          onClick={decrement}
-          disabled={atMin}
-          className={cn(
-            "stepper-button bg-muted text-foreground w-full md:w-auto min-h-[44px] md:min-w-[48px] md:min-h-[48px] touch-manipulation",
-            atMin && "opacity-30 cursor-not-allowed",
-            !atMin && "hover:bg-destructive hover:text-destructive-foreground hover:border-destructive active:scale-95"
-          )}
-        >
-          <Minus className="w-5 h-5 mx-auto" />
-        </button>
+        <Ripple className="w-full md:w-auto rounded-2xl">
+          <button
+            type="button"
+            onClick={decrement}
+            disabled={atMin}
+            className={cn(
+              "stepper-button bg-muted text-foreground w-full md:w-auto min-h-[44px] md:min-w-[48px] md:min-h-[48px] touch-manipulation",
+              atMin && "opacity-30 cursor-not-allowed",
+              !atMin && "hover:bg-destructive hover:text-destructive-foreground hover:border-destructive active:scale-95"
+            )}
+          >
+            <Minus className="w-5 h-5 mx-auto" />
+          </button>
+        </Ripple>
       </div>
     </div>
   );
