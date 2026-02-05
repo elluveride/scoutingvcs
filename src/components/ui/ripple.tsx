@@ -21,7 +21,17 @@ function getRandomSides(): number {
 }
 
 // Generate polygon clip-path for n sides (0 = circle)
-function getPolygonPath(sides: number, rotation: number): string {
+function getPolygonPath(sides: number, rotation: number, progress: number): string {
+  // Start as rounded rectangle (inset), morph to polygon
+  if (progress < 0.2) {
+    // Keep as rounded rectangle initially
+    const roundness = 20 - (progress * 50); // shrink roundness
+    return `inset(0% round ${Math.max(roundness, 0)}%)`;
+  }
+  
+  // Morph progress from 0.2 to 1.0 mapped to 0-1
+  const morphProgress = (progress - 0.2) / 0.8;
+  
   if (sides === 0) {
     return "circle(50% at 50% 50%)";
   }
@@ -93,6 +103,7 @@ interface RippleElementProps {
 
 function RippleElement({ ripple }: RippleElementProps) {
   const [rotation, setRotation] = React.useState(0);
+  const [progress, setProgress] = React.useState(0);
   const animationRef = React.useRef<number>();
 
   React.useEffect(() => {
@@ -102,12 +113,13 @@ function RippleElement({ ripple }: RippleElementProps) {
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const prog = Math.min(elapsed / duration, 1);
       
       // Slow rotation during expansion
-      setRotation(progress * rotationSpeed);
+      setRotation(prog * rotationSpeed);
+      setProgress(prog);
       
-      if (progress < 1) {
+      if (prog < 1) {
         animationRef.current = requestAnimationFrame(animate);
       }
     };
@@ -121,7 +133,7 @@ function RippleElement({ ripple }: RippleElementProps) {
     };
   }, []);
 
-  const clipPath = getPolygonPath(ripple.sides, rotation);
+  const clipPath = getPolygonPath(ripple.sides, rotation, progress);
 
   return (
     <span
