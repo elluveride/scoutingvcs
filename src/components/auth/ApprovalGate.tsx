@@ -1,8 +1,9 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Clock, XCircle } from 'lucide-react';
+import { Clock, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FullPageLoader } from '@/components/ui/loading-spinner';
 
 interface ApprovalGateProps {
   children: React.ReactNode;
@@ -13,11 +14,7 @@ export function ApprovalGate({ children, requireApproval = true }: ApprovalGateP
   const { user, profile, loading, signOut, isApproved } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <FullPageLoader text="Checking authentication..." />;
   }
 
   if (!user) {
@@ -31,7 +28,7 @@ export function ApprovalGate({ children, requireApproval = true }: ApprovalGateP
   if (profile?.status === 'rejected') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="data-card max-w-md text-center">
+        <div className="data-card max-w-md text-center animate-m3-fade-in">
           <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-8 h-8 text-destructive" />
           </div>
@@ -50,7 +47,7 @@ export function ApprovalGate({ children, requireApproval = true }: ApprovalGateP
   if (!isApproved) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="data-card max-w-md text-center">
+        <div className="data-card max-w-md text-center animate-m3-fade-in">
           <div className="w-16 h-16 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-4">
             <Clock className="w-8 h-8 text-warning" />
           </div>
