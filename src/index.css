@@ -389,25 +389,22 @@
   }
 }
 
-/* Pixel OS Polygon Ripple Effect */
+/* Material 3 Ripple Effect */
 @keyframes ripple-expand {
   0% {
     width: 0;
     height: 0;
-    opacity: 0.3;
-  }
-  50% {
     opacity: 0.2;
   }
   100% {
-    width: 500px;
-    height: 500px;
+    width: 400px;
+    height: 400px;
     opacity: 0;
   }
 }
 
 .animate-ripple-expand {
-  animation: ripple-expand 1000ms var(--ease-emphasized-decelerate) forwards;
+  animation: ripple-expand 500ms var(--ease-emphasized-decelerate) forwards;
 }
 
 .animate-m3-fade-in {
