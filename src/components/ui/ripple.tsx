@@ -68,7 +68,7 @@ export function Ripple({ className, children, disabled = false }: RippleProps) {
       // Remove ripple after animation completes
       setTimeout(() => {
         setRipples((prev) => prev.filter((r) => r.id !== newRipple.id));
-      }, 600);
+      }, 1000);
     },
     [disabled]
   );
@@ -76,7 +76,7 @@ export function Ripple({ className, children, disabled = false }: RippleProps) {
   return (
     <div
       ref={containerRef}
-      className={cn("relative overflow-hidden", className)}
+      className={cn("relative overflow-hidden inline-flex items-center justify-center", className)}
       onClick={handleClick}
     >
       {children}
@@ -97,8 +97,8 @@ function RippleElement({ ripple }: RippleElementProps) {
 
   React.useEffect(() => {
     const startTime = performance.now();
-    const duration = 600; // ms
-    const rotationSpeed = 90; // degrees per animation cycle
+    const duration = 1000; // ms
+    const rotationSpeed = 60; // degrees per animation cycle
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
