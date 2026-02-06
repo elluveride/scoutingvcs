@@ -11,84 +11,84 @@
 
 @layer base {
   :root {
-    /* Google Material 3 Baseline Dark Theme */
-    --background: 0 0% 6%;
-    --foreground: 0 0% 90%;
+    /* FTC Robotics Dark Theme - Tech Industrial Feel */
+    --background: 220 20% 7%;
+    --foreground: 210 20% 92%;
 
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 90%;
+    --card: 220 18% 11%;
+    --card-foreground: 210 20% 92%;
 
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 90%;
+    --popover: 220 18% 13%;
+    --popover-foreground: 210 20% 92%;
 
-    /* Primary: Google Blue (baseline M3) */
-    --primary: 210 100% 70%;
-    --primary-foreground: 210 100% 10%;
+    /* Primary: FTC Red - Bold and energetic */
+    --primary: 0 85% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Google Purple */
-    --secondary: 280 70% 75%;
-    --secondary-foreground: 280 100% 10%;
+    /* Secondary: FTC Blue - Technical and precise */
+    --secondary: 210 100% 50%;
+    --secondary-foreground: 0 0% 100%;
 
-    /* Tertiary: Google Teal */
-    --tertiary: 174 60% 70%;
-    --tertiary-foreground: 174 100% 10%;
+    /* Tertiary: Industrial Orange accent */
+    --tertiary: 25 95% 55%;
+    --tertiary-foreground: 0 0% 10%;
 
-    /* Muted: Material surface tones */
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 60%;
+    /* Muted: Tech surface tones */
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 10% 55%;
 
-    /* Accent: Material tertiary purple */
-    --accent: 280 50% 70%;
-    --accent-foreground: 280 100% 10%;
+    /* Accent: Complementary purple for highlights */
+    --accent: 260 60% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    /* Destructive: Material error red */
-    --destructive: 0 84% 60%;
+    /* Destructive: Warning red */
+    --destructive: 0 75% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Warning: Material warning orange */
+    /* Warning: Caution orange */
     --warning: 38 92% 50%;
     --warning-foreground: 38 100% 10%;
 
-    /* Success: Material success green */
+    /* Success: System green */
     --success: 142 70% 45%;
     --success-foreground: 142 100% 10%;
 
-    /* FTC Alliance colors */
-    --alliance-red: 0 84% 60%;
-    --alliance-blue: 210 100% 55%;
+    /* FTC Alliance colors - Official palette */
+    --alliance-red: 0 85% 55%;
+    --alliance-blue: 210 100% 50%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 14%;
-    --ring: 210 100% 70%;
+    --border: 220 15% 20%;
+    --input: 220 15% 15%;
+    --ring: 0 85% 55%;
 
-    /* Material 3 uses larger radius */
-    --radius: 1rem;
+    /* Tech-inspired radius */
+    --radius: 0.75rem;
 
-    /* Sidebar - Material surface container */
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 88%;
-    --sidebar-primary: 210 100% 70%;
-    --sidebar-primary-foreground: 210 100% 10%;
-    --sidebar-accent: 0 0% 14%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 14%;
-    --sidebar-ring: 210 100% 70%;
+    /* Sidebar - Dark tech panel */
+    --sidebar-background: 220 20% 9%;
+    --sidebar-foreground: 210 15% 85%;
+    --sidebar-primary: 0 85% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 0 85% 55%;
 
-    /* Material 3 elevation through tonal surfaces */
-    --surface-dim: 0 0% 6%;
-    --surface-bright: 0 0% 20%;
-    --surface-container-lowest: 0 0% 4%;
-    --surface-container-low: 0 0% 8%;
-    --surface-container: 0 0% 10%;
-    --surface-container-high: 0 0% 14%;
-    --surface-container-highest: 0 0% 18%;
+    /* Surface elevation - Industrial layers */
+    --surface-dim: 220 20% 5%;
+    --surface-bright: 220 15% 22%;
+    --surface-container-lowest: 220 20% 4%;
+    --surface-container-low: 220 18% 9%;
+    --surface-container: 220 18% 11%;
+    --surface-container-high: 220 15% 15%;
+    --surface-container-highest: 220 15% 20%;
 
-    /* Material Design fonts */
+    /* Tech fonts */
     --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
     --font-display: "Google Sans", "Roboto", ui-sans-serif, system-ui, sans-serif;
     --font-mono: "Roboto Mono", ui-monospace, monospace;
 
-    /* Material 3 motion curves */
+    /* Snappy motion curves */
     --ease-standard: cubic-bezier(0.2, 0, 0, 1);
     --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
     --ease-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
@@ -99,7 +99,7 @@
     --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
     --font-display: "Google Sans", "Roboto", ui-sans-serif, system-ui, sans-serif;
     --font-mono: "Roboto Mono", ui-monospace, monospace;
-    --radius: 1rem;
+    --radius: 0.75rem;
   }
 }
 
@@ -185,52 +185,88 @@
     background: hsl(var(--surface-container-highest));
   }
 
-  /* Material 3 Cards */
+  /* FTC Tech Cards */
   .m3-card {
-    @apply rounded-2xl border border-border bg-card p-4;
-    transition: all 300ms var(--ease-standard);
+    @apply rounded-xl border border-border/60 bg-card p-4;
+    @apply relative overflow-hidden;
+    transition: all 200ms var(--ease-standard);
+  }
+
+  .m3-card::after {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-px;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.3), transparent);
   }
 
   .m3-card:hover {
-    @apply bg-muted/50;
+    @apply bg-muted/40 border-border;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px hsl(0 0% 0% / 0.3);
   }
 
-  /* Pixel-style section panels */
+  /* FTC Section Panels - Industrial style */
   .pit-section {
-    @apply relative rounded-2xl border border-border bg-card overflow-hidden;
-    transition: all 300ms var(--ease-standard);
+    @apply relative rounded-xl border border-border/60 bg-card overflow-hidden;
+    transition: all 200ms var(--ease-standard);
   }
 
   .pit-section::before {
     content: '';
-    @apply absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl;
-    background: hsl(var(--primary));
+    @apply absolute left-0 top-0 bottom-0 w-1;
+    background: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--primary) / 0.5));
+  }
+
+  .pit-section::after {
+    content: '';
+    @apply absolute top-0 left-1 right-0 h-px;
+    background: linear-gradient(90deg, hsl(var(--primary) / 0.4), transparent 50%);
   }
 
   .pit-section-red::before {
-    background: hsl(var(--alliance-red));
+    background: linear-gradient(180deg, hsl(var(--alliance-red)), hsl(var(--alliance-red) / 0.5));
+  }
+
+  .pit-section-red::after {
+    background: linear-gradient(90deg, hsl(var(--alliance-red) / 0.4), transparent 50%);
   }
 
   .pit-section-blue::before {
-    background: hsl(var(--alliance-blue));
+    background: linear-gradient(180deg, hsl(var(--alliance-blue)), hsl(var(--alliance-blue) / 0.5));
+  }
+
+  .pit-section-blue::after {
+    background: linear-gradient(90deg, hsl(var(--alliance-blue) / 0.4), transparent 50%);
   }
 
   .pit-section-warning::before {
-    background: hsl(var(--warning));
+    background: linear-gradient(180deg, hsl(var(--warning)), hsl(var(--warning) / 0.5));
   }
 
   .pit-section-header {
-    @apply flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-muted/20;
+    @apply flex items-center gap-3 px-4 py-3 border-b border-border/40;
+    background: linear-gradient(180deg, hsl(var(--muted) / 0.4), transparent);
   }
 
   .pit-section-content {
     @apply p-4;
   }
 
-  /* Material Counter Display */
+  /* Tech Counter Display */
   .pit-counter {
-    @apply flex flex-col items-center justify-center gap-1 p-4 rounded-2xl bg-muted/30 border border-border/30;
+    @apply flex flex-col items-center justify-center gap-1 p-4 rounded-xl;
+    @apply bg-surface-container-high/50 border border-border/30;
+    @apply relative overflow-hidden;
     transition: all 200ms var(--ease-standard);
+  }
+
+  .pit-counter::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity;
+    background: radial-gradient(circle at center, hsl(var(--primary) / 0.15), transparent 70%);
+  }
+
+  .pit-counter:hover::before {
+    opacity: 1;
   }
 
   .pit-counter-value {
@@ -241,39 +277,61 @@
     @apply text-xs uppercase tracking-wider text-muted-foreground font-medium;
   }
 
-  /* Material 3 Buttons */
+  /* FTC Tech Buttons */
   .pit-button {
-    @apply h-14 rounded-2xl font-medium text-sm transition-all;
-    @apply active:scale-[0.98] touch-manipulation;
-    @apply border border-transparent;
-    transition: all 200ms var(--ease-standard);
+    @apply h-14 rounded-xl font-medium text-sm transition-all;
+    @apply active:scale-[0.97] touch-manipulation;
+    @apply border border-border/50;
+    @apply relative overflow-hidden;
+    transition: all 150ms var(--ease-standard);
+  }
+
+  .pit-button::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-150;
+    background: linear-gradient(135deg, transparent 0%, currentColor 100%);
+  }
+
+  .pit-button:hover::before {
+    opacity: 0.08;
   }
 
   .pit-button-active {
-    @apply bg-primary text-primary-foreground;
+    @apply bg-primary text-primary-foreground border-primary/50;
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.1);
   }
 
   .pit-button-red {
-    @apply bg-alliance-red text-white;
+    @apply bg-alliance-red text-white border-alliance-red/50;
+    box-shadow: 0 0 20px hsl(var(--alliance-red) / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.15);
   }
 
   .pit-button-blue {
-    @apply bg-alliance-blue text-white;
+    @apply bg-alliance-blue text-white border-alliance-blue/50;
+    box-shadow: 0 0 20px hsl(var(--alliance-blue) / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.15);
   }
 
   .pit-button-muted {
-    @apply bg-muted text-muted-foreground;
+    @apply bg-muted/80 text-muted-foreground border-border/30;
   }
 
   .pit-button-muted:hover {
-    @apply bg-muted/80;
+    @apply bg-muted border-border/50;
   }
 
   .stepper-button {
-    @apply w-14 h-14 rounded-2xl text-xl font-medium transition-all;
-    @apply active:scale-[0.96] touch-manipulation;
-    @apply border border-border/30;
-    transition: all 200ms var(--ease-standard);
+    @apply w-14 h-14 rounded-xl text-xl font-medium transition-all;
+    @apply active:scale-[0.95] touch-manipulation;
+    @apply border border-border/40 bg-surface-container-high;
+    transition: all 150ms var(--ease-standard);
+  }
+
+  .stepper-button:hover {
+    @apply bg-muted border-border/60;
+  }
+
+  .stepper-button:active {
+    box-shadow: inset 0 2px 4px hsl(0 0% 0% / 0.3);
   }
 
   /* Material Data Cards */
@@ -334,17 +392,50 @@
     transition: all 200ms var(--ease-standard);
   }
 
-  /* Remove old glow effects - Material uses tonal elevation instead */
+  /* FTC Tech Glow Effects */
   .text-glow {
     @apply text-primary;
+    text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+  }
+
+  .text-glow-red {
+    @apply text-alliance-red;
+    text-shadow: 0 0 20px hsl(var(--alliance-red) / 0.5);
+  }
+
+  .text-glow-blue {
+    @apply text-alliance-blue;
+    text-shadow: 0 0 20px hsl(var(--alliance-blue) / 0.5);
   }
 
   .bg-glow {
-    /* Subtle elevation instead of glow */
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
   }
 
   .glass {
-    @apply bg-card/90 backdrop-blur-md border border-border/50 rounded-2xl;
+    @apply bg-card/80 backdrop-blur-lg border border-border/40 rounded-xl;
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.05);
+  }
+
+  /* Tech grid pattern overlay */
+  .tech-grid {
+    background-image: 
+      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Scan line effect */
+  .scan-lines::after {
+    content: '';
+    @apply absolute inset-0 pointer-events-none opacity-[0.03];
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      hsl(0 0% 0%) 2px,
+      hsl(0 0% 0%) 4px
+    );
   }
 }
 
