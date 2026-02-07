@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { EventProvider } from "@/contexts/EventContext";
+import { AllianceProvider } from "@/contexts/AllianceContext";
 import { AnimatedRoutes } from "@/components/layout/AnimatedRoutes";
 
 const queryClient = new QueryClient();
@@ -17,7 +18,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <EventProvider>
-            <AnimatedRoutes />
+            <AllianceProvider>
+              <AnimatedRoutes />
+            </AllianceProvider>
           </EventProvider>
         </AuthProvider>
       </BrowserRouter>

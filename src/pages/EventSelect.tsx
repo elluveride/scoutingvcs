@@ -56,7 +56,10 @@ export default function EventSelect() {
     navigate('/scout');
   };
 
+  const isAdmin = profile?.role === 'admin';
+
   const handleCreateClick = () => {
+    if (!isAdmin) return;
     if (events.length === 0) {
       setShowPasswordDialog(true);
     } else {
@@ -130,10 +133,13 @@ export default function EventSelect() {
             <p className="text-muted-foreground mb-6">
               Create the first event to get started
             </p>
-            <Button onClick={handleCreateClick} className="gap-2">
+            <Button onClick={handleCreateClick} className="gap-2" disabled={!isAdmin}>
               <Lock className="w-4 h-4" />
               Create Event (Admin)
             </Button>
+            {!isAdmin && (
+              <p className="text-xs text-muted-foreground mt-2">Only admins can create events</p>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
@@ -160,14 +166,16 @@ export default function EventSelect() {
               </button>
             ))}
 
-            <Button
-              variant="outline"
-              onClick={handleCreateClick}
-              className="w-full h-14 gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Create New Event
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="outline"
+                onClick={handleCreateClick}
+                className="w-full h-14 gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                Create New Event
+              </Button>
+            )}
           </div>
         )}
       </div>

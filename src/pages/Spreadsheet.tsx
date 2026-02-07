@@ -14,8 +14,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Loader2, RefreshCw, Download, Pencil } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Loader2, RefreshCw, Download, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
 
 interface MatchRow {
@@ -42,20 +53,16 @@ export default function Spreadsheet() {
   const { user, profile } = useAuth();
   const { currentEvent } = useEvent();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [entries, setEntries] = useState<MatchRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<MatchRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const isAdmin = profile?.role === 'admin';
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  if (!currentEvent) {
-    return <Navigate to="/event-select" replace />;
-  }
-
-  const loadEntries = async () => {
+  const loadEntries = React.useCallback(async () => {
+    if (!currentEvent) return;
     setLoading(true);
     
     const { data, error } = await supabase
@@ -88,9 +95,10 @@ export default function Spreadsheet() {
     }
     
     setLoading(false);
-  };
+  }, [currentEvent]);
 
   useEffect(() => {
+    if (!currentEvent) return;
     loadEntries();
 
     const channel = supabase
@@ -112,11 +120,45 @@ export default function Spreadsheet() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentEvent.code]);
+  }, [currentEvent, loadEntries]);
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (!currentEvent) {
+    return <Navigate to="/event-select" replace />;
+  }
 
   const handleEditRow = (entry: MatchRow) => {
-    // Navigate to match scout with query params to load this entry
     navigate(`/scout?edit=${entry.id}`);
+  };
+
+  const handleDeleteRow = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    
+    const { error } = await supabase
+      .from('match_entries')
+      .delete()
+      .eq('id', deleteTarget.id);
+    
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete entry.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Deleted',
+        description: `Entry for Team ${deleteTarget.team_number}, Match ${deleteTarget.match_number} deleted.`,
+      });
+      loadEntries();
+    }
+    
+    setDeleting(false);
+    setDeleteTarget(null);
   };
 
   const exportCSV = () => {
@@ -204,6 +246,7 @@ export default function Spreadsheet() {
             <Table>
               <TableHeader>
                 <TableRow>
+                   {isAdmin && <TableHead className="w-10"></TableHead>}
                   {isAdmin && <TableHead className="w-10"></TableHead>}
                   <TableHead className="font-semibold">Match</TableHead>
                   <TableHead className="font-semibold">Team</TableHead>
@@ -221,7 +264,7 @@ export default function Spreadsheet() {
               </TableHeader>
               <TableBody>
                 {entries.map((entry) => (
-                  <TableRow 
+                   <TableRow 
                     key={entry.id}
                     className={cn(isAdmin && "cursor-pointer hover:bg-muted/50")}
                     onClick={() => isAdmin && handleEditRow(entry)}
@@ -229,6 +272,20 @@ export default function Spreadsheet() {
                     {isAdmin && (
                       <TableCell>
                         <Pencil className="w-4 h-4 text-muted-foreground" />
+                      </TableCell>
+                    )}
+                    {isAdmin && (
+                      <TableCell>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(entry);
+                          }}
+                          className="p-1 rounded hover:bg-destructive/20 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </button>
                       </TableCell>
                     )}
                     <TableCell className="font-mono">{entry.match_number}</TableCell>
@@ -265,6 +322,29 @@ export default function Spreadsheet() {
         {entries.length} entries • Auto-syncing enabled
         {isAdmin && ' • Click row to edit'}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Entry</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete the entry for Team {deleteTarget?.team_number}, Match {deleteTarget?.match_number}? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteRow}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
