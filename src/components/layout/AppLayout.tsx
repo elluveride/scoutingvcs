@@ -167,6 +167,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <p className="text-xs text-muted-foreground capitalize">
               {profile?.role} • {profile?.status}
             </p>
+            {profile?.teamNumber && (
+              <p className="text-xs text-primary font-mono">
+                Team {profile.teamNumber}
+              </p>
+            )}
           </div>
         </div>
         <button
