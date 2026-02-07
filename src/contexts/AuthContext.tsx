@@ -8,6 +8,7 @@ interface UserProfile {
   role: 'admin' | 'scout';
   status: 'pending' | 'approved' | 'rejected';
   eventCode: string | null;
+  teamNumber: number | null;
 }
 
 interface AuthContextType {
@@ -15,7 +16,7 @@ interface AuthContextType {
   session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string, teamNumber: number) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
@@ -44,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: data.role,
         status: data.status,
         eventCode: data.event_code,
+        teamNumber: data.team_number,
       });
     }
   };
@@ -77,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, teamNumber: number) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
@@ -96,6 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name,
         role: 'scout',
         status: 'pending',
+        team_number: teamNumber,
       });
     }
 

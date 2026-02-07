@@ -11,6 +11,10 @@ const signUpSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(50),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  teamNumber: z.string().min(1, 'Team number is required').refine(
+    (val) => !isNaN(Number(val)) && Number(val) > 0 && Number(val) <= 99999,
+    'Enter a valid FTC team number (1-99999)'
+  ),
 });
 
 const signInSchema = z.object({
@@ -24,6 +28,7 @@ export default function Auth() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [teamNumber, setTeamNumber] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -48,14 +53,14 @@ export default function Auth() {
 
     try {
       if (isSignUp) {
-        const validation = signUpSchema.safeParse({ name, email, password });
+        const validation = signUpSchema.safeParse({ name, email, password, teamNumber });
         if (!validation.success) {
           setError(validation.error.errors[0].message);
           setSubmitting(false);
           return;
         }
 
-        const { error } = await signUp(email, password, name);
+        const { error } = await signUp(email, password, name, Number(teamNumber));
         if (error) {
           if (error.message.includes('already registered')) {
             setError('This email is already registered. Please sign in.');
@@ -156,18 +161,32 @@ export default function Auth() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {isSignUp && (
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your name"
-                    className="h-12 bg-input"
-                    required
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      className="h-12 bg-input"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="teamNumber">FTC Team Number</Label>
+                    <Input
+                      id="teamNumber"
+                      type="number"
+                      value={teamNumber}
+                      onChange={(e) => setTeamNumber(e.target.value)}
+                      placeholder="12345"
+                      className="h-12 bg-input"
+                      required
+                    />
+                  </div>
+                </>
               )}
 
               <div className="space-y-2">
