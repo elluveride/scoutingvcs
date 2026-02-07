@@ -58,7 +58,7 @@ export default function MatchScout() {
   // Autonomous
   const [autoScoredClose, setAutoScoredClose] = useState(0);
   const [autoScoredFar, setAutoScoredFar] = useState(0);
-  const [onLaunchLine, setOnLaunchLine] = useState(false);
+  const [onLaunchLine, setOnLaunchLine] = useState(true);
   
   // TeleOp
   const [teleopScoredClose, setTeleopScoredClose] = useState(0);
@@ -141,7 +141,7 @@ export default function MatchScout() {
     setMatchNumber('');
     setAutoScoredClose(0);
     setAutoScoredFar(0);
-    setOnLaunchLine(false);
+    setOnLaunchLine(true);
     setTeleopScoredClose(0);
     setTeleopScoredFar(0);
     setDefenseRating(0);
@@ -303,6 +303,7 @@ export default function MatchScout() {
               label="Launch Line"
               onLabel="ON"
               offLabel="OFF"
+              invertColors
             />
           </div>
         </PitSection>

@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
+import { useAlliance } from '@/contexts/AllianceContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   ClipboardList,
@@ -37,6 +38,40 @@ const navItems = [
   { to: '/live-stats', icon: Radio, label: 'Live Stats' },
 ];
 
+function AllianceSelector() {
+  const { alliance, setAlliance } = useAlliance();
+  
+  return (
+    <div className="px-3 mx-3 mt-3 md:px-4 md:mx-4 md:mt-4">
+      <p className="text-xs text-muted-foreground mb-2">Alliance</p>
+      <div className="grid grid-cols-2 gap-1.5">
+        <button
+          onClick={() => setAlliance('blue')}
+          className={cn(
+            "h-10 rounded-lg text-xs font-semibold transition-all",
+            alliance === 'blue'
+              ? "bg-alliance-blue text-white shadow-[0_0_12px_hsl(210_100%_50%/0.4)]"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          )}
+        >
+          BLUE
+        </button>
+        <button
+          onClick={() => setAlliance('red')}
+          className={cn(
+            "h-10 rounded-lg text-xs font-semibold transition-all",
+            alliance === 'red'
+              ? "bg-alliance-red text-white shadow-[0_0_12px_hsl(0_85%_55%/0.4)]"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          )}
+        >
+          RED
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { profile, signOut, isAdmin } = useAuth();
   const { currentEvent } = useEvent();
@@ -51,7 +86,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Logo */}
       <div className="p-4 md:p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center bg-glow">
             <Zap className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
@@ -60,6 +95,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         </div>
       </div>
+
+      {/* Alliance Selector */}
+      <AllianceSelector />
 
       {/* Event Badge */}
       {currentEvent && (

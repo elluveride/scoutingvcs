@@ -9,6 +9,8 @@ interface ToggleButtonProps {
   onLabel?: string;
   offLabel?: string;
   className?: string;
+  /** When true, "on" is shown as bad (red) and "off" as good (green) */
+  invertColors?: boolean;
 }
 
 export function ToggleButton({
@@ -18,6 +20,7 @@ export function ToggleButton({
   onLabel = "Yes",
   offLabel = "No",
   className,
+  invertColors = false,
 }: ToggleButtonProps) {
   return (
     <div className={cn("flex flex-col gap-2", className)}>
@@ -33,11 +36,14 @@ export function ToggleButton({
           className={cn(
             "pit-button flex-1 flex items-center justify-center gap-2",
             value
-              ? "pit-button-active"
+              ? invertColors
+                ? "bg-destructive text-destructive-foreground border-destructive"
+                : "pit-button-active"
               : "pit-button-muted"
           )}
+          style={value && invertColors ? { boxShadow: '0 0 15px hsl(0 75% 50% / 0.5), 0 0 30px hsl(0 75% 50% / 0.2)' } : value && !invertColors ? { boxShadow: '0 0 15px hsl(var(--primary) / 0.5), 0 0 30px hsl(var(--primary) / 0.2)' } : undefined}
         >
-          <Check className="w-4 h-4" />
+          {invertColors ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
           <span>{onLabel}</span>
         </button>
         <button
@@ -46,12 +52,14 @@ export function ToggleButton({
           className={cn(
             "pit-button flex-1 flex items-center justify-center gap-2",
             !value
-              ? "bg-destructive text-destructive-foreground border-destructive"
+              ? invertColors
+                ? "pit-button-active"
+                : "bg-destructive text-destructive-foreground border-destructive"
               : "pit-button-muted"
           )}
-          style={!value ? { boxShadow: '0 0 15px hsl(0 80% 50% / 0.4)' } : undefined}
+          style={!value && !invertColors ? { boxShadow: '0 0 15px hsl(0 75% 50% / 0.5), 0 0 30px hsl(0 75% 50% / 0.2)' } : !value && invertColors ? { boxShadow: '0 0 15px hsl(var(--primary) / 0.5), 0 0 30px hsl(var(--primary) / 0.2)' } : undefined}
         >
-          <X className="w-4 h-4" />
+          {invertColors ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
           <span>{offLabel}</span>
         </button>
       </div>

@@ -83,7 +83,7 @@ const getDefaultWeights = (): SortWeight[] =>
   defaultCategories.flatMap(cat => cat.weights);
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { currentEvent } = useEvent();
   const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -425,25 +425,27 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* List 1 */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">{config1.name}</h2>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Settings2 className="w-4 h-4 mr-2" />
-                    Configure
-                  </Button>
-                </SheetTrigger>
-                <SheetContent className="overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Configure {config1.name}</SheetTitle>
-                    <SheetDescription>Adjust weights for each metric</SheetDescription>
-                  </SheetHeader>
-                  <div className="mt-6 pb-6">
-                    {renderConfigPanel(config1, setConfig1)}
-                  </div>
-                </SheetContent>
-              </Sheet>
+              {isAdmin && (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Settings2 className="w-4 h-4 mr-2" />
+                      Configure
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="overflow-y-auto">
+                    <SheetHeader>
+                      <SheetTitle>Configure {config1.name}</SheetTitle>
+                      <SheetDescription>Adjust weights for each metric</SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-6 pb-6">
+                      {renderConfigPanel(config1, setConfig1)}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
             </div>
             <div className="space-y-3">
               {list1Teams.map((team, idx) => (
@@ -459,25 +461,27 @@ export default function Dashboard() {
 
           {/* List 2 */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">{config2.name}</h2>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Settings2 className="w-4 h-4 mr-2" />
-                    Configure
-                  </Button>
-                </SheetTrigger>
-                <SheetContent className="overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Configure {config2.name}</SheetTitle>
-                    <SheetDescription>Adjust weights for each metric</SheetDescription>
-                  </SheetHeader>
-                  <div className="mt-6 pb-6">
-                    {renderConfigPanel(config2, setConfig2)}
-                  </div>
-                </SheetContent>
-              </Sheet>
+              {isAdmin && (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Settings2 className="w-4 h-4 mr-2" />
+                      Configure
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="overflow-y-auto">
+                    <SheetHeader>
+                      <SheetTitle>Configure {config2.name}</SheetTitle>
+                      <SheetDescription>Adjust weights for each metric</SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-6 pb-6">
+                      {renderConfigPanel(config2, setConfig2)}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
             </div>
             <div className="space-y-3">
               {list2Teams.map((team, idx) => (

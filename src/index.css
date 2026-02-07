@@ -21,12 +21,12 @@
     --popover: 220 18% 13%;
     --popover-foreground: 210 20% 92%;
 
-    /* Primary: FTC Red - Bold and energetic */
-    --primary: 0 85% 55%;
+    /* Primary: defaults to Blue alliance */
+    --primary: 210 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: FTC Blue - Technical and precise */
-    --secondary: 210 100% 50%;
+    /* Secondary: opposite alliance */
+    --secondary: 0 85% 55%;
     --secondary-foreground: 0 0% 100%;
 
     /* Tertiary: Industrial Orange accent */
@@ -59,7 +59,7 @@
 
     --border: 220 15% 20%;
     --input: 220 15% 15%;
-    --ring: 0 85% 55%;
+    --ring: 210 100% 50%;
 
     /* Tech-inspired radius */
     --radius: 0.75rem;
@@ -67,12 +67,12 @@
     /* Sidebar - Dark tech panel */
     --sidebar-background: 220 20% 9%;
     --sidebar-foreground: 210 15% 85%;
-    --sidebar-primary: 0 85% 55%;
+    --sidebar-primary: 210 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 15% 18%;
     --sidebar-accent-foreground: 210 20% 92%;
     --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 0 85% 55%;
+    --sidebar-ring: 210 100% 50%;
 
     /* Surface elevation - Industrial layers */
     --surface-dim: 220 20% 5%;
@@ -93,6 +93,18 @@
     --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
     --ease-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
     --ease-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+  }
+
+  /* Alliance Red Override - swaps primary to red */
+  .alliance-red {
+    --primary: 0 85% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 100% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --ring: 0 85% 55%;
+    --sidebar-primary: 0 85% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-ring: 0 85% 55%;
   }
 
   .dark {
@@ -392,24 +404,32 @@
     transition: all 200ms var(--ease-standard);
   }
 
-  /* FTC Tech Glow Effects */
+  /* FTC Tech Glow Effects - Enhanced */
   .text-glow {
     @apply text-primary;
-    text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+    text-shadow: 0 0 10px hsl(var(--primary) / 0.6), 0 0 30px hsl(var(--primary) / 0.3), 0 0 60px hsl(var(--primary) / 0.15);
   }
 
   .text-glow-red {
     @apply text-alliance-red;
-    text-shadow: 0 0 20px hsl(var(--alliance-red) / 0.5);
+    text-shadow: 0 0 10px hsl(var(--alliance-red) / 0.6), 0 0 30px hsl(var(--alliance-red) / 0.3), 0 0 60px hsl(var(--alliance-red) / 0.15);
   }
 
   .text-glow-blue {
     @apply text-alliance-blue;
-    text-shadow: 0 0 20px hsl(var(--alliance-blue) / 0.5);
+    text-shadow: 0 0 10px hsl(var(--alliance-blue) / 0.6), 0 0 30px hsl(var(--alliance-blue) / 0.3), 0 0 60px hsl(var(--alliance-blue) / 0.15);
   }
 
   .bg-glow {
-    box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.15), 0 0 80px hsl(var(--primary) / 0.05);
+  }
+
+  .bg-glow-red {
+    box-shadow: 0 0 15px hsl(var(--alliance-red) / 0.3), 0 0 40px hsl(var(--alliance-red) / 0.15);
+  }
+
+  .bg-glow-blue {
+    box-shadow: 0 0 15px hsl(var(--alliance-blue) / 0.3), 0 0 40px hsl(var(--alliance-blue) / 0.15);
   }
 
   .glass {
