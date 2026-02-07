@@ -11,6 +11,7 @@ import Spreadsheet from '@/pages/Spreadsheet';
 import Dashboard from '@/pages/Dashboard';
 import LiveStats from '@/pages/LiveStats';
 import Admin from '@/pages/Admin';
+import ProfileSettings from '@/pages/ProfileSettings';
 import NotFound from '@/pages/NotFound';
 
 export function AnimatedRoutes() {
@@ -101,6 +102,16 @@ export function AnimatedRoutes() {
             <ApprovalGate>
               <PageTransition>
                 <Admin />
+              </PageTransition>
+            </ApprovalGate>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ApprovalGate>
+              <PageTransition>
+                <ProfileSettings />
               </PageTransition>
             </ApprovalGate>
           }

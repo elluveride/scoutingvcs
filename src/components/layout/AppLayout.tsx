@@ -12,6 +12,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  UserCog,
   Zap,
   Radio,
   Menu,
@@ -128,6 +129,17 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </NavLink>
         ))}
         
+        <NavLink
+          to="/profile"
+          onClick={onNavigate}
+          className={({ isActive }) =>
+            cn('nav-item', isActive && 'nav-item-active')
+          }
+        >
+          <UserCog className="w-5 h-5" />
+          <span>Profile</span>
+        </NavLink>
+
         {isAdmin && (
           <NavLink
             to="/admin"
