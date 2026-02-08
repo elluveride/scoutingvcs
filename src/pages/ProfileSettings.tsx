@@ -86,9 +86,6 @@ export default function ProfileSettings() {
     setSaving(true);
 
     const updateData: Record<string, unknown> = { name: trimmedName, team_number: parsedTeam };
-    if (teamNumberChanged) {
-      updateData.team_number_changed_at = new Date().toISOString();
-    }
 
     const { error } = await supabase
       .from('profiles')
