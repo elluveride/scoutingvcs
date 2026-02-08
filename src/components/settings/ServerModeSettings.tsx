@@ -80,7 +80,7 @@ export function ServerModeSettings() {
                 id="localUrl"
                 value={localUrl}
                 onChange={(e) => setLocalUrl(e.target.value)}
-                placeholder="http://192.168.137.1:3000"
+                placeholder="http://192.168.44.1:3000"
                 className="h-12 font-mono bg-background border-border"
               />
             </div>
@@ -107,8 +107,8 @@ export function ServerModeSettings() {
             </div>
 
             <p className="text-xs text-muted-foreground font-mono">
-              Point this to the laptop running the local server.
-              Phones will submit data here instead of the cloud.
+              Point this to the laptop running the local server via Bluetooth PAN.
+              The default IP works if the laptop is set to 192.168.44.1.
             </p>
           </div>
         )}

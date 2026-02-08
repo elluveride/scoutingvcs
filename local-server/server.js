@@ -5,7 +5,7 @@
  *   1. npm install
  *   2. npm start
  *
- * Scouter phones connect via WiFi hotspot or Bluetooth PAN.
+ * Scouter phones connect via Bluetooth PAN.
  * Listens on 0.0.0.0:3000 so any device on the local network can reach it.
  */
 
@@ -13,6 +13,7 @@ const express = require('express');
 const cors = require('cors');
 const Database = require('better-sqlite3');
 const path = require('path');
+const os = require('os');
 
 const PORT = 3000;
 
@@ -166,15 +167,48 @@ app.get('/api/export-csv', (_req, res) => {
   }
 });
 
+// ── Helpers ──────────────────────────────────────────────────────────────
+function getNetworkIPs() {
+  const interfaces = os.networkInterfaces();
+  const results = [];
+  for (const [name, addrs] of Object.entries(interfaces)) {
+    for (const addr of addrs) {
+      if (addr.family === 'IPv4' && !addr.internal) {
+        results.push({ name, address: addr.address });
+      }
+    }
+  }
+  return results;
+}
+
 // ── Start ───────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
+  const ips = getNetworkIPs();
+
   console.log('');
-  console.log('╔══════════════════════════════════════════════╗');
-  console.log('║   DECODE Scouting — Local Server Running     ║');
-  console.log(`║   http://0.0.0.0:${PORT}                        ║`);
-  console.log('║                                              ║');
-  console.log('║   Scouters connect to this laptop\'s IP.      ║');
-  console.log('║   Data stored in scouting.db (SQLite)        ║');
-  console.log('╚══════════════════════════════════════════════╝');
+  console.log('╔═══════════════════════════════════════════════════════╗');
+  console.log('║   DECODE Scouting — Local Server Running             ║');
+  console.log('╠═══════════════════════════════════════════════════════╣');
+
+  if (ips.length === 0) {
+    console.log('║                                                       ║');
+    console.log('║   ⚠  No network interfaces found!                    ║');
+    console.log('║   Make sure Bluetooth PAN is enabled.                 ║');
+  } else {
+    console.log('║                                                       ║');
+    console.log('║   Your server addresses:                              ║');
+    for (const ip of ips) {
+      const url = `http://${ip.address}:${PORT}`;
+      const line = `   ${url}  (${ip.name})`;
+      console.log(`║${line.padEnd(55)}║`);
+    }
+  }
+
+  console.log('║                                                       ║');
+  console.log('║   In the app: Profile → Server Mode → Local           ║');
+  console.log('║   Paste the Bluetooth PAN address above.              ║');
+  console.log('║                                                       ║');
+  console.log('║   Data stored in scouting.db (SQLite)                 ║');
+  console.log('╚═══════════════════════════════════════════════════════╝');
   console.log('');
 });
