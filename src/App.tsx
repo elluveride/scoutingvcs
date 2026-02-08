@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { EventProvider } from "@/contexts/EventContext";
 import { AllianceProvider } from "@/contexts/AllianceContext";
+import { ServerModeProvider } from "@/contexts/ServerModeContext";
 import { AnimatedRoutes } from "@/components/layout/AnimatedRoutes";
 import { OfflineIndicator } from "@/components/layout/OfflineIndicator";
 
@@ -20,8 +21,10 @@ const App = () => (
         <AuthProvider>
           <EventProvider>
             <AllianceProvider>
-              <AnimatedRoutes />
-              <OfflineIndicator />
+              <ServerModeProvider>
+                <AnimatedRoutes />
+                <OfflineIndicator />
+              </ServerModeProvider>
             </AllianceProvider>
           </EventProvider>
         </AuthProvider>
