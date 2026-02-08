@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      dashboard_configs: {
+        Row: {
+          config_index: number
+          event_code: string
+          id: string
+          list_name: string
+          team_number: number
+          updated_at: string
+          updated_by: string | null
+          weights: Json
+        }
+        Insert: {
+          config_index?: number
+          event_code: string
+          id?: string
+          list_name?: string
+          team_number: number
+          updated_at?: string
+          updated_by?: string | null
+          weights?: Json
+        }
+        Update: {
+          config_index?: number
+          event_code?: string
+          id?: string
+          list_name?: string
+          team_number?: number
+          updated_at?: string
+          updated_by?: string | null
+          weights?: Json
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           code: string
@@ -35,6 +68,45 @@ export type Database = {
           created_by?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      ftc_events_cache: {
+        Row: {
+          city: string | null
+          code: string
+          country: string | null
+          date_end: string
+          date_start: string
+          last_synced: string
+          name: string
+          season: number
+          state_prov: string | null
+          team_numbers: Json
+        }
+        Insert: {
+          city?: string | null
+          code: string
+          country?: string | null
+          date_end: string
+          date_start: string
+          last_synced?: string
+          name: string
+          season: number
+          state_prov?: string | null
+          team_numbers?: Json
+        }
+        Update: {
+          city?: string | null
+          code?: string
+          country?: string | null
+          date_end?: string
+          date_start?: string
+          last_synced?: string
+          name?: string
+          season?: number
+          state_prov?: string | null
+          team_numbers?: Json
         }
         Relationships: []
       }
@@ -258,6 +330,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_allied_team: {
+        Args: { team_a: number; team_b: number }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "scout"

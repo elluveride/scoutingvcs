@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { useFTCRankings } from '@/hooks/useFTCRankings';
-import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2, Trophy } from 'lucide-react';
+import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2, Trophy, Save, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TeamStats, SortWeight, SortConfig } from '@/types/scouting';
 import {
@@ -78,32 +78,118 @@ const defaultCategories: WeightCategory[] = [
   },
 ];
 
-// Flatten categories to get all weights
-const getDefaultWeights = (): SortWeight[] => 
+const getDefaultWeights = (): SortWeight[] =>
   defaultCategories.flatMap(cat => cat.weights);
 
 export default function Dashboard() {
-  const { user, isAdmin } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const { currentEvent } = useEvent();
   const navigate = useNavigate();
   const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  
-  // Fetch official rankings from FTC API
+  const [configsLoaded, setConfigsLoaded] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const { rankings: apiRankings, getRankForTeam, getRecordForTeam } = useFTCRankings();
-  
-  // Two independent sort configs
+
   const [config1, setConfig1] = useState<SortConfig>({
     name: 'List 1',
     weights: JSON.parse(JSON.stringify(getDefaultWeights())),
   });
   const [config2, setConfig2] = useState<SortConfig>({
-    name: 'List 2', 
+    name: 'List 2',
     weights: JSON.parse(JSON.stringify(getDefaultWeights())),
   });
 
-  // All hooks must be called before any early returns
+  // Load dashboard configs from server
+  useEffect(() => {
+    if (currentEvent?.code && profile?.teamNumber) {
+      loadDashboardConfigs();
+    }
+  }, [currentEvent?.code, profile?.teamNumber]);
+
+  const loadDashboardConfigs = async () => {
+    if (!currentEvent?.code || !profile?.teamNumber) return;
+
+    const { data, error } = await supabase
+      .from('dashboard_configs')
+      .select('*')
+      .eq('team_number', profile.teamNumber)
+      .eq('event_code', currentEvent.code);
+
+    if (data && data.length > 0 && !error) {
+      const cfg0 = data.find(d => d.config_index === 0);
+      const cfg1 = data.find(d => d.config_index === 1);
+
+      if (cfg0) {
+        setConfig1({
+          name: cfg0.list_name,
+          weights: Array.isArray(cfg0.weights) ? cfg0.weights as unknown as SortWeight[] : getDefaultWeights(),
+        });
+      }
+      if (cfg1) {
+        setConfig2({
+          name: cfg1.list_name,
+          weights: Array.isArray(cfg1.weights) ? cfg1.weights as unknown as SortWeight[] : getDefaultWeights(),
+        });
+      }
+    }
+    setConfigsLoaded(true);
+  };
+
+  // Auto-save configs when admin makes changes (debounced)
+  const saveDashboardConfig = useCallback(async (configIndex: number, config: SortConfig) => {
+    if (!isAdmin || !currentEvent?.code || !profile?.teamNumber || !user) return;
+
+    setSaveStatus('saving');
+
+    const record = {
+      team_number: profile.teamNumber,
+      event_code: currentEvent.code,
+      config_index: configIndex,
+      list_name: config.name,
+      weights: config.weights as unknown as Record<string, unknown>[],
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from('dashboard_configs')
+      .upsert(record as any, { onConflict: 'team_number,event_code,config_index' });
+
+    if (error) {
+      console.error('Error saving dashboard config:', error);
+      setSaveStatus('idle');
+    } else {
+      setSaveStatus('saved');
+      if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
+      saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
+    }
+  }, [isAdmin, currentEvent?.code, profile?.teamNumber, user]);
+
+  // Debounced save for config1
+  useEffect(() => {
+    if (!configsLoaded || !isAdmin) return;
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      saveDashboardConfig(0, config1);
+    }, 1500);
+    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
+  }, [config1, configsLoaded, isAdmin]);
+
+  // Debounced save for config2
+  useEffect(() => {
+    if (!configsLoaded || !isAdmin) return;
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      saveDashboardConfig(1, config2);
+    }, 1500);
+    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
+  }, [config2, configsLoaded, isAdmin]);
+
   useEffect(() => {
     if (currentEvent?.code) {
       calculateStats();
@@ -120,7 +206,7 @@ export default function Dashboard() {
 
   const calculateStats = async () => {
     setLoading(true);
-    
+
     const { data, error } = await supabase
       .from('match_entries')
       .select('*')
@@ -128,7 +214,7 @@ export default function Dashboard() {
 
     if (data && !error) {
       const teamMap = new Map<number, typeof data>();
-      
+
       data.forEach(entry => {
         const existing = teamMap.get(entry.team_number) || [];
         existing.push(entry);
@@ -136,37 +222,36 @@ export default function Dashboard() {
       });
 
       const stats: TeamStats[] = [];
-      
+
       teamMap.forEach((entries, teamNumber) => {
         const matchesPlayed = entries.length;
-        
+
         const avgAutoClose = entries.reduce((sum, e) => sum + e.auto_scored_close, 0) / matchesPlayed;
         const avgAutoFar = entries.reduce((sum, e) => sum + e.auto_scored_far, 0) / matchesPlayed;
         const autoTotalAvg = avgAutoClose + avgAutoFar;
-        
+
         const avgTeleopClose = entries.reduce((sum, e) => sum + e.teleop_scored_close, 0) / matchesPlayed;
         const avgTeleopFar = entries.reduce((sum, e) => sum + e.teleop_scored_far, 0) / matchesPlayed;
         const teleopTotalAvg = avgTeleopClose + avgTeleopFar;
-        
+
         const avgFoulsMinor = entries.reduce((sum, e) => sum + e.auto_fouls_minor, 0) / matchesPlayed;
         const avgFoulsMajor = entries.reduce((sum, e) => sum + e.auto_fouls_major, 0) / matchesPlayed;
-        
+
         const onLaunchLinePercent = (entries.filter(e => e.on_launch_line).length / matchesPlayed) * 100;
         const avgDefense = entries.reduce((sum, e) => sum + e.defense_rating, 0) / matchesPlayed;
-        
+
         const liftPercent = (entries.filter(e => e.endgame_return === 'lift').length / matchesPlayed) * 100;
         const fullReturnPercent = (entries.filter(e => e.endgame_return === 'full').length / matchesPlayed) * 100;
         const partialReturnPercent = (entries.filter(e => e.endgame_return === 'partial').length / matchesPlayed) * 100;
-        
+
         const penaltyRate = (entries.filter(e => e.penalty_status !== 'none').length / matchesPlayed) * 100;
-        
-        // Variance calculation on auto scoring
+
         const autoVariance = entries.reduce((sum, e) => {
           const autoTotal = e.auto_scored_close + e.auto_scored_far;
           return sum + Math.pow(autoTotal - autoTotalAvg, 2);
         }, 0) / matchesPlayed;
         const varianceScore = Math.sqrt(autoVariance);
-        
+
         stats.push({
           teamNumber,
           matchesPlayed,
@@ -185,13 +270,13 @@ export default function Dashboard() {
           partialReturnPercent: Math.round(partialReturnPercent),
           penaltyRate: Math.round(penaltyRate),
           varianceScore: Math.round(varianceScore * 10) / 10,
-          selectionScore: 0, // Will be calculated per-list
+          selectionScore: 0,
         });
       });
-      
+
       setTeamStats(stats);
     }
-    
+
     setLoading(false);
   };
 
@@ -199,7 +284,7 @@ export default function Dashboard() {
     let score = 0;
     const apiData = getApiDataForTeam(team.teamNumber);
     const totalTeams = apiRankings.length || 1;
-    
+
     weights.forEach(w => {
       if (!w.enabled) return;
       switch (w.id) {
@@ -215,15 +300,14 @@ export default function Dashboard() {
         case 'fouls': score += team.avgFoulsMinor * w.weight; break;
         case 'penalties': score += (team.penaltyRate / 100) * w.weight * 10; break;
         case 'variance': score += team.varianceScore * w.weight; break;
-        // API-based metrics
-        case 'apiRank': 
-          if (apiData) score += ((totalTeams - apiData.rank + 1) / totalTeams) * w.weight * 10; 
+        case 'apiRank':
+          if (apiData) score += ((totalTeams - apiData.rank + 1) / totalTeams) * w.weight * 10;
           break;
-        case 'apiQualAvg': 
-          if (apiData) score += (apiData.qualAverage / 100) * w.weight * 10; 
+        case 'apiQualAvg':
+          if (apiData) score += (apiData.qualAverage / 100) * w.weight * 10;
           break;
-        case 'apiWinRate': 
-          if (apiData) score += (apiData.winRate / 100) * w.weight * 10; 
+        case 'apiWinRate':
+          if (apiData) score += (apiData.winRate / 100) * w.weight * 10;
           break;
       }
     });
@@ -240,15 +324,14 @@ export default function Dashboard() {
       .sort((a, b) => b.selectionScore - a.selectionScore);
   };
 
-  // Helper to get API data for a team
   const getApiDataForTeam = (teamNumber: number) => {
     const ranking = apiRankings.find(r => r.teamNumber === teamNumber);
     if (!ranking) return null;
     return {
       rank: ranking.rank,
       qualAverage: ranking.qualAverage,
-      winRate: ranking.matchesPlayed > 0 
-        ? (ranking.wins / ranking.matchesPlayed) * 100 
+      winRate: ranking.matchesPlayed > 0
+        ? (ranking.wins / ranking.matchesPlayed) * 100
         : 0,
     };
   };
@@ -267,26 +350,24 @@ export default function Dashboard() {
     }));
   };
 
-  // Get weights organized by category for display
   const getWeightsByCategory = (weights: SortWeight[]) => {
     return defaultCategories.map(cat => ({
       ...cat,
-      weights: cat.weights.map(defaultW => 
+      weights: cat.weights.map(defaultW =>
         weights.find(w => w.id === defaultW.id) || defaultW
       ),
     }));
   };
 
-  // Render config panel content inline to prevent focus loss on re-render
   const renderConfigPanel = (config: SortConfig, setConfig: React.Dispatch<React.SetStateAction<SortConfig>>) => {
     const categorizedWeights = getWeightsByCategory(config.weights);
-    
+
     return (
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>List Name</Label>
-          <Input 
-            value={config.name} 
+          <Input
+            value={config.name}
             onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
             className="h-10"
           />
@@ -301,8 +382,8 @@ export default function Dashboard() {
                 <div key={w.id} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Switch 
-                        checked={w.enabled} 
+                      <Switch
+                        checked={w.enabled}
                         onCheckedChange={() => toggleWeight(setConfig, w.id)}
                       />
                       <span className={cn("text-sm", !w.enabled && "text-muted-foreground")}>{w.label}</span>
@@ -333,9 +414,9 @@ export default function Dashboard() {
 
   const TeamCard = ({ team }: { team: TeamStats }) => {
     const officialRank = getRankForTeam(team.teamNumber);
-    
+
     return (
-      <div 
+      <div
         className="data-card cursor-pointer hover:border-primary/40 transition-colors"
         onClick={() => navigate(`/team?team=${team.teamNumber}`)}
       >
@@ -345,7 +426,6 @@ export default function Dashboard() {
               <h3 className="text-xl font-bold font-mono">{team.teamNumber}</h3>
               <p className="text-xs text-muted-foreground">{team.matchesPlayed} matches</p>
             </div>
-            {/* Official Rank Badge */}
             {officialRank !== null && (
               <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-accent/20 border border-accent/30">
                 <Trophy className="w-3 h-3 text-accent" />
@@ -400,6 +480,27 @@ export default function Dashboard() {
   const list1Teams = getSortedTeams(config1.weights);
   const list2Teams = getSortedTeams(config2.weights);
 
+  // Save status indicator
+  const SaveIndicator = () => {
+    if (saveStatus === 'idle') return null;
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        {saveStatus === 'saving' && (
+          <>
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span>Saving...</span>
+          </>
+        )}
+        {saveStatus === 'saved' && (
+          <>
+            <CheckCircle2 className="w-3 h-3 text-accent" />
+            <span className="text-accent">Saved</span>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -407,14 +508,17 @@ export default function Dashboard() {
         description="Dual team ranking lists with configurable weights"
       />
 
-      <div className="relative mb-6">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <Input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by team number..."
-          className="pl-12 h-12"
-        />
+      <div className="flex items-center justify-between mb-4">
+        <div className="relative flex-1 mr-4">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by team number..."
+            className="pl-12 h-12"
+          />
+        </div>
+        {isAdmin && <SaveIndicator />}
       </div>
 
       {loading ? (
@@ -429,7 +533,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* List 1 */}
           <div className="space-y-4">
-             <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">{config1.name}</h2>
               {isAdmin && (
                 <Sheet>
@@ -465,7 +569,7 @@ export default function Dashboard() {
 
           {/* List 2 */}
           <div className="space-y-4">
-             <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">{config2.name}</h2>
               {isAdmin && (
                 <Sheet>

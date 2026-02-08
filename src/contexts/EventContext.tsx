@@ -55,6 +55,11 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     loadEvents();
 
+    // Re-fetch events when auth state changes (fixes events not loading after login)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      loadEvents();
+    });
+
     // Subscribe to realtime updates for events
     const channel = supabase
       .channel('events_changes')
@@ -72,6 +77,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .subscribe();
 
     return () => {
+      subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, []);
