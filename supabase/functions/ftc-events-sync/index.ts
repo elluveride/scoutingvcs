@@ -175,12 +175,13 @@ serve(async (req) => {
       }
     }
 
-    // 7. Delete finished events and all associated scouting data
+    // 7. Archive finished events (soft-delete instead of hard-delete)
     const { data: allDbEvents } = await supabase
       .from('events')
-      .select('code');
+      .select('code, archived')
+      .eq('archived', false);
 
-    let cleanedCount = 0;
+    let archivedCount = 0;
     if (allDbEvents) {
       for (const dbEvent of allDbEvents) {
         // Check if this event is in cache and finished
@@ -191,22 +192,20 @@ serve(async (req) => {
           .maybeSingle();
 
         if (cached && cached.date_end < today) {
-          console.log(`Cleaning up finished event: ${dbEvent.code} (ended ${cached.date_end})`);
+          console.log(`Archiving finished event: ${dbEvent.code} (ended ${cached.date_end})`);
 
-          // Delete associated data
-          await supabase.from('match_entries').delete().eq('event_code', dbEvent.code);
-          await supabase.from('pit_entries').delete().eq('event_code', dbEvent.code);
-          await supabase.from('scouter_assignments').delete().eq('event_code', dbEvent.code);
-          await supabase.from('dashboard_configs').delete().eq('event_code', dbEvent.code);
-          await supabase.from('events').delete().eq('code', dbEvent.code);
+          await supabase
+            .from('events')
+            .update({ archived: true })
+            .eq('code', dbEvent.code);
 
-          cleanedCount++;
+          archivedCount++;
         }
       }
     }
 
-    if (cleanedCount > 0) {
-      console.log(`Cleaned up ${cleanedCount} finished events`);
+    if (archivedCount > 0) {
+      console.log(`Archived ${archivedCount} finished events`);
     }
 
     const result = {
@@ -214,7 +213,7 @@ serve(async (req) => {
       totalCached: upsertedCount,
       activeToday: activeEvents.length,
       autoCreated: createdCount,
-      cleaned: cleanedCount,
+      archived: archivedCount,
       teamsChecked: uniqueTeams,
     };
 

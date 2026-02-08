@@ -14,6 +14,7 @@ import {
   CheckCircle2, AlertTriangle, ArrowRightLeft,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ImportFileSchema, MatchEntryImportSchema } from '@/lib/importValidation';
 
 export default function DataSharing() {
   const { user } = useAuth();
@@ -98,12 +99,25 @@ export default function DataSharing() {
 
       if (file.name.endsWith('.json')) {
         const parsed = JSON.parse(text);
-        entries = parsed.entries || parsed;
-        if (!Array.isArray(entries)) throw new Error('Invalid JSON format');
+        // Try parsing as full export format first, then as raw array
+        const fileResult = ImportFileSchema.safeParse(parsed);
+        if (fileResult.success) {
+          entries = fileResult.data.entries;
+        } else {
+          const rawArray = Array.isArray(parsed) ? parsed : parsed.entries;
+          if (!Array.isArray(rawArray)) throw new Error('Invalid JSON format: expected entries array');
+          // Validate each entry individually, skip invalid ones
+          entries = rawArray.map((item: unknown) => {
+            const result = MatchEntryImportSchema.safeParse(item);
+            return result.success ? result.data : null;
+          }).filter(Boolean);
+          if (entries.length === 0) throw new Error('No valid entries found in file');
+        }
       } else if (file.name.endsWith('.csv')) {
         const lines = text.trim().split('\n');
-        const headers = lines[0].split(',');
-        entries = lines.slice(1).map(line => {
+        if (lines.length < 2) throw new Error('CSV file is empty or has no data rows');
+        const headers = lines[0].split(',').map(h => h.trim());
+        const rawEntries = lines.slice(1).filter(l => l.trim()).map(line => {
           const values = line.split(',');
           const obj: any = {};
           headers.forEach((h, i) => {
@@ -115,6 +129,12 @@ export default function DataSharing() {
           });
           return obj;
         });
+        // Validate each parsed CSV row
+        entries = rawEntries.map((item: unknown) => {
+          const result = MatchEntryImportSchema.safeParse(item);
+          return result.success ? result.data : null;
+        }).filter(Boolean);
+        if (entries.length === 0) throw new Error('No valid entries found in CSV');
       } else {
         throw new Error('Unsupported file format. Use JSON or CSV.');
       }
