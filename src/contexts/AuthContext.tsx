@@ -9,6 +9,7 @@ interface UserProfile {
   status: 'pending' | 'approved' | 'rejected';
   eventCode: string | null;
   teamNumber: number | null;
+  teamNumberChangedAt: string | null;
 }
 
 interface AuthContextType {
@@ -47,6 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: data.status,
         eventCode: data.event_code,
         teamNumber: data.team_number,
+        teamNumberChangedAt: data.team_number_changed_at,
       });
     }
   };
