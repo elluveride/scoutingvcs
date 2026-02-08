@@ -23,14 +23,6 @@ export default function Admin() {
   const [users, setUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(true);
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  if (!isAdmin) {
-    return <Navigate to="/scout" replace />;
-  }
-
   const loadUsers = async () => {
     setLoading(true);
     
@@ -53,8 +45,18 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    loadUsers();
-  }, []);
+    if (user && isAdmin) {
+      loadUsers();
+    }
+  }, [user, isAdmin]);
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/scout" replace />;
+  }
 
   const updateUserStatus = async (userId: string, status: 'approved' | 'rejected') => {
     const { error } = await supabase
@@ -78,24 +80,31 @@ export default function Admin() {
   };
 
   const promoteToAdmin = async (userId: string) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: 'admin' })
-      .eq('id', userId);
+    // Insert into user_roles (the authoritative roles table)
+    const { error: roleError } = await supabase
+      .from('user_roles')
+      .insert({ user_id: userId, role: 'admin' as const });
 
-    if (error) {
+    if (roleError) {
       toast({
         title: 'Error',
         description: 'Failed to promote user.',
         variant: 'destructive',
       });
-    } else {
-      toast({
-        title: 'Success',
-        description: 'User promoted to admin.',
-      });
-      loadUsers();
+      return;
     }
+
+    // Also update profiles.role for display purposes
+    await supabase
+      .from('profiles')
+      .update({ role: 'admin' })
+      .eq('id', userId);
+
+    toast({
+      title: 'Success',
+      description: 'User promoted to admin.',
+    });
+    loadUsers();
   };
 
   const pendingUsers = users.filter(u => u.status === 'pending');
