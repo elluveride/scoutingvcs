@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.ftc-rankings]
 verify_jwt = false
+
+[functions.ftc-events-sync]
+verify_jwt = false

@@ -5,7 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Zap, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import cipherLogo from '@/assets/cipher-icon.png';
 import { z } from 'zod';
 
 const signUpSchema = z.object({
@@ -128,9 +129,7 @@ export default function Auth() {
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex flex-1 bg-card items-center justify-center p-12">
         <div className="max-w-md text-center">
-          <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-8">
-            <Zap className="w-10 h-10 text-primary-foreground" />
-          </div>
+          <img src={cipherLogo} alt="Cipher" className="w-20 h-20 rounded-2xl mx-auto mb-8" />
           <h1 className="text-4xl font-bold mb-4 text-glow">12841×2844: Cipher</h1>
           <p className="text-xl text-muted-foreground mb-8">
             Competition-Grade Scouting
@@ -156,9 +155,7 @@ export default function Auth() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <Zap className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <img src={cipherLogo} alt="Cipher" className="w-12 h-12 rounded-xl" />
             <div>
               <h1 className="font-bold text-xl">Cipher</h1>
               <p className="text-xs text-muted-foreground">12841×2844</p>

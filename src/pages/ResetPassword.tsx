@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Zap, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import cipherLogo from '@/assets/cipher-icon.png';
 import { z } from 'zod';
 
 const passwordSchema = z.object({
@@ -84,9 +85,7 @@ export default function ResetPassword() {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-8 justify-center">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-            <Zap className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img src={cipherLogo} alt="Cipher" className="w-12 h-12 rounded-xl" />
           <div>
             <h1 className="font-bold text-xl">Cipher</h1>
             <p className="text-xs text-muted-foreground">12841×2844</p>

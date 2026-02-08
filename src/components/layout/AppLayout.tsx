@@ -13,7 +13,6 @@ import {
   Settings,
   LogOut,
   UserCog,
-  Zap,
   Radio,
   Menu,
   X,
@@ -32,6 +31,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import cipherLogo from '@/assets/cipher-icon.png';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -98,9 +98,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Logo */}
       <div className="p-4 md:p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center bg-glow">
-            <Zap className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img src={cipherLogo} alt="Cipher" className="w-10 h-10 rounded-xl" />
           <div>
             <h1 className="font-bold text-lg text-sidebar-foreground">Cipher</h1>
             <p className="text-xs text-muted-foreground">12841×2844</p>
@@ -207,9 +205,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Mobile Header */}
         <header className="sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-sidebar border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Zap className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img src={cipherLogo} alt="Cipher" className="w-8 h-8 rounded-lg" />
             <span className="font-bold text-sidebar-foreground">Cipher</span>
           </div>
           
