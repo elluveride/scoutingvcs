@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { EventProvider } from "@/contexts/EventContext";
 import { AllianceProvider } from "@/contexts/AllianceContext";
 import { AnimatedRoutes } from "@/components/layout/AnimatedRoutes";
+import { OfflineIndicator } from "@/components/layout/OfflineIndicator";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
           <EventProvider>
             <AllianceProvider>
               <AnimatedRoutes />
+              <OfflineIndicator />
             </AllianceProvider>
           </EventProvider>
         </AuthProvider>
