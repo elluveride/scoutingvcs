@@ -11,6 +11,7 @@ import PitScout from '@/pages/PitScout';
 import Spreadsheet from '@/pages/Spreadsheet';
 import Dashboard from '@/pages/Dashboard';
 import TeamDetail from '@/pages/TeamDetail';
+import TeamCompare from '@/pages/TeamCompare';
 import LiveStats from '@/pages/LiveStats';
 import MatchPlanner from '@/pages/MatchPlanner';
 import QRTransfer from '@/pages/QRTransfer';
@@ -35,6 +36,7 @@ export function AnimatedRoutes() {
         <Route path="/spreadsheet" element={<ApprovalGate><PageTransition><Spreadsheet /></PageTransition></ApprovalGate>} />
         <Route path="/dashboard" element={<ApprovalGate><PageTransition><Dashboard /></PageTransition></ApprovalGate>} />
         <Route path="/team" element={<ApprovalGate><PageTransition><TeamDetail /></PageTransition></ApprovalGate>} />
+        <Route path="/compare" element={<ApprovalGate><PageTransition><TeamCompare /></PageTransition></ApprovalGate>} />
         <Route path="/live-stats" element={<ApprovalGate><PageTransition><LiveStats /></PageTransition></ApprovalGate>} />
         <Route path="/planner" element={<ApprovalGate><PageTransition><MatchPlanner /></PageTransition></ApprovalGate>} />
         <Route path="/qr-transfer" element={<ApprovalGate><PageTransition><QRTransfer /></PageTransition></ApprovalGate>} />

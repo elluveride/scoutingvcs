@@ -21,6 +21,7 @@ import {
   QrCode,
   Users,
   Share2,
+  GitCompareArrows,
 } from 'lucide-react';
 import { OfflineIndicator } from '@/components/layout/OfflineIndicator';
 import {
@@ -41,6 +42,7 @@ const navItems = [
   { to: '/pit', icon: Wrench, label: 'Pit Scout' },
   { to: '/spreadsheet', icon: Table, label: 'Spreadsheet' },
   { to: '/dashboard', icon: BarChart3, label: 'Dashboard' },
+  { to: '/compare', icon: GitCompareArrows, label: 'Compare' },
   { to: '/live-stats', icon: Radio, label: 'Live Stats' },
   { to: '/planner', icon: Swords, label: 'Planner' },
   { to: '/assignments', icon: Users, label: 'Assignments' },

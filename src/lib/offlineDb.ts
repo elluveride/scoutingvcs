@@ -16,6 +16,7 @@ export interface OfflineMatchEntry {
   defense_rating: number;
   endgame_return: string;
   penalty_status: string;
+  notes: string;
   created_at: string;
   /** 0 = not synced, 1 = synced (IDB indexes don't support booleans) */
   synced: 0 | 1;

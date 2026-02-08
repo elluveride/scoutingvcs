@@ -18,6 +18,7 @@ import { PitSection } from '@/components/match-scout/PitSection';
 import { OptionSelector } from '@/components/match-scout/OptionSelector';
 import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil, Crosshair, WifiOff, Server } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
 import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
 
 const endgameOptions: { value: EndgameReturnStatus; label: string }[] = [
@@ -78,6 +79,9 @@ export default function MatchScout() {
   // General counters
   const [fouls, setFouls] = useState(0);
   
+  // Notes
+  const [notes, setNotes] = useState('');
+  
   const [saving, setSaving] = useState(false);
 
   // Handle match type change - refetch schedule
@@ -120,6 +124,7 @@ export default function MatchScout() {
       setEndgameReturn(data.endgame_return as EndgameReturnStatus);
       setPenaltyStatus(data.penalty_status as PenaltyStatus);
       setFouls(data.auto_fouls_minor + data.auto_fouls_major);
+      setNotes((data as any).notes || '');
       setEditingEntry({ id: data.id, scouterId: data.scouter_id });
     } else {
       toast({
@@ -154,6 +159,7 @@ export default function MatchScout() {
     setEndgameReturn('not_returned');
     setPenaltyStatus('none');
     setFouls(0);
+    setNotes('');
     setEditingEntry(null);
     setSearchParams({});
   };
@@ -195,6 +201,7 @@ export default function MatchScout() {
       defense_rating: defenseRating,
       endgame_return: endgameReturn,
       penalty_status: penaltyStatus,
+      notes: notes.trim(),
     };
 
     let error;
@@ -425,6 +432,18 @@ export default function MatchScout() {
             onChange={setFouls}
             label="Total Fouls"
           />
+        </PitSection>
+
+        {/* Notes */}
+        <PitSection title="Notes" icon={Pencil}>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Optional observations — e.g. robot disconnected, gripper broke, alliance blocked..."
+            className="min-h-[80px] bg-background border-border font-mono text-sm resize-none"
+            maxLength={500}
+          />
+          <p className="text-xs text-muted-foreground mt-1">{notes.length}/500</p>
         </PitSection>
 
         {/* Actions */}

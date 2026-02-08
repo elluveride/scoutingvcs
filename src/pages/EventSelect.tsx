@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Zap, Calendar, Plus, Loader2, Lock, AlertCircle } from 'lucide-react';
+import { Zap, Calendar, Plus, Loader2, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const ADMIN_PASSWORD = 'decode2025'; // In production, this should be stored securely
@@ -31,6 +31,8 @@ export default function EventSelect() {
   const [eventName, setEventName] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
+  const [validating, setValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<'valid' | 'invalid' | null>(null);
 
   if (loading) {
     return (
@@ -78,6 +80,26 @@ export default function EventSelect() {
     }
   };
 
+
+  const validateEventCode = async (code: string) => {
+    if (!code || code.length < 3) return;
+    setValidating(true);
+    setValidationResult(null);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('ftc-matches', {
+        body: { eventCode: code, matchType: 'Q' },
+      });
+      if (fnError || data?.error) {
+        setValidationResult('invalid');
+      } else {
+        setValidationResult('valid');
+      }
+    } catch {
+      setValidationResult('invalid');
+    }
+    setValidating(false);
+  };
+
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -95,6 +117,7 @@ export default function EventSelect() {
       setShowCreateDialog(false);
       setEventCode('');
       setEventName('');
+      setValidationResult(null);
       await loadEvents();
     }
 
@@ -231,15 +254,36 @@ export default function EventSelect() {
             )}
             <div className="space-y-2">
               <Label htmlFor="eventCode">Event Code</Label>
-              <Input
-                id="eventCode"
-                value={eventCode}
-                onChange={(e) => setEventCode(e.target.value.toUpperCase())}
-                placeholder="e.g., CASC2025"
-                className="h-12 font-mono uppercase"
-                maxLength={20}
-                required
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="eventCode"
+                  value={eventCode}
+                  onChange={(e) => { setEventCode(e.target.value.toUpperCase()); setValidationResult(null); }}
+                  placeholder="e.g., CASC2025"
+                  className="h-12 font-mono uppercase flex-1"
+                  maxLength={20}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12"
+                  onClick={() => validateEventCode(eventCode.toUpperCase())}
+                  disabled={validating || eventCode.length < 3}
+                >
+                  {validating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify'}
+                </Button>
+              </div>
+              {validationResult === 'valid' && (
+                <p className="text-xs text-success flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Event code found in FTC API
+                </p>
+              )}
+              {validationResult === 'invalid' && (
+                <p className="text-xs text-warning flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> Event code not found in FTC API — you can still create it
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="eventName">Event Name</Label>
