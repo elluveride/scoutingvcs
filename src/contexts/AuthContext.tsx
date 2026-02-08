@@ -95,14 +95,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (!error && data.user) {
-      // Create profile
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        name,
-        role: 'scout',
-        status: 'pending',
-        team_number: teamNumber,
+      // Use RPC to create profile (bypasses RLS since user isn't authenticated yet)
+      const { error: rpcError } = await supabase.rpc('create_profile_for_signup', {
+        _user_id: data.user.id,
+        _name: name,
+        _team_number: teamNumber,
       });
+
+      if (rpcError) {
+        console.error('Failed to create profile:', rpcError.message);
+      }
     }
 
     return { error: error as Error | null };
