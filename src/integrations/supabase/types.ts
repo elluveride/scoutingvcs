@@ -49,6 +49,7 @@ export type Database = {
       }
       events: {
         Row: {
+          archived: boolean
           code: string
           created_at: string
           created_by: string | null
@@ -56,6 +57,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          archived?: boolean
           code: string
           created_at?: string
           created_by?: string | null
@@ -63,6 +65,7 @@ export type Database = {
           name: string
         }
         Update: {
+          archived?: boolean
           code?: string
           created_at?: string
           created_by?: string | null
@@ -322,6 +325,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_my_team_number: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

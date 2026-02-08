@@ -10,6 +10,7 @@ import { PitSection } from '@/components/match-scout/PitSection';
 import { Loader2, QrCode, ScanLine, Download, Upload, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QRCodeSVG } from 'qrcode.react';
+import { QRPayloadSchema } from '@/lib/importValidation';
 
 interface CompactEntry {
   t: number; // team_number
@@ -119,10 +120,12 @@ export default function QRTransfer() {
         (decodedText: string) => {
           try {
             const parsed = JSON.parse(decodedText);
-            if (parsed.d && Array.isArray(parsed.d)) {
+            const result = QRPayloadSchema.safeParse(parsed);
+            if (result.success) {
+              const validEntries = result.data.d as CompactEntry[];
               setScannedEntries(prev => {
                 const existing = new Set(prev.map(e => `${e.t}-${e.m}`));
-                const newEntries = parsed.d.filter((e: CompactEntry) => !existing.has(`${e.t}-${e.m}`));
+                const newEntries = validEntries.filter((e) => !existing.has(`${e.t}-${e.m}`));
                 if (newEntries.length > 0) {
                   toast({ title: 'Scanned!', description: `${newEntries.length} new entries found.` });
                 }
@@ -130,7 +133,7 @@ export default function QRTransfer() {
               });
             }
           } catch {
-            // Not valid scouting data
+            console.warn('QR scan: invalid data format');
           }
         },
         () => {} // error callback

@@ -221,7 +221,20 @@ export default function PitScout() {
       setPartialParkCapable(data.partial_park_capable);
       setFullParkCapable(data.full_park_capable);
       setEndgameConsistency(data.endgame_consistency as ConsistencyLevel);
-      setRobotPhotoUrl((data as any).robot_photo_url || null);
+      // Load signed URL for private bucket
+      const storedUrl = (data as any).robot_photo_url as string | null;
+      if (storedUrl) {
+        // Extract the storage path from the stored URL
+        const pathMatch = storedUrl.match(/robot-photos\/(.+?)(\?|$)/);
+        if (pathMatch) {
+          const { data: signedData } = await supabase.storage
+            .from('robot-photos')
+            .createSignedUrl(pathMatch[1], 3600);
+          setRobotPhotoUrl(signedData?.signedUrl || null);
+        } else {
+          setRobotPhotoUrl(null);
+        }
+      }
 
       if (data.last_edited_by) {
         const { data: editor } = await supabase
@@ -279,11 +292,14 @@ export default function PitScout() {
       return;
     }
 
-    const { data: urlData } = supabase.storage
+    // Use signed URL since bucket is private
+    const { data: signedData, error: signError } = await supabase.storage
       .from('robot-photos')
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 3600);
 
-    setRobotPhotoUrl(urlData.publicUrl);
+    if (signedData && !signError) {
+      setRobotPhotoUrl(signedData.signedUrl);
+    }
     setUploadingPhoto(false);
 
     toast({
