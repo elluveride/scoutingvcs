@@ -131,7 +131,7 @@ export default function Auth() {
           <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-8">
             <Zap className="w-10 h-10 text-primary-foreground" />
           </div>
-          <h1 className="text-4xl font-bold mb-4 text-glow">FTC DECODE</h1>
+          <h1 className="text-4xl font-bold mb-4 text-glow">12841×2844: Cipher</h1>
           <p className="text-xl text-muted-foreground mb-8">
             Competition-Grade Scouting
           </p>
@@ -160,8 +160,8 @@ export default function Auth() {
               <Zap className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-bold text-xl">DECODE</h1>
-              <p className="text-xs text-muted-foreground">Scouting</p>
+              <h1 className="font-bold text-xl">Cipher</h1>
+              <p className="text-xs text-muted-foreground">12841×2844</p>
             </div>
           </div>
 

@@ -88,8 +88,8 @@ export default function ResetPassword() {
             <Zap className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-bold text-xl">DECODE</h1>
-            <p className="text-xs text-muted-foreground">Scouting</p>
+            <h1 className="font-bold text-xl">Cipher</h1>
+            <p className="text-xs text-muted-foreground">12841×2844</p>
           </div>
         </div>
 
