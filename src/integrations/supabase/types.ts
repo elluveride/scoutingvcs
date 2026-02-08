@@ -325,6 +325,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_profile_for_signup: {
+        Args: { _name: string; _team_number: number; _user_id: string }
+        Returns: undefined
+      }
       get_my_team_number: { Args: never; Returns: number }
       has_role: {
         Args: {
