@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, User, Lock, Unlock, KeyRound, Clock } from 'lucide-react';
 import { PitSection } from '@/components/match-scout/PitSection';
+import { ServerModeSettings } from '@/components/settings/ServerModeSettings';
 
 function getTimeRemaining(changedAt: string | null): { canChange: boolean; hoursLeft: number; minutesLeft: number } {
   if (!changedAt) return { canChange: true, hoursLeft: 0, minutesLeft: 0 };
@@ -153,6 +154,8 @@ export default function ProfileSettings() {
       </div>
 
       <div className="space-y-6 max-w-md">
+        {/* Server Mode */}
+        <ServerModeSettings />
         {/* Profile Info Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <PitSection title="Your Info" icon={User}>
