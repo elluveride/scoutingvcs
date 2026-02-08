@@ -23,9 +23,9 @@ function loadMode(): ServerMode {
 
 function loadUrl(): string {
   try {
-    return localStorage.getItem(STORAGE_KEY_URL) || 'http://192.168.137.1:3000';
+    return localStorage.getItem(STORAGE_KEY_URL) || 'http://192.168.44.1:3000';
   } catch {
-    return 'http://192.168.137.1:3000';
+    return 'http://192.168.44.1:3000';
   }
 }
 
