@@ -17,14 +17,15 @@ export interface OfflineMatchEntry {
   endgame_return: string;
   penalty_status: string;
   created_at: string;
-  synced: boolean;
+  /** 0 = not synced, 1 = synced (IDB indexes don't support booleans) */
+  synced: 0 | 1;
 }
 
 interface ScoutingDB {
   matchQueue: {
     key: string;
     value: OfflineMatchEntry;
-    indexes: { 'by-synced': boolean; 'by-event': string };
+    indexes: { 'by-synced': number; 'by-event': string };
   };
   cachedMatches: {
     key: string;
@@ -48,18 +49,33 @@ let dbPromise: Promise<IDBPDatabase<any>> | null = null;
 
 function getDb() {
   if (!dbPromise) {
-    dbPromise = openDB<ScoutingDB>('decode-scouting', 2, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains('matchQueue')) {
-          const store = db.createObjectStore('matchQueue', { keyPath: 'localId' });
-          store.createIndex('by-synced', 'synced');
-          store.createIndex('by-event', 'event_code');
+    dbPromise = openDB<ScoutingDB>('decode-scouting', 3, {
+      upgrade(db, oldVersion, _newVersion, transaction) {
+        if (oldVersion < 2) {
+          if (!db.objectStoreNames.contains('matchQueue')) {
+            const store = db.createObjectStore('matchQueue', { keyPath: 'localId' });
+            store.createIndex('by-synced', 'synced');
+            store.createIndex('by-event', 'event_code');
+          }
+          if (!db.objectStoreNames.contains('cachedMatches')) {
+            db.createObjectStore('cachedMatches', { keyPath: 'eventCode' });
+          }
+          if (!db.objectStoreNames.contains('cachedEntries')) {
+            db.createObjectStore('cachedEntries', { keyPath: 'eventCode' });
+          }
         }
-        if (!db.objectStoreNames.contains('cachedMatches')) {
-          db.createObjectStore('cachedMatches', { keyPath: 'eventCode' });
-        }
-        if (!db.objectStoreNames.contains('cachedEntries')) {
-          db.createObjectStore('cachedEntries', { keyPath: 'eventCode' });
+        if (oldVersion < 3) {
+          // Migrate boolean synced → numeric 0/1 for IDB index compatibility
+          const store = transaction.objectStore('matchQueue');
+          store.openCursor().then(function migrateCursor(cursor) {
+            if (!cursor) return;
+            const entry = cursor.value;
+            if (typeof entry.synced === 'boolean') {
+              entry.synced = entry.synced ? 1 : 0;
+              cursor.update(entry);
+            }
+            return cursor.continue().then(migrateCursor);
+          });
         }
       },
     });
@@ -74,7 +90,7 @@ export async function queueMatchEntry(entry: Omit<OfflineMatchEntry, 'localId' |
   const full: OfflineMatchEntry = {
     ...entry,
     localId,
-    synced: false,
+    synced: 0,
     created_at: new Date().toISOString(),
   };
   await db.put('matchQueue', full);
@@ -84,7 +100,7 @@ export async function queueMatchEntry(entry: Omit<OfflineMatchEntry, 'localId' |
 // Get all unsynced entries
 export async function getUnsyncedEntries(): Promise<OfflineMatchEntry[]> {
   const db = await getDb();
-  return db.getAllFromIndex('matchQueue', 'by-synced', false);
+  return db.getAllFromIndex('matchQueue', 'by-synced', 0);
 }
 
 // Mark entry as synced
@@ -92,7 +108,7 @@ export async function markSynced(localId: string) {
   const db = await getDb();
   const entry = await db.get('matchQueue', localId);
   if (entry) {
-    entry.synced = true;
+    entry.synced = 1;
     await db.put('matchQueue', entry);
   }
 }
@@ -107,7 +123,7 @@ export async function getLocalEntries(eventCode: string): Promise<OfflineMatchEn
 export async function getQueueStatus() {
   const db = await getDb();
   const all = await db.getAll('matchQueue');
-  const unsynced = all.filter(e => !e.synced);
+  const unsynced = all.filter(e => e.synced === 0);
   return { total: all.length, pending: unsynced.length };
 }
 
@@ -139,7 +155,7 @@ export async function cleanupOldEntries() {
   const all = await db.getAll('matchQueue');
   const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
   for (const entry of all) {
-    if (entry.synced && new Date(entry.created_at).getTime() < cutoff) {
+    if (entry.synced === 1 && new Date(entry.created_at).getTime() < cutoff) {
       await db.delete('matchQueue', entry.localId);
     }
   }
