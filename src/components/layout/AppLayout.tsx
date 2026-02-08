@@ -17,7 +17,12 @@ import {
   Radio,
   Menu,
   X,
+  Swords,
+  QrCode,
+  Users,
+  Share2,
 } from 'lucide-react';
+import { OfflineIndicator } from '@/components/layout/OfflineIndicator';
 import {
   Sheet,
   SheetContent,
@@ -37,6 +42,10 @@ const navItems = [
   { to: '/spreadsheet', icon: Table, label: 'Spreadsheet' },
   { to: '/dashboard', icon: BarChart3, label: 'Dashboard' },
   { to: '/live-stats', icon: Radio, label: 'Live Stats' },
+  { to: '/planner', icon: Swords, label: 'Planner' },
+  { to: '/assignments', icon: Users, label: 'Assignments' },
+  { to: '/qr-transfer', icon: QrCode, label: 'QR Transfer' },
+  { to: '/sharing', icon: Share2, label: 'Data Sharing' },
 ];
 
 function AllianceSelector() {

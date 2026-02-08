@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useFTCMatches } from '@/hooks/useFTCMatches';
+import { useOnlineStatus } from '@/hooks/useOfflineSync';
+import { queueMatchEntry } from '@/lib/offlineDb';
 import { MatchInfoSection } from '@/components/match-scout/MatchInfoSection';
 import { PitSection } from '@/components/match-scout/PitSection';
 import { OptionSelector } from '@/components/match-scout/OptionSelector';
-import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil, Crosshair } from 'lucide-react';
+import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil, Crosshair, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
 
@@ -43,6 +45,7 @@ export default function MatchScout() {
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const { matches, loading: matchesLoading, refetch: refetchMatches } = useFTCMatches();
+  const isOnline = useOnlineStatus();
   
   const isAdmin = profile?.role === 'admin';
   const editId = searchParams.get('edit');
@@ -199,6 +202,23 @@ export default function MatchScout() {
         .update(entryData)
         .eq('id', editingEntry.id);
       error = updateError;
+    } else if (!isOnline) {
+      // Offline: queue locally
+      try {
+        await queueMatchEntry({
+          ...entryData,
+          scouter_id: user.id,
+        });
+        setSaving(false);
+        toast({
+          title: 'Saved Offline',
+          description: `Match ${matchNumber} data queued. Will sync when online.`,
+        });
+        resetForm();
+        return;
+      } catch (e) {
+        error = e;
+      }
     } else {
       const { error: upsertError } = await supabase.from('match_entries').upsert(
         {
@@ -215,7 +235,7 @@ export default function MatchScout() {
     if (error) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save match data.',
+        description: (error as any)?.message || 'Failed to save match data.',
         variant: 'destructive',
       });
     } else {
@@ -380,10 +400,12 @@ export default function MatchScout() {
           >
             {saving ? (
               <Loader2 className="w-5 h-5 animate-spin" />
+            ) : !isOnline ? (
+              <WifiOff className="w-5 h-5" />
             ) : (
               <Save className="w-5 h-5" />
             )}
-            Save Match
+            {isOnline ? 'Save Match' : 'Save Offline'}
           </Button>
         </div>
       </form>
