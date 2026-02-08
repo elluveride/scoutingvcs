@@ -164,6 +164,7 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
           status: Database["public"]["Enums"]["user_status"]
           team_number: number | null
+          team_number_changed_at: string | null
           updated_at: string
         }
         Insert: {
@@ -174,6 +175,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           status?: Database["public"]["Enums"]["user_status"]
           team_number?: number | null
+          team_number_changed_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -184,6 +186,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           status?: Database["public"]["Enums"]["user_status"]
           team_number?: number | null
+          team_number_changed_at?: string | null
           updated_at?: string
         }
         Relationships: []
