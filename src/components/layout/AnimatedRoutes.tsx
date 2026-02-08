@@ -4,6 +4,7 @@ import { PageTransition } from './PageTransition';
 import { ApprovalGate } from '@/components/auth/ApprovalGate';
 
 import Auth from '@/pages/Auth';
+import ResetPassword from '@/pages/ResetPassword';
 import EventSelect from '@/pages/EventSelect';
 import MatchScout from '@/pages/MatchScout';
 import PitScout from '@/pages/PitScout';
@@ -27,6 +28,7 @@ export function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Auth /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/event-select" element={<ApprovalGate><PageTransition><EventSelect /></PageTransition></ApprovalGate>} />
         <Route path="/scout" element={<ApprovalGate><PageTransition><MatchScout /></PageTransition></ApprovalGate>} />
         <Route path="/pit" element={<ApprovalGate><PageTransition><PitScout /></PageTransition></ApprovalGate>} />
