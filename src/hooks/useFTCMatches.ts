@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEvent } from '@/contexts/EventContext';
-import { useToast } from '@/hooks/use-toast';
 
 interface MatchPosition {
   teamNumber: number;
@@ -23,7 +22,6 @@ interface UseFTCMatchesResult {
 
 export function useFTCMatches(): UseFTCMatchesResult {
   const { currentEvent } = useEvent();
-  const { toast } = useToast();
   const [matches, setMatches] = useState<MatchData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,11 +55,7 @@ export function useFTCMatches(): UseFTCMatchesResult {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load match schedule';
       setError(message);
-      toast({
-        title: 'FTC API Error',
-        description: message,
-        variant: 'destructive',
-      });
+      console.error('FTC Matches error:', message);
     } finally {
       setLoading(false);
     }

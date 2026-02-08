@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
@@ -10,15 +10,19 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
+  Tooltip, TooltipContent, TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, RefreshCw, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, RefreshCw, Pencil, Trash2, ArrowUp, ArrowDown, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { DataExportButtons } from '@/components/data/DataExportButtons';
 import { DataQualityAlerts } from '@/components/data/DataQualityAlerts';
+import { SpreadsheetFilters } from '@/components/spreadsheet/SpreadsheetFilters';
 import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
 
 interface MatchRow {
@@ -38,8 +42,12 @@ interface MatchRow {
   defense_rating: number;
   endgame_return: EndgameReturnStatus;
   penalty_status: PenaltyStatus;
+  notes: string;
   created_at: string;
 }
+
+type SortKey = 'match_number' | 'team_number' | 'auto_scored_close' | 'auto_scored_far' | 'teleop_scored_close' | 'teleop_scored_far' | 'defense_rating';
+type SortDir = 'asc' | 'desc';
 
 export default function Spreadsheet() {
   const { user, profile } = useAuth();
@@ -50,6 +58,16 @@ export default function Spreadsheet() {
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<MatchRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Filters
+  const [teamFilter, setTeamFilter] = useState('');
+  const [matchMin, setMatchMin] = useState('');
+  const [matchMax, setMatchMax] = useState('');
+  const [scouterFilter, setScouterFilter] = useState('all');
+
+  // Sorting
+  const [sortKey, setSortKey] = useState<SortKey>('match_number');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   const isAdmin = profile?.role === 'admin';
 
@@ -80,6 +98,7 @@ export default function Spreadsheet() {
       setEntries(data.map(entry => ({
         ...entry,
         scouter_name: nameById.get(entry.scouter_id) || 'Unknown',
+        notes: (entry as any).notes || '',
       })));
     }
     
@@ -103,8 +122,57 @@ export default function Spreadsheet() {
     return () => { supabase.removeChannel(channel); };
   }, [currentEvent, loadEntries]);
 
+  // Unique scouter names for filter dropdown
+  const scouterNames = useMemo(() => 
+    Array.from(new Set(entries.map(e => e.scouter_name))).sort(),
+    [entries]
+  );
+
+  // Filtered + sorted entries
+  const filteredEntries = useMemo(() => {
+    let result = entries;
+
+    if (teamFilter) {
+      result = result.filter(e => e.team_number.toString().includes(teamFilter));
+    }
+    if (matchMin) {
+      result = result.filter(e => e.match_number >= parseInt(matchMin));
+    }
+    if (matchMax) {
+      result = result.filter(e => e.match_number <= parseInt(matchMax));
+    }
+    if (scouterFilter && scouterFilter !== 'all') {
+      result = result.filter(e => e.scouter_name === scouterFilter);
+    }
+
+    result.sort((a, b) => {
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      const cmp = typeof aVal === 'number' && typeof bVal === 'number' ? aVal - bVal : 0;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+    return result;
+  }, [entries, teamFilter, matchMin, matchMax, scouterFilter, sortKey, sortDir]);
+
   if (!user) return <Navigate to="/auth" replace />;
   if (!currentEvent) return <Navigate to="/event-select" replace />;
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const SortIcon = ({ column }: { column: SortKey }) => {
+    if (sortKey !== column) return null;
+    return sortDir === 'asc' 
+      ? <ArrowUp className="w-3 h-3 inline ml-1" /> 
+      : <ArrowDown className="w-3 h-3 inline ml-1" />;
+  };
 
   const handleEditRow = (entry: MatchRow) => {
     navigate(`/scout?edit=${entry.id}`);
@@ -156,6 +224,21 @@ export default function Spreadsheet() {
         </div>
       )}
 
+      {/* Filters */}
+      {!loading && entries.length > 0 && (
+        <SpreadsheetFilters
+          teamFilter={teamFilter}
+          onTeamFilterChange={setTeamFilter}
+          matchMin={matchMin}
+          onMatchMinChange={setMatchMin}
+          matchMax={matchMax}
+          onMatchMaxChange={setMatchMax}
+          scouterFilter={scouterFilter}
+          onScouterFilterChange={setScouterFilter}
+          scouterNames={scouterNames}
+        />
+      )}
+
       <div className="data-card overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -172,22 +255,37 @@ export default function Spreadsheet() {
                 <TableRow>
                   {isAdmin && <TableHead className="w-10"></TableHead>}
                   {isAdmin && <TableHead className="w-10"></TableHead>}
-                  <TableHead className="font-semibold">Match</TableHead>
-                  <TableHead className="font-semibold">Team</TableHead>
+                  <TableHead className="font-semibold cursor-pointer select-none" onClick={() => handleSort('match_number')}>
+                    Match<SortIcon column="match_number" />
+                  </TableHead>
+                  <TableHead className="font-semibold cursor-pointer select-none" onClick={() => handleSort('team_number')}>
+                    Team<SortIcon column="team_number" />
+                  </TableHead>
                   <TableHead className="font-semibold">Scouter</TableHead>
-                  <TableHead className="font-semibold text-center">Auto C</TableHead>
-                  <TableHead className="font-semibold text-center">Auto F</TableHead>
+                  <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('auto_scored_close')}>
+                    Auto C<SortIcon column="auto_scored_close" />
+                  </TableHead>
+                  <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('auto_scored_far')}>
+                    Auto F<SortIcon column="auto_scored_far" />
+                  </TableHead>
                   <TableHead className="font-semibold text-center">Fouls</TableHead>
                   <TableHead className="font-semibold text-center">Line</TableHead>
-                  <TableHead className="font-semibold text-center">Tel C</TableHead>
-                  <TableHead className="font-semibold text-center">Tel F</TableHead>
-                  <TableHead className="font-semibold text-center">Def</TableHead>
+                  <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('teleop_scored_close')}>
+                    Tel C<SortIcon column="teleop_scored_close" />
+                  </TableHead>
+                  <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('teleop_scored_far')}>
+                    Tel F<SortIcon column="teleop_scored_far" />
+                  </TableHead>
+                  <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('defense_rating')}>
+                    Def<SortIcon column="defense_rating" />
+                  </TableHead>
                   <TableHead className="font-semibold text-center">End</TableHead>
                   <TableHead className="font-semibold text-center">Pen</TableHead>
+                  <TableHead className="font-semibold text-center">Notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {entries.map((entry) => (
+                {filteredEntries.map((entry) => (
                   <TableRow 
                     key={entry.id}
                     className={cn(isAdmin && "cursor-pointer hover:bg-muted/50")}
@@ -231,6 +329,20 @@ export default function Spreadsheet() {
                       {entry.endgame_return.replace('_', ' ')}
                     </TableCell>
                     <TableCell className="text-center">{getPenaltyBadge(entry.penalty_status)}</TableCell>
+                    <TableCell className="text-center">
+                      {entry.notes ? (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <MessageSquare className="w-4 h-4 text-primary inline-block" />
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-[300px]">
+                            <p className="text-sm">{entry.notes}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -240,7 +352,7 @@ export default function Spreadsheet() {
       </div>
 
       <div className="mt-4 text-sm text-muted-foreground">
-        {entries.length} entries • Auto-syncing enabled
+        {filteredEntries.length}{filteredEntries.length !== entries.length ? ` / ${entries.length}` : ''} entries • Auto-syncing enabled
         {isAdmin && ' • Click row to edit'}
       </div>
 

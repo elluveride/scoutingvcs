@@ -107,6 +107,66 @@
     --sidebar-ring: 0 85% 55%;
   }
 
+  /* Light Mode Theme */
+  .light, [data-theme="light"] {
+    --background: 0 0% 98%;
+    --foreground: 220 20% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 12%;
+
+    --primary: 210 100% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 80% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --tertiary: 25 95% 50%;
+    --tertiary-foreground: 0 0% 100%;
+
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 260 55% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 100% 10%;
+
+    --success: 142 70% 38%;
+    --success-foreground: 142 100% 10%;
+
+    --alliance-red: 0 80% 50%;
+    --alliance-blue: 210 100% 45%;
+
+    --border: 220 15% 85%;
+    --input: 220 15% 90%;
+    --ring: 210 100% 45%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 15%;
+    --sidebar-primary: 210 100% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 95%;
+    --sidebar-accent-foreground: 220 20% 12%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 210 100% 45%;
+
+    --surface-dim: 220 15% 95%;
+    --surface-bright: 0 0% 100%;
+    --surface-container-lowest: 0 0% 100%;
+    --surface-container-low: 220 15% 97%;
+    --surface-container: 220 15% 95%;
+    --surface-container-high: 220 15% 92%;
+    --surface-container-highest: 220 15% 88%;
+  }
+
   .dark {
     --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
     --font-display: "Google Sans", "Roboto", ui-sans-serif, system-ui, sans-serif;

@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, User, Lock, Unlock, KeyRound, Clock } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Loader2, Save, User, Lock, Unlock, KeyRound, Clock, Sun, Moon } from 'lucide-react';
 import { PitSection } from '@/components/match-scout/PitSection';
 import { ServerModeSettings } from '@/components/settings/ServerModeSettings';
 
@@ -27,6 +28,7 @@ function getTimeRemaining(changedAt: string | null): { canChange: boolean; hours
 export default function ProfileSettings() {
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
 
   const [name, setName] = useState('');
   const [teamNumber, setTeamNumber] = useState('');
@@ -175,6 +177,27 @@ export default function ProfileSettings() {
       </div>
 
       <div className="space-y-6 max-w-md">
+        {/* Theme Toggle */}
+        <PitSection title="Appearance" icon={theme === 'dark' ? Moon : Sun}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Theme</p>
+              <p className="text-xs text-muted-foreground">
+                {theme === 'dark' ? 'Dark mode — great for dim pit areas' : 'Light mode — better for bright venues'}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="gap-2"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? 'Light' : 'Dark'}
+            </Button>
+          </div>
+        </PitSection>
+
         {/* Server Mode */}
         <ServerModeSettings />
         {/* Profile Info Form */}

@@ -50,6 +50,7 @@ export type Database = {
           event_code: string
           id: string
           match_number: number
+          notes: string
           on_launch_line: boolean
           penalty_status: Database["public"]["Enums"]["penalty_status"]
           scouter_id: string
@@ -68,6 +69,7 @@ export type Database = {
           event_code: string
           id?: string
           match_number: number
+          notes?: string
           on_launch_line?: boolean
           penalty_status?: Database["public"]["Enums"]["penalty_status"]
           scouter_id: string
@@ -86,6 +88,7 @@ export type Database = {
           event_code?: string
           id?: string
           match_number?: number
+          notes?: string
           on_launch_line?: boolean
           penalty_status?: Database["public"]["Enums"]["penalty_status"]
           scouter_id?: string
@@ -188,6 +191,39 @@ export type Database = {
           team_number?: number | null
           team_number_changed_at?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      scouter_assignments: {
+        Row: {
+          created_at: string
+          created_by: string
+          event_code: string
+          id: string
+          match_number: number
+          position: string
+          scouter_id: string
+          team_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          event_code: string
+          id?: string
+          match_number: number
+          position: string
+          scouter_id: string
+          team_number: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          event_code?: string
+          id?: string
+          match_number?: number
+          position?: string
+          scouter_id?: string
+          team_number?: number
         }
         Relationships: []
       }

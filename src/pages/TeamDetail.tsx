@@ -8,22 +8,12 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, ArrowLeft, Bot, Gamepad2, Flag, TrendingUp } from 'lucide-react';
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Legend, RadarChart, PolarGrid,
+  PolarAngleAxis, PolarRadiusAxis, Radar,
 } from 'recharts';
+import { StatCard } from '@/components/team-detail/TeamStatCards';
+import { MatchLogTable } from '@/components/team-detail/MatchLogTable';
 
 interface MatchEntry {
   match_number: number;
@@ -36,6 +26,7 @@ interface MatchEntry {
   defense_rating: number;
   endgame_return: string;
   penalty_status: string;
+  notes: string;
   created_at: string;
 }
 
@@ -63,7 +54,7 @@ export default function TeamDetail() {
       .eq('team_number', parseInt(teamNumber!))
       .order('match_number', { ascending: true });
 
-    if (data) setEntries(data);
+    if (data) setEntries(data.map(e => ({ ...e, notes: (e as any).notes || '' })));
     setLoading(false);
   };
 
@@ -84,7 +75,6 @@ export default function TeamDetail() {
     defense: e.defense_rating,
   }));
 
-  // Radar data for overall team profile
   const avg = (fn: (e: MatchEntry) => number) =>
     entries.length > 0
       ? Math.round((entries.reduce((s, e) => s + fn(e), 0) / entries.length) * 10) / 10
@@ -116,6 +106,13 @@ export default function TeamDetail() {
     { status: 'Partial', count: endgameCounts.partial },
     { status: 'None', count: endgameCounts.none },
   ];
+
+  const chartStyle = {
+    background: 'hsl(220 18% 11%)',
+    border: '1px solid hsl(220 15% 20%)',
+    borderRadius: '0.75rem',
+    fontSize: 12,
+  };
 
   return (
     <AppLayout>
@@ -156,14 +153,7 @@ export default function TeamDetail() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 20%)" />
                   <XAxis dataKey="match" stroke="hsl(220 10% 55%)" fontSize={12} />
                   <YAxis stroke="hsl(220 10% 55%)" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{
-                      background: 'hsl(220 18% 11%)',
-                      border: '1px solid hsl(220 15% 20%)',
-                      borderRadius: '0.75rem',
-                      fontSize: 12,
-                    }}
-                  />
+                  <Tooltip contentStyle={chartStyle} />
                   <Legend />
                   <Line type="monotone" dataKey="autoTotal" name="Auto" stroke="hsl(210 100% 50%)" strokeWidth={2} dot={{ r: 4 }} />
                   <Line type="monotone" dataKey="teleopTotal" name="TeleOp" stroke="hsl(0 85% 55%)" strokeWidth={2} dot={{ r: 4 }} />
@@ -183,13 +173,7 @@ export default function TeamDetail() {
                     <PolarGrid stroke="hsl(220 15% 20%)" />
                     <PolarAngleAxis dataKey="metric" stroke="hsl(220 10% 55%)" fontSize={11} />
                     <PolarRadiusAxis stroke="hsl(220 15% 20%)" fontSize={10} />
-                    <Radar
-                      name="Avg"
-                      dataKey="value"
-                      stroke="hsl(210 100% 50%)"
-                      fill="hsl(210 100% 50%)"
-                      fillOpacity={0.3}
-                    />
+                    <Radar name="Avg" dataKey="value" stroke="hsl(210 100% 50%)" fill="hsl(210 100% 50%)" fillOpacity={0.3} />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
@@ -204,14 +188,7 @@ export default function TeamDetail() {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 20%)" />
                     <XAxis dataKey="status" stroke="hsl(220 10% 55%)" fontSize={12} />
                     <YAxis stroke="hsl(220 10% 55%)" fontSize={12} allowDecimals={false} />
-                    <Tooltip
-                      contentStyle={{
-                        background: 'hsl(220 18% 11%)',
-                        border: '1px solid hsl(220 15% 20%)',
-                        borderRadius: '0.75rem',
-                        fontSize: 12,
-                      }}
-                    />
+                    <Tooltip contentStyle={chartStyle} />
                     <Bar dataKey="count" name="Count" fill="hsl(260 60% 60%)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -228,14 +205,7 @@ export default function TeamDetail() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 20%)" />
                   <XAxis dataKey="match" stroke="hsl(220 10% 55%)" fontSize={12} />
                   <YAxis stroke="hsl(220 10% 55%)" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{
-                      background: 'hsl(220 18% 11%)',
-                      border: '1px solid hsl(220 15% 20%)',
-                      borderRadius: '0.75rem',
-                      fontSize: 12,
-                    }}
-                  />
+                  <Tooltip contentStyle={chartStyle} />
                   <Legend />
                   <Bar dataKey="autoClose" name="Auto Close" fill="hsl(210 100% 50%)" stackId="auto" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="autoFar" name="Auto Far" fill="hsl(210 100% 70%)" stackId="auto" radius={[6, 6, 0, 0]} />
@@ -245,18 +215,11 @@ export default function TeamDetail() {
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* Match-by-Match Log with Notes */}
+          <MatchLogTable entries={entries} />
         </div>
       )}
     </AppLayout>
-  );
-}
-
-function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: number | string; color: string }) {
-  return (
-    <div className="data-card flex flex-col items-center justify-center py-4">
-      <Icon className={`w-5 h-5 mb-1 ${color}`} />
-      <span className="text-2xl font-display font-bold">{value}</span>
-      <span className="text-xs text-muted-foreground font-mono">{label}</span>
-    </div>
   );
 }

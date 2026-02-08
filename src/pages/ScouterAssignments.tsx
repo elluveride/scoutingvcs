@@ -11,8 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFTCMatches } from '@/hooks/useFTCMatches';
 import { PitSection } from '@/components/match-scout/PitSection';
 import {
-  Loader2, Users, UserPlus, ClipboardList, Shuffle,
-  ChevronDown, ChevronUp, CheckCircle2,
+  Loader2, Users, ClipboardList, Shuffle,
+  ChevronDown, ChevronUp, CheckCircle2, Save,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -41,11 +41,16 @@ export default function ScouterAssignments() {
   const [numScouters, setNumScouters] = useState(4);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [expandedMatch, setExpandedMatch] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  // Fetch team scouters
+  // Fetch team scouters and saved assignments on mount
   useEffect(() => {
     loadScouters();
   }, []);
+
+  useEffect(() => {
+    if (currentEvent) loadSavedAssignments();
+  }, [currentEvent]);
 
   const loadScouters = async () => {
     setLoading(true);
@@ -64,6 +69,34 @@ export default function ScouterAssignments() {
       setScouters(data || []);
     }
     setLoading(false);
+  };
+
+  const loadSavedAssignments = async () => {
+    if (!currentEvent) return;
+    const { data } = await supabase
+      .from('scouter_assignments')
+      .select('*')
+      .eq('event_code', currentEvent.code)
+      .order('match_number', { ascending: true });
+
+    if (data && data.length > 0) {
+      // Need scouter names
+      const scouterIds = Array.from(new Set(data.map(a => a.scouter_id)));
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .in('id', scouterIds);
+      
+      const nameMap = new Map((profiles || []).map(p => [p.id, p.name]));
+
+      setAssignments(data.map(a => ({
+        scouterName: nameMap.get(a.scouter_id) || 'Unknown',
+        scouterId: a.scouter_id,
+        matchNumber: a.match_number,
+        teamNumber: a.team_number,
+        position: a.position,
+      })));
+    }
   };
 
   // Auto-generate assignments using round-robin
@@ -89,7 +122,41 @@ export default function ScouterAssignments() {
     });
 
     setAssignments(newAssignments);
-    toast({ title: 'Assignments Generated', description: `${newAssignments.length} assignments created for ${activeScouters.length} scouters.` });
+    toast({ title: 'Assignments Generated', description: `${newAssignments.length} assignments created for ${activeScouters.length} scouters. Save to persist.` });
+  };
+
+  // Save assignments to database
+  const saveAssignments = async () => {
+    if (!currentEvent || assignments.length === 0) return;
+    setSaving(true);
+
+    // Delete existing assignments for this event
+    await supabase
+      .from('scouter_assignments')
+      .delete()
+      .eq('event_code', currentEvent.code);
+
+    // Insert new assignments
+    const rows = assignments.map(a => ({
+      event_code: currentEvent.code,
+      match_number: a.matchNumber,
+      team_number: a.teamNumber,
+      position: a.position,
+      scouter_id: a.scouterId,
+      created_by: user!.id,
+    }));
+
+    const { error } = await supabase
+      .from('scouter_assignments')
+      .insert(rows);
+
+    setSaving(false);
+
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to save assignments.', variant: 'destructive' });
+    } else {
+      toast({ title: 'Saved!', description: `${assignments.length} assignments saved and will persist across sessions.` });
+    }
   };
 
   // Group assignments by match
@@ -203,14 +270,25 @@ export default function ScouterAssignments() {
                   ))}
                 </div>
 
-                <Button
-                  onClick={generateAssignments}
-                  disabled={matches.length === 0}
-                  className="w-full h-14 gap-2"
-                >
-                  <Shuffle className="w-5 h-5" />
-                  Generate Assignments
-                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={generateAssignments}
+                    disabled={matches.length === 0}
+                    className="flex-1 h-14 gap-2"
+                  >
+                    <Shuffle className="w-5 h-5" />
+                    Generate
+                  </Button>
+                  <Button
+                    onClick={saveAssignments}
+                    disabled={assignments.length === 0 || saving}
+                    variant="outline"
+                    className="flex-1 h-14 gap-2"
+                  >
+                    {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                    Save
+                  </Button>
+                </div>
               </div>
             </PitSection>
           )}
