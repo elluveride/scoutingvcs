@@ -102,8 +102,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <Zap className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-sidebar-foreground">DECODE</h1>
-            <p className="text-xs text-muted-foreground">Scouting</p>
+            <h1 className="font-bold text-lg text-sidebar-foreground">Cipher</h1>
+            <p className="text-xs text-muted-foreground">12841×2844</p>
           </div>
         </div>
       </div>
@@ -210,7 +210,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Zap className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-sidebar-foreground">DECODE</span>
+            <span className="font-bold text-sidebar-foreground">Cipher</span>
           </div>
           
           <Sheet open={open} onOpenChange={setOpen}>

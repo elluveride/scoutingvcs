@@ -261,7 +261,7 @@ export default function DataSharing() {
         {/* Format Info */}
         <div className="data-card text-xs text-muted-foreground space-y-2">
           <h4 className="font-display font-semibold text-foreground text-sm">Standardized Format</h4>
-          <p>All exports use the same schema so any team running DECODE can import data from another DECODE team.</p>
+          <p>All exports use the same schema so any team running Cipher can import data from another Cipher team.</p>
           <p>CSV files can also be opened in Google Sheets or Excel for manual analysis.</p>
           <p>Imported data will be attributed to your account. Duplicate team+match combinations will be updated.</p>
         </div>
