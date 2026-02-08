@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Calendar, Plus, Loader2, AlertCircle, CheckCircle2, RefreshCw, Star } from 'lucide-react';
+import { Calendar, Plus, Loader2, AlertCircle, CheckCircle2, RefreshCw, Star, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import cipherLogo from '@/assets/cipher-icon.png';
 
@@ -28,7 +28,7 @@ interface CachedEvent {
 
 export default function EventSelect() {
   const { user, loading, profile } = useAuth();
-  const { events, setCurrentEvent, createEvent, loadEvents } = useEvent();
+  const { events, setCurrentEvent, createEvent, loadEvents, eventExpired, clearExpired } = useEvent();
   const navigate = useNavigate();
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -186,6 +186,21 @@ export default function EventSelect() {
             Choose an event to start scouting
           </p>
         </div>
+
+        {eventExpired && (
+          <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium text-secondary">Event Ended</p>
+              <p className="text-sm text-muted-foreground">
+                Your previous event has concluded and its data has been archived. Please select a new event.
+              </p>
+            </div>
+            <button onClick={clearExpired} className="text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {profile?.status === 'pending' && (
           <div className="bg-warning/10 border border-warning/20 rounded-lg p-4 mb-6 flex items-start gap-3">

@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+
+const STORAGE_KEY = 'cipher_current_event';
 
 interface Event {
   id: string;
@@ -13,13 +15,39 @@ interface EventContextType {
   setCurrentEvent: (event: Event | null) => void;
   loadEvents: () => Promise<void>;
   createEvent: (code: string, name: string) => Promise<{ error: Error | null }>;
+  eventExpired: boolean;
+  clearExpired: () => void;
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
 
 export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
+  const [currentEvent, setCurrentEventState] = useState<Event | null>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [events, setEvents] = useState<Event[]>([]);
+  const [eventExpired, setEventExpired] = useState(false);
+
+  const setCurrentEvent = useCallback((event: Event | null) => {
+    setCurrentEventState(event);
+    setEventExpired(false);
+    if (event) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(event));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, []);
+
+  const clearExpired = useCallback(() => {
+    setEventExpired(false);
+    setCurrentEventState(null);
+    localStorage.removeItem(STORAGE_KEY);
+  }, []);
 
   const loadEvents = async () => {
     const { data, error } = await supabase
@@ -28,11 +56,22 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .order('created_at', { ascending: false });
 
     if (data && !error) {
-      setEvents(data.map(e => ({
+      const loadedEvents = data.map(e => ({
         id: e.id,
         code: e.code,
         name: e.name,
-      })));
+      }));
+      setEvents(loadedEvents);
+
+      // Check if persisted event still exists (it may have been cleaned up)
+      if (currentEvent) {
+        const stillExists = loadedEvents.some(e => e.code === currentEvent.code);
+        if (!stillExists) {
+          setEventExpired(true);
+          setCurrentEventState(null);
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
     }
   };
 
@@ -90,6 +129,8 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCurrentEvent,
         loadEvents,
         createEvent,
+        eventExpired,
+        clearExpired,
       }}
     >
       {children}
