@@ -20,65 +20,174 @@ import {
   PolarAngleAxis, PolarRadiusAxis, Radar,
 } from 'recharts';
 
-interface TeamScoutData {
-  teamNumber: number;
-  entries: {
-    auto_scored_close: number;
-    auto_scored_far: number;
-    teleop_scored_close: number;
-    teleop_scored_far: number;
-    defense_rating: number;
-    endgame_return: string;
-    on_launch_line: boolean;
-    auto_fouls_minor: number;
-  }[];
+/*──────────────────────────────────────────────────────────────
+  DECODE 2025-2026 Official Point Values (Table 10-2)
+──────────────────────────────────────────────────────────────*/
+const POINTS = {
+  LEAVE: 3,                    // Auto only
+  CLASSIFIED_AUTO: 3,          // "Close" = CLASSIFIED
+  CLASSIFIED_TELEOP: 3,
+  OVERFLOW_AUTO: 1,            // "Far" = OVERFLOW
+  OVERFLOW_TELEOP: 1,
+  DEPOT: 1,                    // Per artifact
+  PATTERN_MATCH: 2,            // Per matching artifact (auto & teleop)
+  BASE_PARTIAL: 5,
+  BASE_FULL: 10,
+  BASE_BOTH_FULL_BONUS: 10,   // Alliance bonus for 2 robots fully returned
+  MINOR_FOUL: 5,               // Credited to opponent
+  MAJOR_FOUL: 15,              // Credited to opponent
+} as const;
+
+/*──────────────────────────────────────────────────────────────
+  Types
+──────────────────────────────────────────────────────────────*/
+interface MatchEntry {
+  auto_scored_close: number;   // CLASSIFIED artifacts in auto
+  auto_scored_far: number;     // OVERFLOW artifacts in auto
+  teleop_scored_close: number; // CLASSIFIED artifacts in teleop
+  teleop_scored_far: number;   // OVERFLOW artifacts in teleop
+  defense_rating: number;
+  endgame_return: string;      // not_returned | partial | full | lift
+  on_launch_line: boolean;     // true = left launch line
+  auto_fouls_minor: number;    // fouls committed
+  penalty_status: string;
 }
 
 interface TeamPrediction {
   teamNumber: number;
+  // Point breakdowns
+  autoLeavePoints: number;
+  autoClassifiedPoints: number;
+  autoOverflowPoints: number;
+  teleopClassifiedPoints: number;
+  teleopOverflowPoints: number;
+  endgamePoints: number;
+  foulsGivenToOpponent: number;
+  // Aggregates
   predictedAuto: number;
   predictedTeleop: number;
+  predictedEndgame: number;
   predictedTotal: number;
-  liftChance: number;
+  // Rates
+  leaveRate: number;
+  fullReturnRate: number;
+  partialReturnRate: number;
+  liftRate: number;
+  // Meta
   consistency: number;
   matchCount: number;
+  avgDefense: number;
 }
 
-function predictTeam(data: TeamScoutData): TeamPrediction {
-  const { entries, teamNumber } = data;
-  if (entries.length === 0) {
-    return { teamNumber, predictedAuto: 0, predictedTeleop: 0, predictedTotal: 0, liftChance: 0, consistency: 0, matchCount: 0 };
-  }
+/*──────────────────────────────────────────────────────────────
+  Prediction Engine — weighted averages with recency bias
+──────────────────────────────────────────────────────────────*/
+function predictTeam(teamNumber: number, entries: MatchEntry[]): TeamPrediction {
+  const empty: TeamPrediction = {
+    teamNumber,
+    autoLeavePoints: 0, autoClassifiedPoints: 0, autoOverflowPoints: 0,
+    teleopClassifiedPoints: 0, teleopOverflowPoints: 0,
+    endgamePoints: 0, foulsGivenToOpponent: 0,
+    predictedAuto: 0, predictedTeleop: 0, predictedEndgame: 0, predictedTotal: 0,
+    leaveRate: 0, fullReturnRate: 0, partialReturnRate: 0, liftRate: 0,
+    consistency: 0, matchCount: 0, avgDefense: 0,
+  };
 
-  // Weight recent matches more heavily (exponential decay)
+  if (entries.length === 0) return empty;
+
+  // Exponential recency weighting (latest match = highest weight)
   const weights = entries.map((_, i) => Math.pow(1.3, i));
   const totalWeight = weights.reduce((a, b) => a + b, 0);
-
-  const weightedAvg = (fn: (e: typeof entries[0]) => number) =>
+  const wAvg = (fn: (e: MatchEntry) => number) =>
     entries.reduce((s, e, i) => s + fn(e) * weights[i], 0) / totalWeight;
 
-  const predictedAuto = weightedAvg(e => e.auto_scored_close + e.auto_scored_far);
-  const predictedTeleop = weightedAvg(e => e.teleop_scored_close + e.teleop_scored_far);
-  const liftChance = entries.filter(e => e.endgame_return === 'lift').length / entries.length;
+  // Rates (simple proportion)
+  const rate = (fn: (e: MatchEntry) => boolean) =>
+    entries.filter(fn).length / entries.length;
 
-  // Consistency: inverse of coefficient of variation
-  const totals = entries.map(e => e.auto_scored_close + e.auto_scored_far + e.teleop_scored_close + e.teleop_scored_far);
-  const mean = totals.reduce((a, b) => a + b, 0) / totals.length;
-  const variance = totals.reduce((s, t) => s + Math.pow(t - mean, 2), 0) / totals.length;
+  // ── AUTO ──
+  const leaveRate = rate(e => e.on_launch_line);
+  const autoLeavePoints = leaveRate * POINTS.LEAVE;
+  const avgAutoClassified = wAvg(e => e.auto_scored_close);
+  const avgAutoOverflow = wAvg(e => e.auto_scored_far);
+  const autoClassifiedPoints = avgAutoClassified * POINTS.CLASSIFIED_AUTO;
+  const autoOverflowPoints = avgAutoOverflow * POINTS.OVERFLOW_AUTO;
+  const predictedAuto = autoLeavePoints + autoClassifiedPoints + autoOverflowPoints;
+
+  // ── TELEOP ──
+  const avgTeleopClassified = wAvg(e => e.teleop_scored_close);
+  const avgTeleopOverflow = wAvg(e => e.teleop_scored_far);
+  const teleopClassifiedPoints = avgTeleopClassified * POINTS.CLASSIFIED_TELEOP;
+  const teleopOverflowPoints = avgTeleopOverflow * POINTS.OVERFLOW_TELEOP;
+  const predictedTeleop = teleopClassifiedPoints + teleopOverflowPoints;
+
+  // ── ENDGAME ──
+  const fullReturnRate = rate(e => e.endgame_return === 'full');
+  const partialReturnRate = rate(e => e.endgame_return === 'partial');
+  const liftRate = rate(e => e.endgame_return === 'lift');
+  // Lift counts as full return for point purposes + extra strategic value
+  const endgamePoints =
+    (fullReturnRate + liftRate) * POINTS.BASE_FULL +
+    partialReturnRate * POINTS.BASE_PARTIAL;
+
+  // ── FOULS (given to opponent) ──
+  const avgFouls = wAvg(e => e.auto_fouls_minor);
+  const foulsGivenToOpponent = avgFouls * POINTS.MINOR_FOUL;
+
+  // ── TOTAL (fouls HELP opponent, so subtract from this team's effective score) ──
+  const predictedEndgame = endgamePoints;
+  const predictedTotal = predictedAuto + predictedTeleop + predictedEndgame;
+
+  // ── CONSISTENCY ──
+  const matchTotals = entries.map(e => {
+    const autoScore =
+      (e.on_launch_line ? POINTS.LEAVE : 0) +
+      e.auto_scored_close * POINTS.CLASSIFIED_AUTO +
+      e.auto_scored_far * POINTS.OVERFLOW_AUTO;
+    const teleopScore =
+      e.teleop_scored_close * POINTS.CLASSIFIED_TELEOP +
+      e.teleop_scored_far * POINTS.OVERFLOW_TELEOP;
+    const endScore =
+      (e.endgame_return === 'full' || e.endgame_return === 'lift') ? POINTS.BASE_FULL :
+      e.endgame_return === 'partial' ? POINTS.BASE_PARTIAL : 0;
+    return autoScore + teleopScore + endScore;
+  });
+  const mean = matchTotals.reduce((a, b) => a + b, 0) / matchTotals.length;
+  const variance = matchTotals.reduce((s, t) => s + Math.pow(t - mean, 2), 0) / matchTotals.length;
   const cv = mean > 0 ? Math.sqrt(variance) / mean : 1;
   const consistency = Math.max(0, Math.round((1 - cv) * 100));
 
+  // ── DEFENSE ──
+  const avgDefense = wAvg(e => e.defense_rating);
+
   return {
     teamNumber,
-    predictedAuto: Math.round(predictedAuto * 10) / 10,
-    predictedTeleop: Math.round(predictedTeleop * 10) / 10,
-    predictedTotal: Math.round((predictedAuto + predictedTeleop) * 10) / 10,
-    liftChance: Math.round(liftChance * 100),
+    autoLeavePoints: round1(autoLeavePoints),
+    autoClassifiedPoints: round1(autoClassifiedPoints),
+    autoOverflowPoints: round1(autoOverflowPoints),
+    teleopClassifiedPoints: round1(teleopClassifiedPoints),
+    teleopOverflowPoints: round1(teleopOverflowPoints),
+    endgamePoints: round1(endgamePoints),
+    foulsGivenToOpponent: round1(foulsGivenToOpponent),
+    predictedAuto: round1(predictedAuto),
+    predictedTeleop: round1(predictedTeleop),
+    predictedEndgame: round1(predictedEndgame),
+    predictedTotal: round1(predictedTotal),
+    leaveRate: Math.round(leaveRate * 100),
+    fullReturnRate: Math.round(fullReturnRate * 100),
+    partialReturnRate: Math.round(partialReturnRate * 100),
+    liftRate: Math.round(liftRate * 100),
     consistency,
     matchCount: entries.length,
+    avgDefense: round1(avgDefense),
   };
 }
 
+function round1(v: number) { return Math.round(v * 10) / 10; }
+
+/*──────────────────────────────────────────────────────────────
+  Component
+──────────────────────────────────────────────────────────────*/
 export default function MatchPlanner() {
   const { user } = useAuth();
   const { currentEvent } = useEvent();
@@ -88,7 +197,6 @@ export default function MatchPlanner() {
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState('');
 
-  // Manual team entry for custom matchups
   const [blueTeam1, setBlueTeam1] = useState('');
   const [blueTeam2, setBlueTeam2] = useState('');
   const [redTeam1, setRedTeam1] = useState('');
@@ -110,9 +218,8 @@ export default function MatchPlanner() {
     setLoading(false);
   };
 
-  // Build predictions for all teams
   const teamPredictions = useMemo(() => {
-    const teamMap = new Map<number, any[]>();
+    const teamMap = new Map<number, MatchEntry[]>();
     allEntries.forEach(e => {
       const existing = teamMap.get(e.team_number) || [];
       existing.push(e);
@@ -121,12 +228,11 @@ export default function MatchPlanner() {
 
     const preds = new Map<number, TeamPrediction>();
     teamMap.forEach((entries, teamNumber) => {
-      preds.set(teamNumber, predictTeam({ teamNumber, entries }));
+      preds.set(teamNumber, predictTeam(teamNumber, entries));
     });
     return preds;
   }, [allEntries]);
 
-  // Auto-fill teams from match schedule
   useEffect(() => {
     if (!selectedMatch || matches.length === 0) return;
     const matchNum = parseInt(selectedMatch);
@@ -153,8 +259,28 @@ export default function MatchPlanner() {
   const bluePreds = [getTeamPrediction(blueTeam1), getTeamPrediction(blueTeam2)].filter(Boolean) as TeamPrediction[];
   const redPreds = [getTeamPrediction(redTeam1), getTeamPrediction(redTeam2)].filter(Boolean) as TeamPrediction[];
 
-  const blueTotal = bluePreds.reduce((s, p) => s + p.predictedTotal, 0);
-  const redTotal = redPreds.reduce((s, p) => s + p.predictedTotal, 0);
+  // Alliance totals (including both-full bonus estimate)
+  const blueRawTotal = bluePreds.reduce((s, p) => s + p.predictedTotal, 0);
+  const redRawTotal = redPreds.reduce((s, p) => s + p.predictedTotal, 0);
+
+  // Estimate both-full bonus probability
+  const blueBothFullProb = bluePreds.length === 2
+    ? ((bluePreds[0].fullReturnRate + bluePreds[0].liftRate) / 100) * ((bluePreds[1].fullReturnRate + bluePreds[1].liftRate) / 100)
+    : 0;
+  const redBothFullProb = redPreds.length === 2
+    ? ((redPreds[0].fullReturnRate + redPreds[0].liftRate) / 100) * ((redPreds[1].fullReturnRate + redPreds[1].liftRate) / 100)
+    : 0;
+
+  const blueTotal = blueRawTotal + blueBothFullProb * POINTS.BASE_BOTH_FULL_BONUS;
+  const redTotal = redRawTotal + redBothFullProb * POINTS.BASE_BOTH_FULL_BONUS;
+
+  // Fouls given to opponent
+  const blueFoulsToOpponent = bluePreds.reduce((s, p) => s + p.foulsGivenToOpponent, 0);
+  const redFoulsToOpponent = redPreds.reduce((s, p) => s + p.foulsGivenToOpponent, 0);
+
+  // Net scores (opponent fouls add to your score)
+  const blueNetTotal = round1(blueTotal + redFoulsToOpponent);
+  const redNetTotal = round1(redTotal + blueFoulsToOpponent);
 
   const allPreds = [...bluePreds, ...redPreds];
 
@@ -162,13 +288,14 @@ export default function MatchPlanner() {
     team: `${p.teamNumber}`,
     auto: p.predictedAuto,
     teleop: p.predictedTeleop,
-    total: p.predictedTotal,
+    endgame: p.predictedEndgame,
   }));
 
   const radarData = [
     { metric: 'Auto', ...Object.fromEntries(allPreds.map(p => [p.teamNumber, p.predictedAuto])) },
     { metric: 'TeleOp', ...Object.fromEntries(allPreds.map(p => [p.teamNumber, p.predictedTeleop])) },
-    { metric: 'Lift %', ...Object.fromEntries(allPreds.map(p => [p.teamNumber, p.liftChance / 10])) },
+    { metric: 'Endgame', ...Object.fromEntries(allPreds.map(p => [p.teamNumber, p.predictedEndgame])) },
+    { metric: 'Defense', ...Object.fromEntries(allPreds.map(p => [p.teamNumber, p.avgDefense * 3])) },
     { metric: 'Consistency', ...Object.fromEntries(allPreds.map(p => [p.teamNumber, p.consistency / 10])) },
   ];
 
@@ -178,7 +305,7 @@ export default function MatchPlanner() {
     <AppLayout>
       <PageHeader
         title="Match Planner"
-        description="Predict scores and plan strategy"
+        description="Predict scores using DECODE point values"
       />
 
       {loading ? (
@@ -231,7 +358,10 @@ export default function MatchPlanner() {
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">Blue Alliance</p>
                     <p className="text-4xl font-display font-bold text-alliance-blue">
-                      {Math.round(blueTotal)}
+                      {Math.round(blueNetTotal)}
+                    </p>
+                    <p className="text-xs text-muted-foreground font-mono mt-1">
+                      {Math.round(blueTotal)} + {Math.round(redFoulsToOpponent)} fouls
                     </p>
                     <div className="flex gap-2 justify-center mt-1 text-xs text-muted-foreground font-mono">
                       {bluePreds.map(p => <span key={p.teamNumber}>{p.teamNumber}</span>)}
@@ -240,54 +370,122 @@ export default function MatchPlanner() {
 
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">Predicted Winner</p>
-                    <div className={`text-2xl font-display font-bold ${blueTotal > redTotal ? 'text-alliance-blue' : blueTotal < redTotal ? 'text-alliance-red' : 'text-muted-foreground'}`}>
-                      {blueTotal > redTotal ? 'BLUE' : blueTotal < redTotal ? 'RED' : 'TIE'}
+                    <div className={`text-2xl font-display font-bold ${blueNetTotal > redNetTotal ? 'text-alliance-blue' : blueNetTotal < redNetTotal ? 'text-alliance-red' : 'text-muted-foreground'}`}>
+                      {blueNetTotal > redNetTotal ? 'BLUE' : blueNetTotal < redNetTotal ? 'RED' : 'TIE'}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Margin: {Math.abs(Math.round(blueTotal - redTotal))}
+                      Margin: {Math.abs(Math.round(blueNetTotal - redNetTotal))}
                     </p>
                   </div>
 
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">Red Alliance</p>
                     <p className="text-4xl font-display font-bold text-alliance-red">
-                      {Math.round(redTotal)}
+                      {Math.round(redNetTotal)}
+                    </p>
+                    <p className="text-xs text-muted-foreground font-mono mt-1">
+                      {Math.round(redTotal)} + {Math.round(blueFoulsToOpponent)} fouls
                     </p>
                     <div className="flex gap-2 justify-center mt-1 text-xs text-muted-foreground font-mono">
                       {redPreds.map(p => <span key={p.teamNumber}>{p.teamNumber}</span>)}
                     </div>
                   </div>
                 </div>
+
+                {/* Point value reference */}
+                <div className="mt-4 pt-4 border-t border-border/40">
+                  <p className="text-xs text-muted-foreground font-mono mb-2">DECODE Point Values Used:</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-xs font-mono text-muted-foreground">
+                    <span>Leave: {POINTS.LEAVE}pts</span>
+                    <span>Classified: {POINTS.CLASSIFIED_AUTO}pts</span>
+                    <span>Overflow: {POINTS.OVERFLOW_AUTO}pt</span>
+                    <span>Pattern: {POINTS.PATTERN_MATCH}pts</span>
+                    <span>Depot: {POINTS.DEPOT}pt</span>
+                    <span>Partial Base: {POINTS.BASE_PARTIAL}pts</span>
+                    <span>Full Base: {POINTS.BASE_FULL}pts</span>
+                    <span>Both Full: +{POINTS.BASE_BOTH_FULL_BONUS}pts</span>
+                  </div>
+                </div>
               </PitSection>
 
               {/* Team Breakdown Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {allPreds.map((pred, i) => (
                   <div key={pred.teamNumber} className="data-card">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className={`w-2 h-2 rounded-full ${i < bluePreds.length ? 'bg-alliance-blue' : 'bg-alliance-red'}`} />
-                      <span className="font-display font-bold">{pred.teamNumber}</span>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className={`w-3 h-3 rounded-full ${i < bluePreds.length ? 'bg-alliance-blue' : 'bg-alliance-red'}`} />
+                      <span className="font-display font-bold text-lg">{pred.teamNumber}</span>
+                      <span className="text-xs font-mono text-muted-foreground ml-auto">{pred.matchCount} matches</span>
                     </div>
-                    <div className="space-y-1 text-xs font-mono">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Auto</span>
-                        <span>{pred.predictedAuto}</span>
+
+                    {/* Score Breakdown */}
+                    <div className="space-y-2 text-xs font-mono">
+                      <div className="flex justify-between items-center pb-1 border-b border-border/30">
+                        <span className="text-muted-foreground font-semibold">AUTO</span>
+                        <span className="font-bold text-primary">{pred.predictedAuto} pts</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">TeleOp</span>
-                        <span>{pred.predictedTeleop}</span>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Leave ({pred.leaveRate}%)</span>
+                        <span>{pred.autoLeavePoints}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Lift</span>
-                        <span>{pred.liftChance}%</span>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Classified × {POINTS.CLASSIFIED_AUTO}</span>
+                        <span>{pred.autoClassifiedPoints}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Consistency</span>
-                        <span>{pred.consistency}%</span>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Overflow × {POINTS.OVERFLOW_AUTO}</span>
+                        <span>{pred.autoOverflowPoints}</span>
                       </div>
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>Matches</span>
-                        <span>{pred.matchCount}</span>
+
+                      <div className="flex justify-between items-center pt-1 pb-1 border-b border-border/30">
+                        <span className="text-muted-foreground font-semibold">TELEOP</span>
+                        <span className="font-bold text-primary">{pred.predictedTeleop} pts</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Classified × {POINTS.CLASSIFIED_TELEOP}</span>
+                        <span>{pred.teleopClassifiedPoints}</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Overflow × {POINTS.OVERFLOW_TELEOP}</span>
+                        <span>{pred.teleopOverflowPoints}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-1 pb-1 border-b border-border/30">
+                        <span className="text-muted-foreground font-semibold">ENDGAME</span>
+                        <span className="font-bold text-primary">{pred.predictedEndgame} pts</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Full Return ({pred.fullReturnRate}%)</span>
+                        <span>{round1(pred.fullReturnRate / 100 * POINTS.BASE_FULL)}</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Partial ({pred.partialReturnRate}%)</span>
+                        <span>{round1(pred.partialReturnRate / 100 * POINTS.BASE_PARTIAL)}</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Lift ({pred.liftRate}%)</span>
+                        <span>{round1(pred.liftRate / 100 * POINTS.BASE_FULL)}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-2 border-t border-border/40">
+                        <span className="font-semibold">TOTAL</span>
+                        <span className="font-bold text-lg">{pred.predictedTotal} pts</span>
+                      </div>
+
+                      <div className="flex justify-between text-warning/80">
+                        <span>Fouls → opponent</span>
+                        <span>+{pred.foulsGivenToOpponent} pts</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/30">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Defense</span>
+                          <span>{pred.avgDefense}/3</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Consistency</span>
+                          <span>{pred.consistency}%</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -305,8 +503,9 @@ export default function MatchPlanner() {
                       <YAxis stroke="hsl(220 10% 55%)" fontSize={12} />
                       <Tooltip contentStyle={{ background: 'hsl(220 18% 11%)', border: '1px solid hsl(220 15% 20%)', borderRadius: '0.75rem', fontSize: 12 }} />
                       <Legend />
-                      <Bar dataKey="auto" name="Auto" fill="hsl(210 100% 50%)" radius={[0, 0, 0, 0]} stackId="score" />
-                      <Bar dataKey="teleop" name="TeleOp" fill="hsl(0 85% 55%)" radius={[6, 6, 0, 0]} stackId="score" />
+                      <Bar dataKey="auto" name="Auto" fill="hsl(210 100% 50%)" stackId="score" />
+                      <Bar dataKey="teleop" name="TeleOp" fill="hsl(0 85% 55%)" stackId="score" />
+                      <Bar dataKey="endgame" name="Endgame" fill="hsl(142 70% 45%)" radius={[6, 6, 0, 0]} stackId="score" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -345,7 +544,7 @@ export default function MatchPlanner() {
             <div className="data-card text-center py-8 text-muted-foreground">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>Enter team numbers above to see predictions.</p>
-              <p className="text-xs mt-1">Predictions are based on your scouting data.</p>
+              <p className="text-xs mt-1">Predictions use official DECODE point values.</p>
             </div>
           )}
         </div>
