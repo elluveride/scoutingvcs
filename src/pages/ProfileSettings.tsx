@@ -31,12 +31,16 @@ export default function ProfileSettings() {
   const [name, setName] = useState('');
   const [teamNumber, setTeamNumber] = useState('');
   const [teamUnlocked, setTeamUnlocked] = useState(false);
+  const [teamJustChanged, setTeamJustChanged] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Password change state
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+
+  // Force re-render of cooldown every 30s so the timer stays accurate
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     if (profile) {
@@ -46,9 +50,15 @@ export default function ProfileSettings() {
     }
   }, [profile]);
 
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
   const cooldown = useMemo(
     () => getTimeRemaining(profile?.teamNumberChangedAt ?? null),
-    [profile?.teamNumberChangedAt]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [profile?.teamNumberChangedAt, /* tick triggers re-eval */]
   );
 
   if (!user) {
@@ -99,6 +109,9 @@ export default function ProfileSettings() {
       toast({ title: 'Error', description: error.message || 'Failed to update profile.', variant: 'destructive' });
     } else {
       toast({ title: 'Profile Updated', description: 'Your settings have been saved.' });
+      if (teamNumberChanged) {
+        setTeamJustChanged(true);
+      }
       setTeamUnlocked(false);
       await refreshProfile();
     }
@@ -133,6 +146,14 @@ export default function ProfileSettings() {
   };
 
   const handleUnlockTeam = () => {
+    if (teamJustChanged) {
+      toast({
+        title: 'Cooldown active',
+        description: 'You just changed your team number. Wait 48 hours before changing again.',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (!cooldown.canChange) {
       toast({
         title: 'Cooldown active',
