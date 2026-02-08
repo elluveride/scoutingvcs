@@ -7,26 +7,18 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, RefreshCw, Download, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, RefreshCw, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { DataExportButtons } from '@/components/data/DataExportButtons';
+import { DataQualityAlerts } from '@/components/data/DataQualityAlerts';
 import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
 
 interface MatchRow {
@@ -78,10 +70,7 @@ export default function Spreadsheet() {
       ) as string[];
 
       const { data: profileRows } = scouterIds.length
-        ? await supabase
-            .from('profiles')
-            .select('id,name')
-            .in('id', scouterIds)
+        ? await supabase.from('profiles').select('id,name').in('id', scouterIds)
         : { data: [] as any[] };
 
       const nameById = new Map<string, string>(
@@ -103,32 +92,19 @@ export default function Spreadsheet() {
 
     const channel = supabase
       .channel('match_entries_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'match_entries',
-          filter: `event_code=eq.${currentEvent.code}`,
-        },
-        () => {
-          loadEntries();
-        }
-      )
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'match_entries',
+        filter: `event_code=eq.${currentEvent.code}`,
+      }, () => loadEntries())
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [currentEvent, loadEntries]);
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  if (!currentEvent) {
-    return <Navigate to="/event-select" replace />;
-  }
+  if (!user) return <Navigate to="/auth" replace />;
+  if (!currentEvent) return <Navigate to="/event-select" replace />;
 
   const handleEditRow = (entry: MatchRow) => {
     navigate(`/scout?edit=${entry.id}`);
@@ -144,16 +120,9 @@ export default function Spreadsheet() {
       .eq('id', deleteTarget.id);
     
     if (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete entry.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Failed to delete entry.', variant: 'destructive' });
     } else {
-      toast({
-        title: 'Deleted',
-        description: `Entry for Team ${deleteTarget.team_number}, Match ${deleteTarget.match_number} deleted.`,
-      });
+      toast({ title: 'Deleted', description: `Entry for Team ${deleteTarget.team_number}, Match ${deleteTarget.match_number} deleted.` });
       loadEntries();
     }
     
@@ -161,56 +130,10 @@ export default function Spreadsheet() {
     setDeleteTarget(null);
   };
 
-  const exportCSV = () => {
-    const headers = [
-      'Event Code',
-      'Match #',
-      'Team #',
-      'Scouter',
-      'Auto Close',
-      'Auto Far',
-      'Minor Fouls',
-      'Major Fouls',
-      'Launch Line',
-      'TeleOp Close',
-      'TeleOp Far',
-      'Defense',
-      'Endgame',
-      'Penalty',
-      'Timestamp',
-    ];
-
-    const rows = entries.map(e => [
-      e.event_code,
-      e.match_number,
-      e.team_number,
-      e.scouter_name,
-      e.auto_scored_close,
-      e.auto_scored_far,
-      e.auto_fouls_minor,
-      e.auto_fouls_major,
-      e.on_launch_line ? 'ON' : 'OFF',
-      e.teleop_scored_close,
-      e.teleop_scored_far,
-      e.defense_rating,
-      e.endgame_return,
-      e.penalty_status,
-      new Date(e.created_at).toLocaleString(),
-    ]);
-
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentEvent.code}_scouting_data.csv`;
-    a.click();
-  };
-
   const getPenaltyBadge = (status: PenaltyStatus) => {
     switch (status) {
-      case 'yellow_card': return <span className="px-2 py-0.5 rounded text-xs bg-yellow-500 text-white">YC</span>;
-      case 'red_card': return <span className="px-2 py-0.5 rounded text-xs bg-red-500 text-white">RC</span>;
+      case 'yellow_card': return <span className="px-2 py-0.5 rounded text-xs bg-warning text-warning-foreground">YC</span>;
+      case 'red_card': return <span className="px-2 py-0.5 rounded text-xs bg-destructive text-destructive-foreground">RC</span>;
       case 'dead': return <span className="px-2 py-0.5 rounded text-xs bg-muted text-muted-foreground">Dead</span>;
       default: return <span className="text-muted-foreground">—</span>;
     }
@@ -218,19 +141,20 @@ export default function Spreadsheet() {
 
   return (
     <AppLayout>
-      <PageHeader
-        title="Scouter Spreadsheet"
-        description="Live synchronized match data"
-      >
+      <PageHeader title="Scouter Spreadsheet" description="Live synchronized match data">
         <Button variant="outline" onClick={loadEntries} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
-        <Button variant="secondary" onClick={exportCSV}>
-          <Download className="w-4 h-4 mr-2" />
-          Export CSV
-        </Button>
+        <DataExportButtons entries={entries} eventCode={currentEvent.code} />
       </PageHeader>
+
+      {/* Data Quality Alerts */}
+      {!loading && entries.length > 0 && (
+        <div className="mb-4">
+          <DataQualityAlerts entries={entries} />
+        </div>
+      )}
 
       <div className="data-card overflow-hidden">
         {loading ? (
@@ -246,7 +170,7 @@ export default function Spreadsheet() {
             <Table>
               <TableHeader>
                 <TableRow>
-                   {isAdmin && <TableHead className="w-10"></TableHead>}
+                  {isAdmin && <TableHead className="w-10"></TableHead>}
                   {isAdmin && <TableHead className="w-10"></TableHead>}
                   <TableHead className="font-semibold">Match</TableHead>
                   <TableHead className="font-semibold">Team</TableHead>
@@ -264,7 +188,7 @@ export default function Spreadsheet() {
               </TableHeader>
               <TableBody>
                 {entries.map((entry) => (
-                   <TableRow 
+                  <TableRow 
                     key={entry.id}
                     className={cn(isAdmin && "cursor-pointer hover:bg-muted/50")}
                     onClick={() => isAdmin && handleEditRow(entry)}
@@ -278,10 +202,7 @@ export default function Spreadsheet() {
                       <TableCell>
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteTarget(entry);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(entry); }}
                           className="p-1 rounded hover:bg-destructive/20 transition-colors"
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
@@ -294,9 +215,9 @@ export default function Spreadsheet() {
                     <TableCell className="text-center">{entry.auto_scored_close}</TableCell>
                     <TableCell className="text-center">{entry.auto_scored_far}</TableCell>
                     <TableCell className="text-center">
-                      <span className="text-yellow-600">{entry.auto_fouls_minor}</span>
+                      <span className="text-warning">{entry.auto_fouls_minor}</span>
                       /
-                      <span className="text-red-600">{entry.auto_fouls_major}</span>
+                      <span className="text-destructive">{entry.auto_fouls_major}</span>
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={entry.on_launch_line ? 'text-primary font-semibold' : 'text-muted-foreground'}>

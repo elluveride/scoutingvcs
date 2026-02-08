@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -85,6 +85,7 @@ const getDefaultWeights = (): SortWeight[] =>
 export default function Dashboard() {
   const { user, isAdmin } = useAuth();
   const { currentEvent } = useEvent();
+  const navigate = useNavigate();
   const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -334,7 +335,10 @@ export default function Dashboard() {
     const officialRank = getRankForTeam(team.teamNumber);
     
     return (
-      <div className="data-card">
+      <div 
+        className="data-card cursor-pointer hover:border-primary/40 transition-colors"
+        onClick={() => navigate(`/team?team=${team.teamNumber}`)}
+      >
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             <div>

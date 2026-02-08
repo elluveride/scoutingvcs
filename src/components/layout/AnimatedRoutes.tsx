@@ -9,6 +9,7 @@ import MatchScout from '@/pages/MatchScout';
 import PitScout from '@/pages/PitScout';
 import Spreadsheet from '@/pages/Spreadsheet';
 import Dashboard from '@/pages/Dashboard';
+import TeamDetail from '@/pages/TeamDetail';
 import LiveStats from '@/pages/LiveStats';
 import Admin from '@/pages/Admin';
 import ProfileSettings from '@/pages/ProfileSettings';
@@ -82,6 +83,16 @@ export function AnimatedRoutes() {
             <ApprovalGate>
               <PageTransition>
                 <Dashboard />
+              </PageTransition>
+            </ApprovalGate>
+          }
+        />
+        <Route
+          path="/team"
+          element={
+            <ApprovalGate>
+              <PageTransition>
+                <TeamDetail />
               </PageTransition>
             </ApprovalGate>
           }
