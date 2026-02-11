@@ -153,12 +153,30 @@ The console will print all available IP addresses. Look for the **Bluetooth Netw
 5. Check both **Private** and **Public**
 6. Click **OK**
 
-### Alternative: If Bluetooth PAN Won't Work
-If you can't get Bluetooth PAN to work on a specific phone:
-1. Use **USB tethering** — connect phone to laptop via USB cable
-2. Enable USB tethering on the phone (Settings → Network → USB tethering)
-3. The phone will get an IP on the USB network — check `ipconfig` for the new adapter
-4. Use the QR Transfer feature in the app as a last resort
+### Alternative: USB Tethering (Fallback for Bluetooth Issues)
+
+If Bluetooth PAN won't work on a specific phone (especially iPhones or older Android devices), **USB tethering** is a reliable fallback:
+
+#### Setup
+1. Connect the phone to the laptop via **USB cable** (charge cable works)
+2. On the phone:
+   - **Android:** Settings → Network & internet → Hotspot & tethering → **USB tethering** (toggle ON)
+   - **iPhone:** Settings → Personal Hotspot → **Allow Others to Join** (with USB connected, it uses USB, not WiFi)
+3. On the laptop, a new network adapter appears. Run `ipconfig` in Command Prompt to find its IP (usually `192.168.42.x` on Android, `172.20.10.x` on iPhone)
+4. In the scouting app on that phone, go to Profile → Server Mode → Local, and set the URL to `http://<laptop-ip-on-usb-adapter>:3000`
+5. Hit **Test Connection** to verify
+
+#### USB Tethering Tips
+- Each phone needs its own USB cable — bring extras!
+- USB tethering works alongside Bluetooth PAN on the same laptop
+- The laptop IP is usually different on the USB adapter vs Bluetooth adapter — check `ipconfig`
+- Phones still charge while USB tethered (bonus!)
+- USB tethering is more stable than Bluetooth but limits mobility — good for pit scouts who stay near the laptop
+
+#### Last Resort: QR Transfer
+If neither Bluetooth nor USB works:
+1. Scout matches in **Cloud mode** (data saves to phone's local storage via PWA offline support)
+2. Use the **QR Transfer** feature in the app to transfer data phone-to-phone or phone-to-laptop
 
 ---
 

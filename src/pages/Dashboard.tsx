@@ -9,9 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { useFTCRankings } from '@/hooks/useFTCRankings';
-import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2, Trophy, Save, CheckCircle2 } from 'lucide-react';
+import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2, Trophy, Save, CheckCircle2, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TeamStats, SortWeight, SortConfig } from '@/types/scouting';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Sheet,
   SheetContent,
@@ -77,6 +82,24 @@ const defaultCategories: WeightCategory[] = [
     ],
   },
 ];
+
+const weightDescriptions: Record<string, string> = {
+  autoClose: 'Multiplied by avg close-zone samples scored in Auto. E.g. weight 3, avg 2.5 → +7.5 pts.',
+  autoFar: 'Multiplied by avg far-zone samples scored in Auto. Higher weight = more emphasis on far scoring.',
+  autoTotal: 'Multiplied by total Auto avg (close + far combined). Use instead of individual close/far for simpler scoring.',
+  launchLine: 'Rewards teams starting on the launch line. Formula: (% on line ÷ 100) × weight × 10. At weight 1, 80% → +8 pts.',
+  teleopClose: 'Multiplied by avg close-zone samples in TeleOp. Same formula as Auto Close.',
+  teleopFar: 'Multiplied by avg far-zone samples in TeleOp. Same formula as Auto Far.',
+  defense: 'Based on avg defense rating (0–3 scale). Formula: rating × weight × 10. At weight 2, rating 2.5 → +50 pts.',
+  lift: 'Bonus for achieving Lift endgame. Formula: (lift % ÷ 100) × weight × 10. 100% lift at weight 5 → +50 pts.',
+  fullReturn: 'Bonus for Full Return endgame. Formula: (full return % ÷ 100) × weight × 10.',
+  fouls: 'Penalty per avg minor fouls. Negative weight means more fouls → lower score. At -2, avg 1.5 fouls → -3 pts.',
+  penalties: 'Penalty for yellow/red card or dead robot rate. Formula: (penalty rate % ÷ 100) × weight × 10.',
+  variance: 'Consistency factor. High variance = unpredictable scores. Negative weight rewards consistent teams.',
+  apiRank: 'Official FTC rank (inverted: #1 = max score). Formula: ((total teams − rank + 1) ÷ total) × weight × 10.',
+  apiQualAvg: 'Official qual point average from FTC. Formula: (qual avg ÷ 100) × weight × 10.',
+  apiWinRate: 'Win percentage from FTC records. Formula: (win % ÷ 100) × weight × 10.',
+};
 
 const getDefaultWeights = (): SortWeight[] =>
   defaultCategories.flatMap(cat => cat.weights);
@@ -387,6 +410,16 @@ export default function Dashboard() {
                         onCheckedChange={() => toggleWeight(setConfig, w.id)}
                       />
                       <span className={cn("text-sm", !w.enabled && "text-muted-foreground")}>{w.label}</span>
+                      {weightDescriptions[w.id] && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help shrink-0" />
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-[260px]">
+                            <p className="text-xs">{weightDescriptions[w.id]}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                     <span className={cn(
                       "text-sm font-mono w-8 text-right",

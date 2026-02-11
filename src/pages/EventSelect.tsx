@@ -258,6 +258,12 @@ export default function EventSelect() {
           </div>
         ) : (
           <div className="space-y-4">
+            {cachedEvents.length === 0 && (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted border border-border">
+                <Calendar className="w-5 h-5 text-muted-foreground shrink-0" />
+                <p className="text-sm text-muted-foreground font-mono">No FTC events happening today</p>
+              </div>
+            )}
             {sortedEvents.map((event) => {
               const isTeamEvent = isUserTeamEvent(event.code);
               const location = getEventLocation(event.code);

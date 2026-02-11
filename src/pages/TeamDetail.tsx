@@ -6,7 +6,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, ArrowLeft, Bot, Gamepad2, Flag, TrendingUp } from 'lucide-react';
+import { Loader2, ArrowLeft, Bot, Gamepad2, Flag, TrendingUp, MessageSquare } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, RadarChart, PolarGrid,
@@ -218,6 +218,30 @@ export default function TeamDetail() {
 
           {/* Match-by-Match Log with Notes */}
           <MatchLogTable entries={entries} />
+
+          {/* Scouting Comments */}
+          {(() => {
+            const notesEntries = entries.filter(e => e.notes && e.notes.trim());
+            if (notesEntries.length === 0) return null;
+            return (
+              <div className="data-card">
+                <h3 className="font-display text-lg mb-4 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  Scouting Comments ({notesEntries.length})
+                </h3>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {notesEntries.map((e, idx) => (
+                    <div key={idx} className="flex gap-3 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+                      <div className="shrink-0 text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded h-fit">
+                        M{e.match_number}
+                      </div>
+                      <p className="text-sm">{e.notes}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </AppLayout>

@@ -155,6 +155,24 @@ export default function Spreadsheet() {
     return result;
   }, [entries, teamFilter, matchMin, matchMax, scouterFilter, sortKey, sortDir]);
 
+  // Detect duplicate entries (same match + team + scouter)
+  const duplicateIds = useMemo(() => {
+    const ids = new Set<string>();
+    const keyMap = new Map<string, string[]>();
+    entries.forEach(e => {
+      const key = `${e.match_number}-${e.team_number}-${e.scouter_id}`;
+      const existing = keyMap.get(key) || [];
+      existing.push(e.id);
+      keyMap.set(key, existing);
+    });
+    keyMap.forEach(idList => {
+      if (idList.length > 1) {
+        idList.forEach(id => ids.add(id));
+      }
+    });
+    return ids;
+  }, [entries]);
+
   if (!user) return <Navigate to="/auth" replace />;
   if (!currentEvent) return <Navigate to="/event-select" replace />;
 
@@ -307,7 +325,14 @@ export default function Spreadsheet() {
                         </button>
                       </TableCell>
                     )}
-                    <TableCell className="font-mono">{entry.match_number}</TableCell>
+                    <TableCell className="font-mono">
+                      {entry.match_number}
+                      {duplicateIds.has(entry.id) && (
+                        <span className="ml-1.5 px-1 py-0.5 rounded text-[10px] bg-warning/20 text-warning font-semibold">
+                          DUP
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="font-mono font-semibold">{entry.team_number}</TableCell>
                     <TableCell className="text-muted-foreground">{entry.scouter_name}</TableCell>
                     <TableCell className="text-center">{entry.auto_scored_close}</TableCell>
