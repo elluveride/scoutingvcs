@@ -4,35 +4,40 @@ import { checkLocalServerHealth } from '@/lib/localServerApi';
 import { PitSection } from '@/components/match-scout/PitSection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Server, Cloud, Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { Server, Cloud, Wifi, WifiOff, Loader2, Zap } from 'lucide-react';
 
 export function ServerModeSettings() {
   const { mode, localUrl, setMode, setLocalUrl } = useServerMode();
   const [healthStatus, setHealthStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
   const [healthInfo, setHealthInfo] = useState('');
 
-  // Check health when switching to local mode or changing URL
+  // Auto-check health when switching to local mode or changing URL
   useEffect(() => {
     if (mode !== 'local') {
       setHealthStatus('idle');
       return;
     }
 
-    const timer = setTimeout(async () => {
-      setHealthStatus('checking');
-      const result = await checkLocalServerHealth(localUrl.replace(/\/+$/, ''));
-      if (result.ok) {
-        setHealthStatus('ok');
-        setHealthInfo(`${result.total} total, ${result.unsynced} unsynced`);
-      } else {
-        setHealthStatus('error');
-        setHealthInfo(result.error || 'Cannot reach server');
-      }
+    const timer = setTimeout(() => {
+      testConnection();
     }, 500);
 
     return () => clearTimeout(timer);
   }, [mode, localUrl]);
+
+  const testConnection = async () => {
+    setHealthStatus('checking');
+    const result = await checkLocalServerHealth(localUrl.replace(/\/+$/, ''));
+    if (result.ok) {
+      setHealthStatus('ok');
+      setHealthInfo(`Connected — ${result.total} entries, ${result.unsynced} unsynced`);
+    } else {
+      setHealthStatus('error');
+      setHealthInfo(result.error || 'Cannot reach server');
+    }
+  };
 
   return (
     <PitSection title="Server Mode" icon={Server}>
@@ -69,7 +74,7 @@ export function ServerModeSettings() {
           </p>
         )}
 
-        {/* Local URL input */}
+        {/* Local Mode Settings */}
         {mode === 'local' && (
           <div className="space-y-3">
             <div className="space-y-2">
@@ -85,7 +90,23 @@ export function ServerModeSettings() {
               />
             </div>
 
-            {/* Health status */}
+            {/* Test Connection Button */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              onClick={testConnection}
+              disabled={healthStatus === 'checking'}
+            >
+              {healthStatus === 'checking' ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Zap className="w-4 h-4" />
+              )}
+              Test Connection
+            </Button>
+
+            {/* Health Status */}
             <div className={cn(
               'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono border',
               healthStatus === 'ok' && 'bg-success/10 border-success/30 text-success',
@@ -100,16 +121,25 @@ export function ServerModeSettings() {
 
               <span>
                 {healthStatus === 'checking' && 'Checking connection...'}
-                {healthStatus === 'ok' && `Connected — ${healthInfo}`}
+                {healthStatus === 'ok' && healthInfo}
                 {healthStatus === 'error' && healthInfo}
                 {healthStatus === 'idle' && 'Cloud mode active'}
               </span>
             </div>
 
-            <p className="text-xs text-muted-foreground font-mono">
-              Point this to the laptop running the local server via Bluetooth PAN.
-              The default IP works if the laptop is set to 192.168.44.1.
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground font-mono font-semibold">
+                Connection Options:
+              </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                <strong>Bluetooth PAN (recommended):</strong> Pair phone with laptop via Bluetooth.
+                Set laptop Bluetooth adapter IP to 192.168.44.1. Default URL works automatically.
+              </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                <strong>USB Tethering (fallback):</strong> Connect phone to laptop via USB cable.
+                Enable USB Tethering on phone. Check laptop&apos;s new network adapter IP and update the URL above.
+              </p>
+            </div>
           </div>
         )}
       </div>

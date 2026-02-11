@@ -123,7 +123,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 md:p-4 space-y-1">
+      <nav className="flex-1 p-3 md:p-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.to}

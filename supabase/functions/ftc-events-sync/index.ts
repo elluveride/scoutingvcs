@@ -198,45 +198,11 @@ serve(async (req) => {
       }
     }
 
-    // 7. Archive finished events (soft-delete instead of hard-delete)
-    const { data: allDbEvents } = await supabase
-      .from('events')
-      .select('code, archived')
-      .eq('archived', false);
-
-    let archivedCount = 0;
-    if (allDbEvents) {
-      for (const dbEvent of allDbEvents) {
-        // Check if this event is in cache and finished
-        const { data: cached } = await supabase
-          .from('ftc_events_cache')
-          .select('date_end')
-          .eq('code', dbEvent.code)
-          .maybeSingle();
-
-        if (cached && cached.date_end < today) {
-          console.log(`Archiving finished event: ${dbEvent.code} (ended ${cached.date_end})`);
-
-          await supabase
-            .from('events')
-            .update({ archived: true })
-            .eq('code', dbEvent.code);
-
-          archivedCount++;
-        }
-      }
-    }
-
-    if (archivedCount > 0) {
-      console.log(`Archived ${archivedCount} finished events`);
-    }
-
     const result = {
       season: currentSeason,
       totalCached: upsertedCount,
       activeToday: activeEvents.length,
       autoCreated: createdCount,
-      archived: archivedCount,
       teamsChecked: uniqueTeams,
     };
 

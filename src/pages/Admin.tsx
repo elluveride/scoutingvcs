@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Check, X, Shield, User } from 'lucide-react';
+import { Loader2, Check, X, Shield, User, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PendingUser {
@@ -14,6 +14,7 @@ interface PendingUser {
   name: string;
   status: string;
   role: string;
+  team_number: number | null;
   created_at: string;
 }
 
@@ -22,6 +23,7 @@ export default function Admin() {
   const { toast } = useToast();
   const [users, setUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [teamRequests, setTeamRequests] = useState<any[]>([]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -37,6 +39,7 @@ export default function Admin() {
         name: u.name,
         status: u.status,
         role: u.role,
+        team_number: u.team_number,
         created_at: u.created_at,
       })));
     }
@@ -44,9 +47,29 @@ export default function Admin() {
     setLoading(false);
   };
 
+  const loadTeamRequests = async () => {
+    const { data } = await (supabase as any)
+      .from('team_change_requests')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+    if (data) setTeamRequests(data);
+  };
+
+  const handleTeamRequest = async (requestId: string, userId: string, newTeam: number, action: 'approved' | 'rejected') => {
+    if (action === 'approved') {
+      await supabase.from('profiles').update({ team_number: newTeam }).eq('id', userId);
+    }
+    await (supabase as any).from('team_change_requests').update({ status: action, reviewed_by: user!.id, reviewed_at: new Date().toISOString() }).eq('id', requestId);
+    toast({ title: 'Done', description: `Team change request ${action}.` });
+    loadTeamRequests();
+    loadUsers();
+  };
+
   useEffect(() => {
     if (user && isAdmin) {
       loadUsers();
+      loadTeamRequests();
     }
   }, [user, isAdmin]);
 
@@ -123,6 +146,43 @@ export default function Admin() {
         </div>
       ) : (
         <div className="space-y-8">
+          {/* Team Change Requests */}
+          {teamRequests.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <ArrowRightLeft className="w-5 h-5 text-primary" />
+                Team Change Requests ({teamRequests.length})
+              </h2>
+              <div className="space-y-3">
+                {teamRequests.map((req: any) => {
+                  const reqUser = users.find(u => u.id === req.user_id);
+                  return (
+                    <div key={req.id} className="data-card flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                        <ArrowRightLeft className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold">{reqUser?.name || 'Unknown'}</p>
+                        <p className="text-sm text-muted-foreground font-mono">
+                          #{req.current_team_number} → #{req.requested_team_number}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">Reason: {req.reason}</p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button variant="outline" size="sm" onClick={() => handleTeamRequest(req.id, req.user_id, req.requested_team_number, 'rejected')} className="text-destructive hover:bg-destructive/10">
+                          <X className="w-4 h-4 mr-1" /> Deny
+                        </Button>
+                        <Button size="sm" onClick={() => handleTeamRequest(req.id, req.user_id, req.requested_team_number, 'approved')}>
+                          <Check className="w-4 h-4 mr-1" /> Approve
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Pending Users */}
           <div>
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -142,7 +202,14 @@ export default function Admin() {
                       <User className="w-5 h-5 text-warning" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold">{pendingUser.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold">{pendingUser.name}</p>
+                        {pendingUser.team_number && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-mono">
+                            #{pendingUser.team_number}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {new Date(pendingUser.created_at).toLocaleDateString()}
                       </p>
@@ -197,8 +264,13 @@ export default function Admin() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold">{approvedUser.name}</p>
+                        {approvedUser.team_number && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-mono">
+                            #{approvedUser.team_number}
+                          </span>
+                        )}
                         {approvedUser.role === 'admin' && (
                           <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-semibold">
                             Admin
