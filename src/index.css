@@ -29,17 +29,17 @@
     --secondary: 0 85% 55%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Tertiary: Industrial Orange accent */
-    --tertiary: 25 95% 55%;
+    /* Tertiary: Neutral white accent */
+    --tertiary: 0 0% 90%;
     --tertiary-foreground: 0 0% 10%;
 
     /* Muted: Tech surface tones */
     --muted: 220 15% 15%;
     --muted-foreground: 220 10% 55%;
 
-    /* Accent: Complementary purple for highlights */
-    --accent: 260 60% 60%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent: Clean white highlight */
+    --accent: 0 0% 85%;
+    --accent-foreground: 0 0% 10%;
 
     /* Destructive: Warning red */
     --destructive: 0 75% 50%;
@@ -124,13 +124,13 @@
     --secondary: 0 80% 50%;
     --secondary-foreground: 0 0% 100%;
 
-    --tertiary: 25 95% 50%;
+    --tertiary: 0 0% 20%;
     --tertiary-foreground: 0 0% 100%;
 
     --muted: 220 15% 92%;
     --muted-foreground: 220 10% 45%;
 
-    --accent: 260 55% 55%;
+    --accent: 0 0% 25%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 75% 50%;

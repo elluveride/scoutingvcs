@@ -20,9 +20,9 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt"],
       manifest: {
-        name: "DECODE Scouting",
-        short_name: "DECODE",
-        description: "FTC Scouting App by Team 12841",
+        name: "2844 × 12841 Scouting App",
+        short_name: "2844×12841",
+        description: "FTC Scouting App by 2844 × 12841",
         theme_color: "#0f1419",
         background_color: "#0f1419",
         display: "standalone",
@@ -48,6 +48,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
           {

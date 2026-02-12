@@ -302,6 +302,42 @@ export type Database = {
         }
         Relationships: []
       }
+      team_change_requests: {
+        Row: {
+          created_at: string
+          current_team_number: number
+          id: string
+          reason: string
+          requested_team_number: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_team_number: number
+          id?: string
+          reason: string
+          requested_team_number: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_team_number?: number
+          id?: string
+          reason?: string
+          requested_team_number?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
