@@ -411,11 +411,13 @@ export default function Dashboard() {
                       />
                       <span className={cn("text-sm", !w.enabled && "text-muted-foreground")}>{w.label}</span>
                       {weightDescriptions[w.id] && (
-                        <Tooltip>
+                        <Tooltip delayDuration={0}>
                           <TooltipTrigger asChild>
-                            <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help shrink-0" />
+                            <button type="button" className="shrink-0 p-1 -m-1">
+                              <Info className="w-3.5 h-3.5 text-muted-foreground/60" />
+                            </button>
                           </TooltipTrigger>
-                          <TooltipContent side="left" className="max-w-[260px]">
+                          <TooltipContent side="bottom" align="center" className="max-w-[240px] z-50">
                             <p className="text-xs">{weightDescriptions[w.id]}</p>
                           </TooltipContent>
                         </Tooltip>
