@@ -62,6 +62,18 @@ export default function Admin() {
     }
     await (supabase as any).from('team_change_requests').update({ status: action, reviewed_by: user!.id, reviewed_at: new Date().toISOString() }).eq('id', requestId);
     toast({ title: 'Done', description: `Team change request ${action}.` });
+
+    // Send email notification (fire-and-forget)
+    supabase.functions.invoke('notify-user', {
+      body: {
+        type: action === 'approved' ? 'team_change_approved' : 'team_change_rejected',
+        user_id: userId,
+        details: { new_team: newTeam },
+      },
+    }).then(({ error }) => {
+      if (error) console.error('Failed to send notification:', error);
+    });
+
     loadTeamRequests();
     loadUsers();
   };

@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Scouting App <onboarding@resend.dev>",
+        from: "2844 × 12841 Scouting App <scouting@vcs-robotics.com>",
         to: Array.isArray(to) ? to : [to],
         subject,
         html: html || undefined,
