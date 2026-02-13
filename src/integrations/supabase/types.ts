@@ -180,12 +180,11 @@ export type Database = {
           drive_type: Database["public"]["Enums"]["drive_type"]
           endgame_consistency: Database["public"]["Enums"]["consistency_level"]
           event_code: string
-          full_park_capable: boolean
           has_autonomous: boolean
           id: string
           last_edited_at: string
           last_edited_by: string | null
-          partial_park_capable: boolean
+          preferred_start: string
           reliable_auto_leave: Database["public"]["Enums"]["auto_leave_status"]
           robot_photo_url: string | null
           scores_artifacts: boolean
@@ -199,12 +198,11 @@ export type Database = {
           drive_type?: Database["public"]["Enums"]["drive_type"]
           endgame_consistency?: Database["public"]["Enums"]["consistency_level"]
           event_code: string
-          full_park_capable?: boolean
           has_autonomous?: boolean
           id?: string
           last_edited_at?: string
           last_edited_by?: string | null
-          partial_park_capable?: boolean
+          preferred_start?: string
           reliable_auto_leave?: Database["public"]["Enums"]["auto_leave_status"]
           robot_photo_url?: string | null
           scores_artifacts?: boolean
@@ -218,12 +216,11 @@ export type Database = {
           drive_type?: Database["public"]["Enums"]["drive_type"]
           endgame_consistency?: Database["public"]["Enums"]["consistency_level"]
           event_code?: string
-          full_park_capable?: boolean
           has_autonomous?: boolean
           id?: string
           last_edited_at?: string
           last_edited_by?: string | null
-          partial_park_capable?: boolean
+          preferred_start?: string
           reliable_auto_leave?: Database["public"]["Enums"]["auto_leave_status"]
           robot_photo_url?: string | null
           scores_artifacts?: boolean

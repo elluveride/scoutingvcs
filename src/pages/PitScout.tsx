@@ -144,8 +144,7 @@ export default function PitScout() {
   const [reliableAutoLeave, setReliableAutoLeave] = useState<AutoLeaveStatus>('no');
   
   // Endgame
-  const [partialParkCapable, setPartialParkCapable] = useState(false);
-  const [fullParkCapable, setFullParkCapable] = useState(false);
+  const [preferredStart, setPreferredStart] = useState<'close' | 'far'>('close');
   const [endgameConsistency, setEndgameConsistency] = useState<ConsistencyLevel>('low');
   
   // Photo
@@ -174,8 +173,7 @@ export default function PitScout() {
     setHasAutonomous(false);
     setAutoConsistency('low');
     setReliableAutoLeave('no');
-    setPartialParkCapable(false);
-    setFullParkCapable(false);
+    setPreferredStart('close');
     setEndgameConsistency('low');
     setRobotPhotoUrl(null);
   };
@@ -218,8 +216,7 @@ export default function PitScout() {
       setHasAutonomous(data.has_autonomous);
       setAutoConsistency(data.auto_consistency as ConsistencyLevel);
       setReliableAutoLeave(data.reliable_auto_leave as AutoLeaveStatus);
-      setPartialParkCapable(data.partial_park_capable);
-      setFullParkCapable(data.full_park_capable);
+      setPreferredStart((data as any).preferred_start || 'close');
       setEndgameConsistency(data.endgame_consistency as ConsistencyLevel);
       // Load signed URL for private bucket
       const storedUrl = (data as any).robot_photo_url as string | null;
@@ -351,8 +348,7 @@ export default function PitScout() {
       has_autonomous: hasAutonomous,
       auto_consistency: autoConsistency,
       reliable_auto_leave: reliableAutoLeave,
-      partial_park_capable: partialParkCapable,
-      full_park_capable: fullParkCapable,
+      preferred_start: preferredStart,
       endgame_consistency: endgameConsistency,
       robot_photo_url: robotPhotoUrl,
       last_edited_by: user.id,
@@ -501,17 +497,29 @@ export default function PitScout() {
             <Bot className="w-5 h-5 text-accent" />
             Endgame
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ToggleButton
-              value={partialParkCapable}
-              onChange={setPartialParkCapable}
-              label="Partial Park Capable"
-            />
-            <ToggleButton
-              value={fullParkCapable}
-              onChange={setFullParkCapable}
-              label="Full Park Capable"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-muted-foreground">Preferred Start</label>
+              <div className="flex gap-2">
+                {(['close', 'far'] as const).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setPreferredStart(option)}
+                    className={cn(
+                      "flex-1 h-14 rounded-xl font-semibold transition-all duration-150",
+                      "flex items-center justify-center gap-2",
+                      "active:scale-95 touch-manipulation capitalize",
+                      preferredStart === option
+                        ? "bg-secondary text-secondary-foreground shadow-lg"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
             <ConsistencySelector
               options={consistencyOptions}
               value={endgameConsistency}
