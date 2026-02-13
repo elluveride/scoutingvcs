@@ -20,6 +20,9 @@ import DataSharing from '@/pages/DataSharing';
 import Admin from '@/pages/Admin';
 import ProfileSettings from '@/pages/ProfileSettings';
 import NotFound from '@/pages/NotFound';
+import LandingHome from '@/pages/landing/LandingHome';
+import LandingFeatures from '@/pages/landing/LandingFeatures';
+import LandingAbout from '@/pages/landing/LandingAbout';
 
 export function AnimatedRoutes() {
   const location = useLocation();
@@ -27,7 +30,9 @@ export function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Auth /></PageTransition>} />
+        <Route path="/" element={<PageTransition><LandingHome /></PageTransition>} />
+        <Route path="/features" element={<PageTransition><LandingFeatures /></PageTransition>} />
+        <Route path="/about" element={<PageTransition><LandingAbout /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/event-select" element={<ApprovalGate><PageTransition><EventSelect /></PageTransition></ApprovalGate>} />
