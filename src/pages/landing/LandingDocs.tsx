@@ -956,6 +956,8 @@ function DocSectionCard({ section }: { section: DocSection }) {
 }
 
 export default function LandingDocs() {
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Scroll to hash on mount
   useEffect(() => {
     const hash = window.location.hash.slice(1);
@@ -965,6 +967,28 @@ export default function LandingDocs() {
       }, 300);
     }
   }, []);
+
+  const normalizedQuery = searchQuery.toLowerCase().trim();
+
+  const filteredSections = normalizedQuery
+    ? docSections
+        .map((section) => {
+          const titleMatch = section.title.toLowerCase().includes(normalizedQuery);
+          const matchingContent = section.content.filter(
+            (item) =>
+              item.title.toLowerCase().includes(normalizedQuery) ||
+              item.body.toLowerCase().includes(normalizedQuery) ||
+              item.steps?.some((s) => s.toLowerCase().includes(normalizedQuery)) ||
+              item.tips?.some((t) => t.toLowerCase().includes(normalizedQuery)) ||
+              item.warnings?.some((w) => w.toLowerCase().includes(normalizedQuery)) ||
+              (item.code && item.code.toLowerCase().includes(normalizedQuery))
+          );
+          if (titleMatch) return section; // show all content if section title matches
+          if (matchingContent.length > 0) return { ...section, content: matchingContent };
+          return null;
+        })
+        .filter(Boolean) as DocSection[]
+    : docSections;
 
   return (
     <LandingLayout>
@@ -1003,32 +1027,71 @@ export default function LandingDocs() {
         </div>
       </section>
 
-      {/* Navigation pills */}
-      <section className="px-4 sm:px-6 pb-6 sm:pb-8">
-        <div className="max-w-5xl mx-auto">
+      {/* Search bar */}
+      <section className="px-4 sm:px-6 pb-4 sm:pb-6">
+        <div className="max-w-3xl mx-auto">
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="flex flex-wrap gap-1.5 sm:gap-2 justify-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
+            className="relative"
           >
-            {docSections.map((s) => (
-              <a
-                key={s.id}
-                href={`#${s.id}`}
-                className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all border border-border/30 min-h-[36px] flex items-center"
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search docs — e.g. 'bluetooth', 'QR code', 'offline'..."
+              className="w-full h-12 pl-12 pr-4 rounded-xl border border-border/40 bg-card/50 text-foreground placeholder:text-muted-foreground/60 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                aria-label="Clear search"
               >
-                {s.title}
-              </a>
-            ))}
+                <span className="text-xs font-medium">✕</span>
+              </button>
+            )}
           </motion.div>
+          {normalizedQuery && (
+            <p className="mt-2 text-xs text-muted-foreground/60 text-center">
+              {filteredSections.length === 0
+                ? 'No results found — try different keywords'
+                : `${filteredSections.length} section${filteredSections.length !== 1 ? 's' : ''} matching "${searchQuery}"`}
+            </p>
+          )}
         </div>
       </section>
+
+      {/* Navigation pills */}
+      {!normalizedQuery && (
+        <section className="px-4 sm:px-6 pb-6 sm:pb-8">
+          <div className="max-w-5xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="flex flex-wrap gap-1.5 sm:gap-2 justify-center"
+            >
+              {docSections.map((s) => (
+                <a
+                  key={s.id}
+                  href={`#${s.id}`}
+                  className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all border border-border/30 min-h-[36px] flex items-center"
+                >
+                  {s.title}
+                </a>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* Doc sections */}
       <section className="px-4 sm:px-6 pb-24">
         <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8">
-          {docSections.map((section) => (
+          {filteredSections.map((section) => (
             <DocSectionCard key={section.id} section={section} />
           ))}
         </div>
