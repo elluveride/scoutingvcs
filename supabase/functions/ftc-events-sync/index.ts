@@ -198,12 +198,73 @@ serve(async (req) => {
       }
     }
 
+    // 7. Auto-archive ended events and delete empty ones
+    const { data: allAppEvents } = await supabase
+      .from('events')
+      .select('id, code, archived')
+      .eq('archived', false);
+
+    let archivedCount = 0;
+    let deletedCount = 0;
+
+    for (const appEvent of allAppEvents || []) {
+      // Check if event has ended using the cache
+      const cached = eventsToCache.find((e: { code: string }) => e.code === appEvent.code);
+      if (!cached) continue; // not in FTC API, skip
+
+      const eventEndDate = cached.date_end;
+      if (eventEndDate >= today) continue; // still active or future
+
+      // Event has ended — check if any data exists
+      const { count: matchCount } = await supabase
+        .from('match_entries')
+        .select('id', { count: 'exact', head: true })
+        .eq('event_code', appEvent.code);
+
+      const { count: pitCount } = await supabase
+        .from('pit_entries')
+        .select('id', { count: 'exact', head: true })
+        .eq('event_code', appEvent.code);
+
+      const hasData = (matchCount ?? 0) > 0 || (pitCount ?? 0) > 0;
+
+      if (hasData) {
+        // Archive it (keep data, hide from selection)
+        const { error: archiveError } = await supabase
+          .from('events')
+          .update({ archived: true })
+          .eq('id', appEvent.id);
+
+        if (!archiveError) {
+          archivedCount++;
+          console.log(`Archived event with data: ${appEvent.code}`);
+        }
+      } else {
+        // No data — fully delete
+        // Clean up related records first
+        await supabase.from('dashboard_configs').delete().eq('event_code', appEvent.code);
+        await supabase.from('scouter_assignments').delete().eq('event_code', appEvent.code);
+
+        const { error: deleteError } = await supabase
+          .from('events')
+          .delete()
+          .eq('id', appEvent.id);
+
+        if (!deleteError) {
+          deletedCount++;
+          console.log(`Deleted empty event: ${appEvent.code}`);
+        }
+      }
+    }
+
     const result = {
       season: currentSeason,
       totalCached: upsertedCount,
       activeToday: activeEvents.length,
       autoCreated: createdCount,
       teamsChecked: uniqueTeams,
+      archivedEnded: archivedCount,
+      deletedEmpty: deletedCount,
     };
 
     console.log("Sync complete:", JSON.stringify(result));
