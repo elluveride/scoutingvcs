@@ -265,7 +265,8 @@ export default function PitScout() {
     setUploadingPhoto(true);
 
     const fileExt = file.name.split('.').pop();
-    const fileName = `${currentEvent.code}/${teamNumber}.${fileExt}`;
+    // Use team_number as first path segment for RLS enforcement
+    const fileName = `${teamNumber}/${currentEvent.code}_${teamNumber}.${fileExt}`;
 
     // Delete old photo if exists
     if (robotPhotoUrl) {

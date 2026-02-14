@@ -97,6 +97,11 @@ export default function DataSharing() {
       const text = await file.text();
       let entries: any[];
 
+      // Enforce import size limit
+      if (text.length > 5 * 1024 * 1024) {
+        throw new Error('File too large. Maximum file size is 5MB.');
+      }
+
       if (file.name.endsWith('.json')) {
         const parsed = JSON.parse(text);
         // Try parsing as full export format first, then as raw array
@@ -137,6 +142,11 @@ export default function DataSharing() {
         if (entries.length === 0) throw new Error('No valid entries found in CSV');
       } else {
         throw new Error('Unsupported file format. Use JSON or CSV.');
+      }
+
+      // Limit number of entries to prevent resource exhaustion
+      if (entries.length > 500) {
+        throw new Error('Import limited to 500 entries at a time. Please split your file.');
       }
 
       let success = 0;
