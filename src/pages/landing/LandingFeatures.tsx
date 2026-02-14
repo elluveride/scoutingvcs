@@ -6,11 +6,12 @@ import {
   ClipboardList, Wrench, BarChart3, Users, Radio, CalendarDays,
   UserCheck, QrCode, Share2, Shield, Wifi, Database
 } from 'lucide-react';
-import featureMatchScout from '@/assets/landing/feature-match-scout.png';
-import featureMatchScout2 from '@/assets/landing/feature-match-scout-2.png';
-import featureDashboard from '@/assets/landing/feature-dashboard.png';
-import featureCompare from '@/assets/landing/feature-compare.png';
-import featureTeamDetail from '@/assets/landing/feature-team-detail.png';
+import featureMatchScout from '@/assets/landing/feature-match-scout-real.png';
+import featurePitScout from '@/assets/landing/feature-pit-scout-real.png';
+import featureTeamDetail from '@/assets/landing/feature-team-detail-real.png';
+import featureQR from '@/assets/landing/feature-qr-real.png';
+import featureLiveStats from '@/assets/landing/feature-live-stats-real.png';
+import featureDashboard from '@/assets/landing/feature-dashboard-real.png';
 
 interface FeatureBlockProps {
   tag: string;
@@ -100,89 +101,107 @@ export default function LandingFeatures() {
             tag="Core Scouting"
             tagColor="text-alliance-red"
             title="Match Scouting"
-            description="Record every detail as it happens. Our mobile-first interface is designed for speed and accuracy during fast-paced FTC matches."
+            description="Record every detail as it happens. Qualification or playoff, the interface auto-fills team numbers from the official schedule and tracks autonomous scoring, TeleOp, defense, endgame, fouls, and notes — all in one scroll."
             bullets={[
-              'Autonomous and TeleOp scoring with close/far tracking',
-              'Defense rating with 4-level scale',
-              'Foul and penalty tracking (minor/major)',
-              'Endgame return status — partial, full, or lift',
-              'Free-form notes for qualitative observations',
-              'Auto-fill from scouter assignments',
+              'Autonomous and TeleOp scoring with close/far counters',
+              'Defense rating on a 0–3 scale (None → Good)',
+              'Endgame return status — None, Partial, Full, or Lift',
+              'Penalty and robot status tracking (Dead, Yellow, Red)',
+              'Free-form notes for qualitative match observations',
+              'One-tap reset and save for fast turnarounds between matches',
             ]}
             image={featureMatchScout}
-            imageAlt="Match Scouting Interface"
+            imageAlt="Match scouting form showing autonomous scoring, TeleOp counters, defense rating, endgame status, and notes fields"
             glowColor="hsl(0 85% 55% / 0.08)"
           />
 
           <FeatureBlock
             tag="Robot Intel"
             tagColor="text-alliance-blue"
-            title="Team Analytics & Detail"
-            description="Dive deep into any team's performance. Scoring trends, radar profiles, endgame breakdowns, and full match logs give you the complete picture."
+            title="Pit Scouting"
+            description="Catalog every robot before matches begin. Record drive type, scoring capabilities, autonomous consistency, endgame strategy, and snap a photo — building your team's intel database for alliance selection."
             bullets={[
-              'Scoring trend charts across all matches',
-              'Team radar profile for strengths at a glance',
-              'Endgame breakdown with lift/full/partial stats',
-              'Close vs far scoring comparison charts',
-              'Full match log with per-match raw stats and notes',
-              'Pit scouting data with drive type and capabilities',
+              'Drive type selection — Tank, Mecanum, Swerve, or Other',
+              'Capability toggles for Motifs, Artifacts, and Autonomous',
+              'Autonomous consistency and reliable auto-leave ratings',
+              'Preferred start position and endgame consistency',
+              'Robot photo capture with secure cloud storage',
+              'Load existing data to update entries throughout the event',
             ]}
-            image={featureTeamDetail}
-            imageAlt="Team Detail Analytics"
+            image={featurePitScout}
+            imageAlt="Pit scouting form with team info, drive type selector, capability toggles, and robot photo upload"
             glowColor="hsl(210 100% 50% / 0.08)"
             reverse
           />
 
           <FeatureBlock
-            tag="Analytics"
+            tag="Deep Dive"
             tagColor="text-alliance-red"
-            title="Team Dashboard & Rankings"
-            description="Transform raw data into actionable intelligence. Dual ranking lists with fully customizable weighted scoring let you prioritize what matters most."
+            title="Team Analytics & Detail"
+            description="Dive deep into any team's performance history. Scoring trends, radar profiles, endgame breakdowns, close vs far analysis, and a full match log with per-match notes give you the complete picture."
             bullets={[
-              'Configurable weight sliders for every scoring category',
-              'Dual ranking lists for comparing strategies',
-              'Quick search by team number',
-              'Historical match performance trends',
-              'One-click access to detailed team profiles',
+              'Scoring trend line charts across all matches (Auto, TeleOp, Total)',
+              'Radar profile showing strengths at a glance',
+              'Endgame breakdown — Lift, Full, Partial, None distribution',
+              'Close vs Far scoring comparison per match',
+              'Full match log table with raw stats and scouter notes',
+              'Scouting Comments section with qualitative observations per match',
             ]}
-            image={featureDashboard}
-            imageAlt="Analytics Dashboard"
+            image={featureTeamDetail}
+            imageAlt="Team detail page showing scoring trends, radar chart, endgame breakdown, match log, and scouting comments"
             glowColor="hsl(0 85% 55% / 0.08)"
           />
 
           <FeatureBlock
-            tag="Strategy"
+            tag="Analytics"
             tagColor="text-alliance-blue"
-            title="Team Comparison"
-            description="Make data-driven alliance selection decisions. Compare any two teams side-by-side with comprehensive visual breakdowns."
+            title="Team Dashboard & Rankings"
+            description="Dual configurable ranking lists let you weigh what matters most. Each list scores teams independently — compare offensive powerhouses against defensive specialists side by side."
             bullets={[
-              'Radar chart overlays for at-a-glance comparison',
-              'Stat-by-stat scoring breakdowns',
-              'Match history comparison',
-              'Consistency and reliability metrics',
-              'Export comparison reports',
+              'Two independent ranking lists with separate weight configurations',
+              'Adjustable weight sliders for every scoring category',
+              'Composite scores calculated from your custom weights',
+              'Official FTC rank badges pulled from the API',
+              'Quick search by team number across both lists',
+              'One-click drill-down to full team analytics',
             ]}
-            image={featureCompare}
-            imageAlt="Team Compare"
+            image={featureDashboard}
+            imageAlt="Dashboard with dual ranking lists showing team cards with auto, teleop, and endgame stats"
             glowColor="hsl(210 100% 50% / 0.08)"
             reverse
           />
 
           <FeatureBlock
-            tag="Connectivity"
-            tagColor="text-foreground/60"
-            title="TeleOp, Defense & Endgame Tracking"
-            description="Record every aspect of match performance — teleop scoring, defense ratings, endgame status, fouls, and qualitative notes all in one streamlined interface."
+            tag="Live Data"
+            tagColor="text-alliance-red"
+            title="Live Stats & Rankings"
+            description="Pull official FTC competition rankings in real time. See every team's wins, losses, ties, ranking points, and tiebreaker scores — updated live from the FTC Events API."
             bullets={[
-              'Close and far scoring counters for TeleOp',
-              'Defense rating on a 0–3 scale',
-              'Endgame return status — None, Partial, Full, or Lift',
-              'Penalty and robot status tracking',
-              'Foul counter for detailed match records',
-              'Free-form notes field for qualitative observations',
+              'Official FTC rankings with gold, silver, and bronze badges',
+              'Win/Loss/Tie records and matches played',
+              'Ranking Points (RP) and Tiebreaker Points (TBP/TB2)',
+              'One-tap refresh for instant updates during events',
+              'Sorted by official competition ranking order',
             ]}
-            image={featureMatchScout2}
-            imageAlt="TeleOp and Endgame Tracking"
+            image={featureLiveStats}
+            imageAlt="Live Stats page showing official FTC rankings with RP, TBP scores and win/loss records"
+            glowColor="hsl(0 85% 55% / 0.08)"
+          />
+
+          <FeatureBlock
+            tag="Connectivity"
+            tagColor="text-alliance-blue"
+            title="QR Transfer"
+            description="Share scouting data between devices without any internet connection. Entries are encoded into paginated QR codes that the receiving device scans to import — perfect for competition venues with unreliable Wi-Fi."
+            bullets={[
+              'Paginated QR codes for large data payloads',
+              'Send and receive modes with simple tab switching',
+              'Works completely offline — no Wi-Fi or cell signal needed',
+              'Visual progress indicator showing current code and total',
+              'Automatic data validation on import',
+            ]}
+            image={featureQR}
+            imageAlt="QR Transfer page showing a paginated QR code with Send Data and Receive Data tabs"
             glowColor="hsl(210 100% 50% / 0.06)"
           />
         </div>

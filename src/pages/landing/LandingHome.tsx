@@ -4,9 +4,9 @@ import { LandingLayout } from '@/components/landing/LandingLayout';
 import { SEOHead } from '@/components/landing/SEOHead';
 import { ClipboardList, BarChart3, Users, QrCode, Wifi, Shield, ArrowRight } from 'lucide-react';
 import heroBg from '@/assets/landing/hero-bg.jpg';
-import featureMatchScout from '@/assets/landing/feature-match-scout.png';
-import featureDashboard from '@/assets/landing/feature-dashboard.png';
-import featureCompare from '@/assets/landing/feature-compare.png';
+import featureMatchScout from '@/assets/landing/feature-match-scout-real.png';
+import featureDashboard from '@/assets/landing/feature-dashboard-real.png';
+import featureLiveStats from '@/assets/landing/feature-live-stats-real.png';
 import cipherIcon from '@/assets/cipher-icon.png';
 
 const fadeUp = {
@@ -163,7 +163,7 @@ export default function LandingHome() {
               </Link>
             </div>
             <div className="rounded-2xl overflow-hidden border border-border/30 shadow-[0_0_40px_hsl(0_85%_55%/0.1)]">
-              <img src={featureMatchScout} alt="Match Scouting Interface" className="w-full" />
+              <img src={featureMatchScout} alt="Match scouting form with autonomous scoring, TeleOp counters, defense rating, and endgame tracking" className="w-full" />
             </div>
           </motion.div>
 
@@ -176,7 +176,7 @@ export default function LandingHome() {
             className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
           >
             <div className="order-2 lg:order-1 rounded-2xl overflow-hidden border border-border/30 shadow-[0_0_40px_hsl(210_100%_50%/0.1)]">
-              <img src={featureDashboard} alt="Analytics Dashboard" className="w-full" />
+              <img src={featureDashboard} alt="Dual ranking lists with configurable weights showing team scores and stats" className="w-full" />
             </div>
             <div className="order-1 lg:order-2">
               <span className="text-xs uppercase tracking-widest text-alliance-blue font-bold mb-3 block">Intelligent Analytics</span>
@@ -199,17 +199,17 @@ export default function LandingHome() {
             className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
           >
             <div>
-              <span className="text-xs uppercase tracking-widest text-foreground/60 font-bold mb-3 block">Strategic Planning</span>
-              <h3 className="text-3xl font-display font-bold text-foreground mb-4">Team Compare</h3>
+              <span className="text-xs uppercase tracking-widest text-foreground/60 font-bold mb-3 block">Live Data</span>
+              <h3 className="text-3xl font-display font-bold text-foreground mb-4">Live Stats</h3>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                Put any two teams side-by-side with detailed statistical comparisons. Radar charts, scoring trends, and match history help you make data-driven alliance selection decisions.
+                Official FTC competition rankings pulled in real time. Win/loss records, ranking points, and tiebreaker scores — all updated live so you always know where teams stand.
               </p>
               <Link to="/features" className="inline-flex items-center gap-2 text-primary font-medium text-sm hover:gap-3 transition-all">
                 Learn more <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
             <div className="rounded-2xl overflow-hidden border border-border/30 shadow-[0_0_40px_hsl(210_100%_50%/0.08)]">
-              <img src={featureCompare} alt="Team Compare" className="w-full" />
+              <img src={featureLiveStats} alt="Live Stats showing official FTC rankings with RP and TBP scores" className="w-full" />
             </div>
           </motion.div>
         </div>
