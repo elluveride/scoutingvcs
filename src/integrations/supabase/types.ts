@@ -375,6 +375,7 @@ export type Database = {
         Args: { team_a: number; team_b: number }
         Returns: boolean
       }
+      is_privileged_team: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "scout"
