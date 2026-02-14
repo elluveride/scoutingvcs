@@ -1,16 +1,19 @@
 import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ReactNode, useState } from 'react';
+import { Menu, X } from 'lucide-react';
 import cipherIcon from '@/assets/cipher-icon.png';
 
 const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/features', label: 'Features' },
   { to: '/about', label: 'About' },
+  { to: '/docs', label: 'Docs' },
 ];
 
 function LandingNav() {
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <motion.nav
@@ -28,7 +31,8 @@ function LandingNav() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-1">
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link
               key={link.to}
@@ -49,7 +53,54 @@ function LandingNav() {
             Sign In
           </Link>
         </div>
+
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="md:hidden p-2 rounded-xl text-foreground hover:bg-muted/50 transition-colors min-h-0"
+          aria-label="Toggle menu"
+        >
+          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+            className="md:hidden overflow-hidden border-t border-border/20"
+            style={{ background: 'hsla(220, 20%, 7%, 0.95)' }}
+          >
+            <div className="px-6 py-4 flex flex-col gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileOpen(false)}
+                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-all min-h-[44px] flex items-center ${
+                    location.pathname === link.to
+                      ? 'text-primary bg-primary/10'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <Link
+                to="/auth"
+                onClick={() => setMobileOpen(false)}
+                className="mt-2 px-4 py-3 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-center min-h-[44px] flex items-center justify-center shadow-[0_0_15px_hsl(210_100%_50%/0.3)]"
+              >
+                Sign In
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.nav>
   );
 }
