@@ -63,11 +63,22 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }));
       setEvents(loadedEvents);
 
-      // Check if persisted event still exists (it may have been cleaned up)
+      // Check if persisted event still exists (it may have been archived/deleted)
       if (currentEvent) {
         const stillExists = loadedEvents.some(e => e.code === currentEvent.code);
         if (!stillExists) {
-          setEventExpired(true);
+          // Check if it was archived (has data) vs deleted (no data)
+          const { data: archivedEvent } = await supabase
+            .from('events')
+            .select('code, archived')
+            .eq('code', currentEvent.code)
+            .eq('archived', true)
+            .maybeSingle();
+
+          if (archivedEvent) {
+            // Event was archived — show expiry message
+            setEventExpired(true);
+          }
           setCurrentEventState(null);
           localStorage.removeItem(STORAGE_KEY);
         }

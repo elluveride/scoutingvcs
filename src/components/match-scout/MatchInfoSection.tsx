@@ -127,7 +127,16 @@ export function MatchInfoSection({
           </span>
           {currentMatch ? (
             <div className="grid grid-cols-2 gap-2">
-              {currentMatch.positions.map((pos) => (
+              {[...currentMatch.positions]
+                .sort((a, b) => {
+                  // Sort: Red 1, Red 2, Blue 1, Blue 2
+                  const allianceOrder = { R: 0, B: 1 };
+                  const aAlliance = allianceOrder[a.position.charAt(0) as 'R' | 'B'] ?? 2;
+                  const bAlliance = allianceOrder[b.position.charAt(0) as 'R' | 'B'] ?? 2;
+                  if (aAlliance !== bAlliance) return aAlliance - bAlliance;
+                  return a.position.localeCompare(b.position);
+                })
+                .map((pos) => (
                 <button
                   key={pos.position}
                   type="button"
