@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
 import { ClipboardList, BarChart3, Users, QrCode, Wifi, Shield, ArrowRight } from 'lucide-react';
 import heroBg from '@/assets/landing/hero-bg.jpg';
-import featureMatchScout from '@/assets/landing/feature-match-scout.jpg';
-import featureDashboard from '@/assets/landing/feature-dashboard.jpg';
-import featureCompare from '@/assets/landing/feature-compare.jpg';
+import featureMatchScout from '@/assets/landing/feature-match-scout.png';
+import featureDashboard from '@/assets/landing/feature-dashboard.png';
+import featureCompare from '@/assets/landing/feature-compare.png';
 import cipherIcon from '@/assets/cipher-icon.png';
 
 const fadeUp = {

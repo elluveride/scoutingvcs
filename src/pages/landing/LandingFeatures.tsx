@@ -5,11 +5,11 @@ import {
   ClipboardList, Wrench, BarChart3, Users, Radio, CalendarDays,
   UserCheck, QrCode, Share2, Shield, Wifi, Database
 } from 'lucide-react';
-import featureMatchScout from '@/assets/landing/feature-match-scout.jpg';
-import featurePitScout from '@/assets/landing/feature-pit-scout.jpg';
-import featureDashboard from '@/assets/landing/feature-dashboard.jpg';
-import featureCompare from '@/assets/landing/feature-compare.jpg';
-import featureQr from '@/assets/landing/feature-qr.jpg';
+import featureMatchScout from '@/assets/landing/feature-match-scout.png';
+import featureMatchScout2 from '@/assets/landing/feature-match-scout-2.png';
+import featureDashboard from '@/assets/landing/feature-dashboard.png';
+import featureCompare from '@/assets/landing/feature-compare.png';
+import featureTeamDetail from '@/assets/landing/feature-team-detail.png';
 
 interface FeatureBlockProps {
   tag: string;
@@ -111,18 +111,18 @@ export default function LandingFeatures() {
           <FeatureBlock
             tag="Robot Intel"
             tagColor="text-alliance-blue"
-            title="Pit Scouting"
-            description="Document robot capabilities before matches start. Know every team's strengths and weaknesses before you face them."
+            title="Team Analytics & Detail"
+            description="Dive deep into any team's performance. Scoring trends, radar profiles, endgame breakdowns, and full match logs give you the complete picture."
             bullets={[
-              'Drive type classification (Tank, Mecanum, Swerve, Other)',
-              'Scoring capability tracking — motifs and artifacts',
-              'Autonomous consistency and path recording',
-              'Endgame consistency rating',
-              'Robot photo upload for visual reference',
-              'Preferred start position tracking',
+              'Scoring trend charts across all matches',
+              'Team radar profile for strengths at a glance',
+              'Endgame breakdown with lift/full/partial stats',
+              'Close vs far scoring comparison charts',
+              'Full match log with per-match raw stats and notes',
+              'Pit scouting data with drive type and capabilities',
             ]}
-            image={featurePitScout}
-            imageAlt="Pit Scouting Interface"
+            image={featureTeamDetail}
+            imageAlt="Team Detail Analytics"
             glowColor="hsl(210 100% 50% / 0.08)"
             reverse
           />
@@ -165,17 +165,18 @@ export default function LandingFeatures() {
           <FeatureBlock
             tag="Connectivity"
             tagColor="text-foreground/60"
-            title="QR Code Transfer & Offline Mode"
-            description="Competition venues have terrible Wi-Fi. Cipher Scout works fully offline and syncs data between devices via QR codes — no internet required."
+            title="TeleOp, Defense & Endgame Tracking"
+            description="Record every aspect of match performance — teleop scoring, defense ratings, endgame status, fouls, and qualitative notes all in one streamlined interface."
             bullets={[
-              'Full offline functionality with IndexedDB storage',
-              'QR code generation for instant data transfer',
-              'Camera-based QR scanning between devices',
-              'Automatic cloud sync when connection returns',
-              'PWA installation for native app experience',
+              'Close and far scoring counters for TeleOp',
+              'Defense rating on a 0–3 scale',
+              'Endgame return status — None, Partial, Full, or Lift',
+              'Penalty and robot status tracking',
+              'Foul counter for detailed match records',
+              'Free-form notes field for qualitative observations',
             ]}
-            image={featureQr}
-            imageAlt="QR Transfer"
+            image={featureMatchScout2}
+            imageAlt="TeleOp and Endgame Tracking"
             glowColor="hsl(210 100% 50% / 0.06)"
           />
         </div>
