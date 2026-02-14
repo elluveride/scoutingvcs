@@ -7,7 +7,7 @@ interface SEOHeadProps {
 }
 
 const SITE_URL = 'https://scoutingvcs.lovable.app';
-const OG_IMAGE = `${SITE_URL}/favicon.png`;
+const OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 export function SEOHead({ title, description, path }: SEOHeadProps) {
   useEffect(() => {

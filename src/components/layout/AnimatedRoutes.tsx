@@ -23,6 +23,7 @@ import NotFound from '@/pages/NotFound';
 import LandingHome from '@/pages/landing/LandingHome';
 import LandingFeatures from '@/pages/landing/LandingFeatures';
 import LandingAbout from '@/pages/landing/LandingAbout';
+import LandingDocs from '@/pages/landing/LandingDocs';
 
 export function AnimatedRoutes() {
   const location = useLocation();
@@ -33,6 +34,7 @@ export function AnimatedRoutes() {
         <Route path="/" element={<PageTransition><LandingHome /></PageTransition>} />
         <Route path="/features" element={<PageTransition><LandingFeatures /></PageTransition>} />
         <Route path="/about" element={<PageTransition><LandingAbout /></PageTransition>} />
+        <Route path="/docs" element={<PageTransition><LandingDocs /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/event-select" element={<ApprovalGate><PageTransition><EventSelect /></PageTransition></ApprovalGate>} />
