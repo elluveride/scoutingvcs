@@ -95,16 +95,24 @@ export default function Spreadsheet() {
       ) as string[];
 
       const { data: profileRows } = scouterIds.length
-        ? await supabase.from('profiles').select('id,name').in('id', scouterIds)
+        ? await supabase.from('profiles').select('id,name,team_number').in('id', scouterIds)
         : { data: [] as any[] };
 
-      const nameById = new Map<string, string>(
-        (profileRows || []).map((p: any) => [p.id, p.name])
+      const profileById = new Map(
+        (profileRows || []).map((p: any) => [p.id, p])
       );
 
-      setEntries(data.map(entry => ({
+      // For privileged teams, filter Team Data to only show own team + allied team entries
+      const filtered = isPrivilegedTeam
+        ? data.filter(entry => {
+            const scouterProfile = profileById.get(entry.scouter_id);
+            return scouterProfile && PRIVILEGED_TEAMS.includes(scouterProfile.team_number);
+          })
+        : data;
+
+      setEntries(filtered.map(entry => ({
         ...entry,
-        scouter_name: nameById.get(entry.scouter_id) || 'Unknown',
+        scouter_name: profileById.get(entry.scouter_id)?.name || 'Unknown',
         notes: (entry as any).notes || '',
       })));
     }
