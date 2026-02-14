@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
+import { SEOHead } from '@/components/landing/SEOHead';
 import { Bot, Rocket, Heart, Code2, Trophy, Users } from 'lucide-react';
 import cipherIcon from '@/assets/cipher-icon.png';
 
@@ -23,6 +24,11 @@ const stats = [
 export default function LandingAbout() {
   return (
     <LandingLayout>
+      <SEOHead
+        title="About — Cipher Scout"
+        description="Built by FTC Teams 12841 and 2844. Learn about the mission behind Cipher Scout and why we built the ultimate FTC scouting platform."
+        path="/about"
+      />
       {/* Header */}
       <section className="pt-20 pb-8 px-6 text-center">
         <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">

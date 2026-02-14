@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
+import { SEOHead } from '@/components/landing/SEOHead';
 import {
   ClipboardList, Wrench, BarChart3, Users, Radio, CalendarDays,
   UserCheck, QrCode, Share2, Shield, Wifi, Database
@@ -66,6 +67,11 @@ const additionalFeatures = [
 export default function LandingFeatures() {
   return (
     <LandingLayout>
+      <SEOHead
+        title="Features — Cipher Scout"
+        description="Match scouting, pit scouting, analytics dashboard, team comparison, QR transfer, and more. Every tool you need for FTC competition strategy."
+        path="/features"
+      />
       {/* Header */}
       <section className="pt-20 pb-12 px-6">
         <div className="max-w-4xl mx-auto text-center">

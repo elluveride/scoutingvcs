@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
+import { SEOHead } from '@/components/landing/SEOHead';
 import { ClipboardList, BarChart3, Users, QrCode, Wifi, Shield, ArrowRight } from 'lucide-react';
 import heroBg from '@/assets/landing/hero-bg.jpg';
 import featureMatchScout from '@/assets/landing/feature-match-scout.png';
@@ -29,6 +30,11 @@ const highlights = [
 export default function LandingHome() {
   return (
     <LandingLayout>
+      <SEOHead
+        title="Cipher Scout — FTC Scouting Platform"
+        description="The competitive edge your alliance needs. Real-time match scouting, analytics, team comparison, and offline QR transfer for FTC competitions."
+        path="/"
+      />
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
