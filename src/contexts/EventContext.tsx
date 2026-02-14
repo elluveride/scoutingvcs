@@ -53,6 +53,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const { data, error } = await supabase
       .from('events')
       .select('*')
+      .eq('archived', false)
       .order('created_at', { ascending: false });
 
     if (data && !error) {
