@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,14 +11,10 @@ const FTC_API_BASE = "https://ftc-api.firstinspires.org/v2.0";
 interface TeamRanking {
   rank: number;
   teamNumber: number;
-  displayTeamNumber: string;
   teamName: string;
   sortOrder1: number;
   sortOrder2: number;
   sortOrder3: number;
-  sortOrder4: number;
-  sortOrder5: number;
-  sortOrder6: number;
   wins: number;
   losses: number;
   ties: number;
@@ -34,16 +31,7 @@ interface FTCRankingsResponse {
 interface MatchScore {
   matchNumber: number;
   matchLevel: string;
-  alliances: AllianceScore[];
-}
-
-interface AllianceScore {
-  alliance: string;
-  totalPoints: number;
-  autoPoints: number;
-  dcPoints: number;
-  endgamePoints: number;
-  penaltyPoints: number;
+  alliances: { alliance: string; totalPoints: number; autoPoints: number; dcPoints: number; endgamePoints: number; penaltyPoints: number; }[];
 }
 
 interface FTCScoresResponse {
@@ -51,12 +39,33 @@ interface FTCScoresResponse {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    // Authenticate the caller
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired session' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { eventCode, season, includeScores } = await req.json();
 
     if (!eventCode) {
@@ -70,58 +79,37 @@ serve(async (req) => {
     const FTC_TOKEN = Deno.env.get("FTC_API_TOKEN");
 
     if (!FTC_USERNAME || !FTC_TOKEN) {
-      console.error("FTC API credentials not configured");
       return new Response(
         JSON.stringify({ error: "FTC API credentials not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Create Basic Auth header
     const authString = btoa(`${FTC_USERNAME}:${FTC_TOKEN}`);
     
-    // Get the current season from the FTC API if not specified
     let ftcSeason = season;
     if (!ftcSeason) {
-      const apiIndexUrl = `${FTC_API_BASE}`;
-      console.log(`Fetching FTC API index to get current season: ${apiIndexUrl}`);
-      
-      const indexResponse = await fetch(apiIndexUrl, {
-        headers: {
-          "Authorization": `Basic ${authString}`,
-          "Accept": "application/json",
-        },
+      const indexResponse = await fetch(FTC_API_BASE, {
+        headers: { "Authorization": `Basic ${authString}`, "Accept": "application/json" },
       });
       
       if (indexResponse.ok) {
         const indexData = await indexResponse.json();
         ftcSeason = indexData.currentSeason;
-        console.log(`Using current season from FTC API: ${ftcSeason}`);
       } else {
-        // Fallback to calculated season if API index fails
         const now = new Date();
         const currentYear = now.getFullYear();
         ftcSeason = now.getMonth() >= 8 ? currentYear : currentYear - 1;
-        console.log(`Fallback to calculated season: ${ftcSeason}`);
       }
     }
 
-    // Fetch rankings
     const rankingsUrl = `${FTC_API_BASE}/${ftcSeason}/rankings/${eventCode}`;
-    console.log(`Fetching FTC rankings: ${rankingsUrl}`);
-    
     const rankingsResponse = await fetch(rankingsUrl, {
-      headers: {
-        "Authorization": `Basic ${authString}`,
-        "Accept": "application/json",
-      },
+      headers: { "Authorization": `Basic ${authString}`, "Accept": "application/json" },
     });
 
-    // Check if we got HTML instead of JSON (error page)
     const contentType = rankingsResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
-      const text = await rankingsResponse.text();
-      console.error(`FTC API returned non-JSON response: ${text.substring(0, 200)}`);
       return new Response(
         JSON.stringify({ 
           error: `FTC API returned invalid response (status ${rankingsResponse.status})`,
@@ -132,31 +120,19 @@ serve(async (req) => {
     }
 
     if (!rankingsResponse.ok) {
-      const errorData = await rankingsResponse.json();
-      console.error(`FTC API error: ${rankingsResponse.status}`, errorData);
       return new Response(
-        JSON.stringify({ 
-          error: `FTC API error: ${rankingsResponse.status}`,
-          details: errorData 
-        }),
+        JSON.stringify({ error: `FTC API error: ${rankingsResponse.status}` }),
         { status: rankingsResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const rankingsData: FTCRankingsResponse = await rankingsResponse.json();
-    console.log(`Fetched ${rankingsData.rankings?.length || 0} team rankings for ${eventCode}`);
 
-    // Optionally fetch match scores for detailed breakdown
     let matchScores: MatchScore[] = [];
     if (includeScores) {
       const scoresUrl = `${FTC_API_BASE}/${ftcSeason}/scores/${eventCode}/qual`;
-      console.log(`Fetching FTC scores: ${scoresUrl}`);
-      
       const scoresResponse = await fetch(scoresUrl, {
-        headers: {
-          "Authorization": `Basic ${authString}`,
-          "Accept": "application/json",
-        },
+        headers: { "Authorization": `Basic ${authString}`, "Accept": "application/json" },
       });
 
       if (scoresResponse.ok) {
@@ -164,12 +140,10 @@ serve(async (req) => {
         if (scoresContentType.includes("application/json")) {
           const scoresData: FTCScoresResponse = await scoresResponse.json();
           matchScores = scoresData.matchScores || [];
-          console.log(`Fetched ${matchScores.length} match scores`);
         }
       }
     }
 
-    // Transform rankings into a more usable format
     const rankings = (rankingsData.rankings || []).map((r) => ({
       rank: r.rank,
       teamNumber: r.teamNumber,
@@ -181,26 +155,18 @@ serve(async (req) => {
       matchesPlayed: r.matchesPlayed,
       matchesCounted: r.matchesCounted,
       dq: r.dq,
-      // Sort orders vary by season but typically:
-      // sortOrder1 = RP, sortOrder2 = TBP, sortOrder3 = Auto points, etc.
       rankingPoints: r.sortOrder1,
       tieBreaker1: r.sortOrder2,
       tieBreaker2: r.sortOrder3,
     }));
 
     return new Response(
-      JSON.stringify({ 
-        rankings,
-        matchScores,
-        season: ftcSeason,
-        eventCode,
-      }),
+      JSON.stringify({ rankings, matchScores, season: ftcSeason, eventCode }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in ftc-rankings function:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "An internal error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
