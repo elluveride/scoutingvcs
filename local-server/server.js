@@ -90,6 +90,67 @@ app.get('/', (_req, res) => {
   `);
 });
 
+// Live dashboard — auto-refreshing web UI
+app.get('/api/dashboard', (_req, res) => {
+  const rows = allStmt.all().slice(0, 50);
+  const total = countStmt.get().total;
+  const unsynced = unsyncedCountStmt.get().total;
+
+  const tableRows = rows.map((r) => {
+    let parsed = {};
+    try { parsed = JSON.parse(r.payload); } catch {}
+    return `<tr>
+      <td>${r.id}</td>
+      <td>${parsed.team_number ?? '—'}</td>
+      <td>${parsed.match_number ?? '—'}</td>
+      <td class="${r.synced ? 'ok' : 'warn'}">${r.synced ? '✓' : '✗'}</td>
+      <td>${r.created_at}</td>
+    </tr>`;
+  }).join('');
+
+  res.send(`<!DOCTYPE html><html><head><title>DECODE Dashboard</title>
+<meta http-equiv="refresh" content="5">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #09090b; color: #e4e4e7; padding: 1.5rem; }
+  h1 { font-size: 1.3rem; color: #22c55e; margin-bottom: 1rem; }
+  .stats { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .stat-card { background: #18181b; border: 1px solid #27272a; border-radius: 10px; padding: 1rem 1.5rem; min-width: 140px; }
+  .stat-card .label { font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem; }
+  .ok { color: #22c55e; } .warn { color: #f59e0b; }
+  table { width: 100%; border-collapse: collapse; background: #18181b; border-radius: 10px; overflow: hidden; }
+  th { text-align: left; padding: 0.6rem 1rem; background: #27272a; color: #a1a1aa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 0.5rem 1rem; border-top: 1px solid #27272a; font-size: 0.85rem; font-family: monospace; }
+  .actions { margin-bottom: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #27272a; background: #18181b; color: #e4e4e7; font-size: 0.85rem; cursor: pointer; text-decoration: none; }
+  .btn:hover { background: #27272a; }
+  .btn-primary { background: #22c55e; color: #000; border-color: #22c55e; font-weight: 600; }
+  .btn-primary:hover { background: #16a34a; }
+  .refresh-note { font-size: 0.7rem; color: #52525b; margin-top: 1rem; }
+  .empty { color: #52525b; padding: 2rem; text-align: center; }
+</style></head><body>
+  <h1>📡 DECODE Local Server Dashboard</h1>
+  <div class="stats">
+    <div class="stat-card"><div class="label">Total Entries</div><div class="value">${total}</div></div>
+    <div class="stat-card"><div class="label">Unsynced</div><div class="value ${unsynced > 0 ? 'warn' : 'ok'}">${unsynced}</div></div>
+    <div class="stat-card"><div class="label">Synced</div><div class="value ok">${total - unsynced}</div></div>
+  </div>
+  <div class="actions">
+    <a class="btn btn-primary" href="/api/export-csv">⬇ Export CSV</a>
+    <a class="btn" href="/api/health">Health Check</a>
+    <a class="btn" href="/api/dashboard">↻ Refresh Now</a>
+  </div>
+  ${rows.length === 0
+    ? '<div class="empty">No entries yet. Scouters will appear here once they submit data.</div>'
+    : `<table>
+    <thead><tr><th>ID</th><th>Team</th><th>Match</th><th>Synced</th><th>Time</th></tr></thead>
+    <tbody>${tableRows}</tbody>
+  </table>`}
+  <p class="refresh-note">Auto-refreshes every 5 seconds</p>
+</body></html>`);
+});
+
 // Health check
 app.get('/api/health', (_req, res) => {
   const total = countStmt.get().total;
