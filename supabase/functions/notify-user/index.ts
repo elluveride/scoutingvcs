@@ -91,6 +91,55 @@ Deno.serve(async (req) => {
           <p style="color: #888; font-size: 12px;">2844 × 12841 Scouting App</p>
         </div>
       `;
+    } else if (type === "bug_report") {
+      // Look up admin emails to notify
+      const { data: adminRoles } = await supabase.from('user_roles').select('user_id').eq('role', 'admin');
+      const adminEmails: string[] = [];
+      if (adminRoles) {
+        for (const role of adminRoles) {
+          const { data: adminUser } = await supabase.auth.admin.getUserById(role.user_id);
+          if (adminUser?.user?.email) adminEmails.push(adminUser.user.email);
+        }
+      }
+      if (adminEmails.length === 0) {
+        return new Response(JSON.stringify({ error: "No admin emails found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      subject = "🐛 New Bug Report Submitted";
+      html = `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #ef4444;">🐛 Bug Report</h2>
+          <p><strong>Reporter:</strong> ${details.reporter_name || 'Unknown'}</p>
+          <p><strong>Page:</strong> ${details.page_url || '—'}</p>
+          <p><strong>Description:</strong></p>
+          <blockquote style="background: #f5f5f5; padding: 12px; border-left: 3px solid #ef4444; margin: 8px 0;">${details.description || '—'}</blockquote>
+          <p style="color: #888; font-size: 12px;">Submitted at ${new Date().toLocaleString()}</p>
+          <hr style="border: none; border-top: 1px solid #333; margin: 24px 0;" />
+          <p style="color: #888; font-size: 12px;">2844 × 12841 Scouting App</p>
+        </div>
+      `;
+      // Send to all admins instead of the single user
+      const adminRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "2844 × 12841 Scouting App <scouting@vcs-robotics.com>",
+          to: adminEmails,
+          subject,
+          html,
+        }),
+      });
+      const adminData = await adminRes.json();
+      if (!adminRes.ok) {
+        console.error("Resend error:", JSON.stringify(adminData));
+        return new Response(JSON.stringify({ error: "Email send failed", details: adminData }), {
+          status: adminRes.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: true, id: adminData.id }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     } else {
       return new Response(
         JSON.stringify({ error: "Unknown notification type" }),

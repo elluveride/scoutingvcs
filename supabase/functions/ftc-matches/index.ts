@@ -29,9 +29,9 @@ serve(async (req) => {
   }
 
   try {
-    // Authenticate the caller
+    // Authenticate the caller using getClaims (works with signing-keys)
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
         JSON.stringify({ error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -43,8 +43,10 @@ serve(async (req) => {
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired session' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
