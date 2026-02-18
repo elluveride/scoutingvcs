@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Server, Cloud, Wifi, WifiOff, Loader2, Zap } from 'lucide-react';
+import { Server, Cloud, Wifi, WifiOff, Loader2, Zap, AlertTriangle, ExternalLink } from 'lucide-react';
+
+const isSecureContext = typeof window !== 'undefined' && window.location.protocol === 'https:';
 
 export function ServerModeSettings() {
   const { mode, localUrl, setMode, setLocalUrl } = useServerMode();
@@ -28,6 +30,11 @@ export function ServerModeSettings() {
   }, [mode, localUrl]);
 
   const testConnection = async () => {
+    if (isSecureContext) {
+      setHealthStatus('error');
+      setHealthInfo('Cannot test from HTTPS. Open the health URL directly in your browser to verify.');
+      return;
+    }
     setHealthStatus('checking');
     const result = await checkLocalServerHealth(localUrl.replace(/\/+$/, ''));
     if (result.ok) {
@@ -126,6 +133,32 @@ export function ServerModeSettings() {
                 {healthStatus === 'idle' && 'Cloud mode active'}
               </span>
             </div>
+
+            {/* HTTPS Warning */}
+            {isSecureContext && (
+              <div className="flex items-start gap-2 px-3 py-2 rounded-lg text-xs font-mono border bg-warning/10 border-warning/30 text-warning">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-semibold">HTTPS blocks local connections</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Browsers block HTTP requests from HTTPS pages. Test Connection won't work from this preview.
+                    Verify your server by opening the health URL directly:
+                  </p>
+                  <a
+                    href={`${localUrl.replace(/\/+$/, '')}/api/health`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 mt-1 text-primary hover:underline"
+                  >
+                    {localUrl.replace(/\/+$/, '')}/api/health
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <p className="mt-1 text-muted-foreground">
+                    Submissions still work when your phone is on the local network and accesses the app via HTTP.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground font-mono font-semibold">

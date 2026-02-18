@@ -1,73 +1,74 @@
-# Welcome to your Lovable project
+# DECODE Scouting
 
-## Project info
+FTC scouting app built for team 12841. Collects match and pit data at events, with offline-first support for venues with no internet.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- **Match Scouting** — Track auto, teleop, endgame stats per team per match
+- **Pit Scouting** — Record robot specs, drivetrain, capabilities
+- **Dashboard** — Weighted team rankings with customizable scoring
+- **Team Compare** — Side-by-side stat comparison with radar charts
+- **Live Stats** — FTC API integration for real-time rankings and match schedules
+- **Scouter Assignments** — Admins assign scouts to specific matches/positions
+- **QR Transfer** — Offline data transfer between devices via QR codes
+- **Data Export** — CSV export for spreadsheet analysis
+- **Bug Reporting** — In-app bug reports visible to admins
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend:** React, TypeScript, Vite, Tailwind CSS, shadcn/ui
+- **Backend:** Lovable Cloud (Supabase) — auth, database, edge functions, storage
+- **Offline:** IndexedDB (PWA) + optional local Node.js server for zero-internet events
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Local Server (Offline Events)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+For events with no internet, a local Node.js server can be run on a laptop. Scouter phones connect via Bluetooth PAN or USB tethering.
 
-**Use GitHub Codespaces**
+See [`local-server/README.md`](local-server/README.md) for full setup instructions.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Quick Start
 
-## What technologies are used for this project?
+```bash
+cd local-server
+npm install
+ADMIN_PASSWORD=your-password npm start
+```
 
-This project is built with:
+### Important: HTTPS ↔ HTTP Limitation
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The published PWA runs on HTTPS. Browsers block HTTP requests from HTTPS pages (mixed content). This means:
 
-## How can I deploy this project?
+- **Test Connection** in the app settings won't work from the cloud-hosted preview
+- To verify the local server, open `http://<server-ip>:3000/api/health` directly in the phone browser
+- Match submissions work when the phone accesses the app via HTTP on the local network
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Project Structure
 
-## Can I connect a custom domain to my Lovable project?
+```
+src/
+  components/     # Reusable UI components
+  contexts/       # React contexts (Auth, Event, Alliance, ServerMode)
+  hooks/          # Custom hooks
+  pages/          # Route pages
+  lib/            # Utilities, offline DB, local server API
+  types/          # TypeScript types
+local-server/     # Node.js offline event server
+supabase/
+  functions/      # Edge functions (FTC API, notifications)
+```
 
-Yes, you can!
+## Roles
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- **Admin** — Full access, manages users, events, scouter assignments, views bug reports
+- **Scout** — Submits match/pit data for their assigned team/event
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Deployment
+
+Published at [scoutingvcs.lovable.app](https://scoutingvcs.lovable.app)
