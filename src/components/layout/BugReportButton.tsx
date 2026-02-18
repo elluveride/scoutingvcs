@@ -11,7 +11,7 @@ export function BugReportButton() {
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
 
@@ -30,6 +30,20 @@ export function BugReportButton() {
       toast({ title: 'Error', description: 'Failed to submit bug report.', variant: 'destructive' });
     } else {
       toast({ title: 'Bug reported', description: 'An admin will review it soon.' });
+      // Notify admins via email (fire-and-forget)
+      supabase.functions.invoke('notify-user', {
+        body: {
+          type: 'bug_report',
+          user_id: user.id,
+          details: {
+            reporter_name: profile?.name || 'Unknown',
+            page_url: location.pathname,
+            description: description.trim(),
+          },
+        },
+      }).then(({ error: notifyErr }) => {
+        if (notifyErr) console.error('Failed to send bug report notification:', notifyErr);
+      });
       setDescription('');
       setOpen(false);
     }
