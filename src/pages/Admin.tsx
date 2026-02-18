@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Check, X, Shield, User, ArrowRightLeft } from 'lucide-react';
+import { Loader2, Check, X, Shield, User, ArrowRightLeft, Bug, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PendingUser {
@@ -24,7 +24,7 @@ export default function Admin() {
   const [users, setUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [teamRequests, setTeamRequests] = useState<any[]>([]);
-
+  const [bugReports, setBugReports] = useState<any[]>([]);
   const loadUsers = async () => {
     setLoading(true);
     
@@ -78,10 +78,31 @@ export default function Admin() {
     loadUsers();
   };
 
+  const loadBugReports = async () => {
+    const { data } = await (supabase as any)
+      .from('bug_reports')
+      .select('*')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false });
+    if (data) setBugReports(data);
+  };
+
+  const resolveBugReport = async (id: string) => {
+    await (supabase as any).from('bug_reports').update({ status: 'resolved', resolved_by: user!.id, resolved_at: new Date().toISOString() }).eq('id', id);
+    toast({ title: 'Resolved', description: 'Bug report marked as resolved.' });
+    loadBugReports();
+  };
+
+  const deleteBugReport = async (id: string) => {
+    await (supabase as any).from('bug_reports').delete().eq('id', id);
+    loadBugReports();
+  };
+
   useEffect(() => {
     if (user && isAdmin) {
       loadUsers();
       loadTeamRequests();
+      loadBugReports();
     }
   }, [user, isAdmin]);
 
@@ -195,7 +216,49 @@ export default function Admin() {
             </div>
           )}
 
-          {/* Pending Users */}
+          {/* Bug Reports */}
+          {bugReports.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Bug className="w-5 h-5 text-destructive" />
+                Bug Reports ({bugReports.length})
+              </h2>
+              <div className="space-y-3">
+                {bugReports.map((bug: any) => {
+                  const reporter = users.find(u => u.id === bug.user_id);
+                  return (
+                    <div key={bug.id} className="data-card flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
+                        <Bug className="w-5 h-5 text-destructive" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold">{reporter?.name || 'Unknown'}</p>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-mono">
+                            {bug.page_url}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground mt-1">{bug.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(bug.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button variant="outline" size="sm" onClick={() => deleteBugReport(bug.id)} className="text-muted-foreground hover:text-destructive">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" onClick={() => resolveBugReport(bug.id)}>
+                          <Check className="w-4 h-4 mr-1" /> Resolve
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+
           <div>
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <User className="w-5 h-5 text-warning" />

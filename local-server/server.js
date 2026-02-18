@@ -157,14 +157,20 @@ app.get('/api/dashboard', (_req, res) => {
   <p class="refresh-note">Auto-refreshes every 5 s · Sync requires SUPABASE_URL &amp; SUPABASE_ANON_KEY env vars on server</p>
   <script>
     async function syncToCloud() {
-      const btn = document.getElementById('syncBtn');
-      const log = document.getElementById('syncLog');
+      var pwd = prompt('Enter admin password:');
+      if (!pwd) return;
+      var btn = document.getElementById('syncBtn');
+      var log = document.getElementById('syncLog');
       btn.disabled = true; btn.textContent = '⏳ Syncing...';
       log.style.display = 'block';
       log.innerHTML = '<div class="line">Starting cloud sync...</div>';
       try {
-        const res = await fetch('/api/sync-to-cloud', { method: 'POST' });
-        const data = await res.json();
+        var res = await fetch('/api/sync-to-cloud', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Password': pwd },
+          body: JSON.stringify({})
+        });
+        var data = await res.json();
         if (!data.ok) {
           log.innerHTML += '<div class="line err">Error: ' + (data.error || 'Unknown') + '</div>';
         } else {
@@ -192,8 +198,17 @@ app.get('/api/health', (_req, res) => {
 });
 
 // POST /api/sync-to-cloud — push unsynced entries to Supabase from the dashboard
-app.post('/api/sync-to-cloud', async (_req, res) => {
+app.post('/api/sync-to-cloud', async (req, res) => {
   try {
+    // Admin password check
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    if (ADMIN_PASSWORD) {
+      const provided = req.headers['x-admin-password'] || req.body?.password;
+      if (provided !== ADMIN_PASSWORD) {
+        return res.status(401).json({ ok: false, error: 'Invalid admin password.' });
+      }
+    }
+
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
