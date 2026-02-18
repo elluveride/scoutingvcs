@@ -23,6 +23,7 @@ import {
   GitCompareArrows,
 } from 'lucide-react';
 import { OfflineIndicator } from '@/components/layout/OfflineIndicator';
+import { BugReportButton } from '@/components/layout/BugReportButton';
 import {
   Sheet,
   SheetContent,
@@ -233,6 +234,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             {children}
           </div>
         </main>
+        <BugReportButton />
       </div>
     );
   }
@@ -250,6 +252,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           {children}
         </div>
       </main>
+      <BugReportButton />
     </div>
   );
 }
