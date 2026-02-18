@@ -56,6 +56,40 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
+// Root route — friendly landing page so "cannot GET /" doesn't confuse people
+app.get('/', (_req, res) => {
+  const total = countStmt.get().total;
+  const unsynced = unsyncedCountStmt.get().total;
+  res.send(`
+    <!DOCTYPE html>
+    <html><head><title>DECODE Local Server</title>
+    <style>
+      body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #e0e0e0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+      .card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 2rem; max-width: 480px; width: 90%; }
+      h1 { margin: 0 0 0.5rem; color: #22c55e; font-size: 1.4rem; }
+      .stat { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #222; }
+      .stat:last-child { border: none; }
+      .label { color: #888; } .value { color: #fff; font-weight: 600; }
+      .ok { color: #22c55e; } .warn { color: #f59e0b; }
+      a { color: #60a5fa; }
+      .endpoints { margin-top: 1rem; font-size: 0.85rem; color: #888; }
+      .endpoints code { background: #222; padding: 2px 6px; border-radius: 4px; color: #ccc; }
+    </style></head><body>
+    <div class="card">
+      <h1>✅ DECODE Local Server Running</h1>
+      <div class="stat"><span class="label">Total Entries</span><span class="value">${total}</span></div>
+      <div class="stat"><span class="label">Unsynced</span><span class="value ${unsynced > 0 ? 'warn' : 'ok'}">${unsynced}</span></div>
+      <div class="stat"><span class="label">Status</span><span class="value ok">Online</span></div>
+      <div class="endpoints">
+        <p><strong>API:</strong></p>
+        <p><code>GET /api/health</code> · <code>GET /api/all</code> · <code>GET /api/export-csv</code></p>
+        <p><code>POST /api/submit</code> · <code>POST /api/mark-synced</code></p>
+      </div>
+    </div>
+    </body></html>
+  `);
+});
+
 // Health check
 app.get('/api/health', (_req, res) => {
   const total = countStmt.get().total;
