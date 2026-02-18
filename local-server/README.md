@@ -130,6 +130,40 @@ The console will print all available IP addresses. Look for the **Bluetooth Netw
 
 ---
 
+## Connecting Additional Laptops / PCs to the PAN
+
+If you want **other laptops** (e.g., a strategy lead's PC, a second pit laptop) to access the local server alongside the scouter phones:
+
+### Windows PC → Laptop PAN
+
+1. **Pair via Bluetooth** — On the server laptop: Settings → Bluetooth → Add device. On the other PC: make it discoverable. Confirm the pairing code on both.
+2. **Join the PAN** — On the **connecting PC**:
+   - Open **Control Panel → Network and Sharing Center → Change adapter settings**
+   - Right-click **"Bluetooth Network Connection"** → **Properties**
+   - Set a **static IP** on the same subnet:
+     - **IP address:** `192.168.44.X` (pick a unique number like `.10`, `.11`, etc. — NOT `.1`, that's the server)
+     - **Subnet mask:** `255.255.255.0`
+     - Leave gateway blank
+   - Click OK
+3. **Connect** — Right-click "Bluetooth Network Connection" → **Connect to** → select the server laptop. Or: open Bluetooth settings, tap the server laptop, and choose "Connect using → Access Point".
+4. **Verify** — Open a browser and go to `http://192.168.44.1:3000` — you should see the server status page.
+
+### macOS → Laptop PAN
+
+1. **Pair via Bluetooth** — System Settings → Bluetooth → pair with the Windows server laptop.
+2. **Join the PAN** — Open **System Settings → Network**. You should see a Bluetooth PAN adapter. Set it to use a static IP: `192.168.44.X` (subnet `255.255.255.0`).
+3. **Verify** — Open Safari/Chrome → `http://192.168.44.1:3000`
+
+### Tips for Multi-PC Setups
+
+- Each device on the PAN needs a **unique IP** in the `192.168.44.X` range (server is `.1`)
+- **Practical limit:** Bluetooth PAN supports ~7 devices total (phones + PCs combined)
+- If you run out of Bluetooth slots, connect the extra PC via **USB tethering** or an **Ethernet cable** with Internet Connection Sharing
+- The connected PCs can access all the same API endpoints: `/api/health`, `/api/all`, `/api/export-csv`, etc.
+- For CSV analysis: on the extra PC, open `http://192.168.44.1:3000/api/export-csv` to download data directly into Excel
+
+---
+
 ## Troubleshooting
 
 ### "Cannot reach local server" on phones
