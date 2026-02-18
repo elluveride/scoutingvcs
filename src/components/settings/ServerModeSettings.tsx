@@ -29,10 +29,14 @@ export function ServerModeSettings() {
     return () => clearTimeout(timer);
   }, [mode, localUrl]);
 
+  const healthUrl = `${localUrl.replace(/\/+$/, '')}/api/health`;
+
   const testConnection = async () => {
     if (isSecureContext) {
-      setHealthStatus('error');
-      setHealthInfo('Cannot test from HTTPS. Open the health URL directly in your browser to verify.');
+      // HTTPS blocks HTTP fetches — open health URL in new tab instead
+      window.open(healthUrl, '_blank');
+      setHealthStatus('ok');
+      setHealthInfo('Opened health check in new tab — check for {"ok": true}');
       return;
     }
     setHealthStatus('checking');
@@ -107,10 +111,12 @@ export function ServerModeSettings() {
             >
               {healthStatus === 'checking' ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isSecureContext ? (
+                <ExternalLink className="w-4 h-4" />
               ) : (
                 <Zap className="w-4 h-4" />
               )}
-              Test Connection
+              {isSecureContext ? 'Open Health Check' : 'Test Connection'}
             </Button>
 
             {/* Health Status */}
