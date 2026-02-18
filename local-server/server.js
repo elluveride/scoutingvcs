@@ -118,15 +118,20 @@ app.get('/api/dashboard', (_req, res) => {
   .stat-card { background: #18181b; border: 1px solid #27272a; border-radius: 10px; padding: 1rem 1.5rem; min-width: 140px; }
   .stat-card .label { font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; }
   .stat-card .value { font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem; }
-  .ok { color: #22c55e; } .warn { color: #f59e0b; }
+  .ok { color: #22c55e; } .warn { color: #f59e0b; } .err { color: #ef4444; }
   table { width: 100%; border-collapse: collapse; background: #18181b; border-radius: 10px; overflow: hidden; }
   th { text-align: left; padding: 0.6rem 1rem; background: #27272a; color: #a1a1aa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
   td { padding: 0.5rem 1rem; border-top: 1px solid #27272a; font-size: 0.85rem; font-family: monospace; }
-  .actions { margin-bottom: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .actions { margin-bottom: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
   .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #27272a; background: #18181b; color: #e4e4e7; font-size: 0.85rem; cursor: pointer; text-decoration: none; }
   .btn:hover { background: #27272a; }
   .btn-primary { background: #22c55e; color: #000; border-color: #22c55e; font-weight: 600; }
   .btn-primary:hover { background: #16a34a; }
+  .btn-sync { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 600; }
+  .btn-sync:hover { background: #2563eb; }
+  .btn-sync:disabled { opacity: 0.5; cursor: not-allowed; }
+  .sync-log { margin-top: 1rem; background: #18181b; border: 1px solid #27272a; border-radius: 10px; padding: 1rem; max-height: 200px; overflow-y: auto; font-size: 0.8rem; font-family: monospace; display: none; }
+  .sync-log .line { padding: 2px 0; } .sync-log .line.err { color: #ef4444; }
   .refresh-note { font-size: 0.7rem; color: #52525b; margin-top: 1rem; }
   .empty { color: #52525b; padding: 2rem; text-align: center; }
 </style></head><body>
@@ -138,16 +143,44 @@ app.get('/api/dashboard', (_req, res) => {
   </div>
   <div class="actions">
     <a class="btn btn-primary" href="/api/export-csv">⬇ Export CSV</a>
+    <button class="btn btn-sync" id="syncBtn" onclick="syncToCloud()" ${unsynced === 0 ? 'disabled' : ''}>☁ Sync to Cloud (${unsynced})</button>
     <a class="btn" href="/api/health">Health Check</a>
     <a class="btn" href="/api/dashboard">↻ Refresh Now</a>
   </div>
+  <div class="sync-log" id="syncLog"></div>
   ${rows.length === 0
     ? '<div class="empty">No entries yet. Scouters will appear here once they submit data.</div>'
     : `<table>
     <thead><tr><th>ID</th><th>Team</th><th>Match</th><th>Synced</th><th>Time</th></tr></thead>
     <tbody>${tableRows}</tbody>
   </table>`}
-  <p class="refresh-note">Auto-refreshes every 5 seconds</p>
+  <p class="refresh-note">Auto-refreshes every 5 s · Sync requires SUPABASE_URL &amp; SUPABASE_ANON_KEY env vars on server</p>
+  <script>
+    async function syncToCloud() {
+      const btn = document.getElementById('syncBtn');
+      const log = document.getElementById('syncLog');
+      btn.disabled = true; btn.textContent = '⏳ Syncing...';
+      log.style.display = 'block';
+      log.innerHTML = '<div class="line">Starting cloud sync...</div>';
+      try {
+        const res = await fetch('/api/sync-to-cloud', { method: 'POST' });
+        const data = await res.json();
+        if (!data.ok) {
+          log.innerHTML += '<div class="line err">Error: ' + (data.error || 'Unknown') + '</div>';
+        } else {
+          log.innerHTML += '<div class="line ok">✓ ' + data.synced + ' synced</div>';
+          if (data.errors > 0) log.innerHTML += '<div class="line err">✗ ' + data.errors + ' failed</div>';
+          if (data.details) data.details.forEach(function(d) {
+            log.innerHTML += '<div class="line ' + (d.ok ? 'ok' : 'err') + '">' + (d.ok ? '✓' : '✗') + ' ' + d.id + '</div>';
+          });
+        }
+      } catch (e) {
+        log.innerHTML += '<div class="line err">Network error: ' + e.message + '</div>';
+      }
+      btn.textContent = '☁ Sync to Cloud';
+      setTimeout(function() { location.reload(); }, 2000);
+    }
+  </script>
 </body></html>`);
 });
 
@@ -158,7 +191,73 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, total, unsynced, timestamp: new Date().toISOString() });
 });
 
-// POST /api/submit — scouter devices post match data here
+// POST /api/sync-to-cloud — push unsynced entries to Supabase from the dashboard
+app.post('/api/sync-to-cloud', async (_req, res) => {
+  try {
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      return res.status(400).json({
+        ok: false,
+        error: 'SUPABASE_URL and SUPABASE_ANON_KEY env vars must be set. Run: set SUPABASE_URL=... && set SUPABASE_ANON_KEY=... before starting the server.',
+      });
+    }
+
+    const rows = unsyncedStmt.all();
+    if (rows.length === 0) {
+      return res.json({ ok: true, synced: 0, errors: 0, details: [] });
+    }
+
+    console.log(`[SYNC] Starting cloud sync for ${rows.length} entries...`);
+    const details = [];
+    const successIds = [];
+    let errorCount = 0;
+
+    for (const entry of rows) {
+      const payload = typeof entry.payload === 'string' ? JSON.parse(entry.payload) : entry.payload;
+      try {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/match_entries`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify(payload),
+        });
+        if (r.ok) {
+          successIds.push(entry.id);
+          details.push({ id: entry.id, ok: true });
+        } else {
+          errorCount++;
+          const errText = await r.text();
+          details.push({ id: entry.id, ok: false, error: `${r.status} ${errText}` });
+        }
+      } catch (e) {
+        errorCount++;
+        details.push({ id: entry.id, ok: false, error: e.message });
+      }
+    }
+
+    // Mark synced
+    if (successIds.length > 0) {
+      const markMany = db.transaction((idList) => {
+        for (const id of idList) markSyncedStmt.run({ id });
+      });
+      markMany(successIds);
+    }
+
+    console.log(`[SYNC] Done: ${successIds.length} synced, ${errorCount} errors`);
+    res.json({ ok: true, synced: successIds.length, errors: errorCount, details });
+  } catch (err) {
+    console.error('[SYNC ERROR]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+
 app.post('/api/submit', (req, res) => {
   try {
     const { id, payload } = req.body;
