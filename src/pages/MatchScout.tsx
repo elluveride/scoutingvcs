@@ -209,6 +209,31 @@ export default function MatchScout() {
 
     // ── LOCAL SERVER MODE ──
     if (localBaseUrl && !editingEntry) {
+      // HTTPS pages cannot fetch HTTP local servers (mixed content).
+      // Detect this and fall back to offline queue with a helpful message.
+      const isHttps = window.location.protocol === 'https:';
+
+      if (isHttps) {
+        // Can't reach local server from HTTPS — save to offline queue instead
+        try {
+          await queueMatchEntry({ ...entryData, scouter_id: user.id });
+          setSaving(false);
+          toast({
+            title: 'Saved Offline (HTTPS limitation)',
+            description: `Your browser blocks HTTP requests from HTTPS. Entry queued locally — sync to cloud when online, or use the QR Transfer feature.`,
+          });
+          resetForm();
+        } catch (e) {
+          setSaving(false);
+          toast({
+            title: 'Save Failed',
+            description: 'Could not save entry.',
+            variant: 'destructive',
+          });
+        }
+        return;
+      }
+
       const entryId = generateEntryId(
         currentEvent.code,
         parseInt(matchNumber),
