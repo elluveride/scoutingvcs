@@ -150,6 +150,7 @@ export type Database = {
         Row: {
           auto_fouls_major: number
           auto_fouls_minor: number
+          auto_pattern_matches: number
           auto_scored_close: number
           auto_scored_far: number
           created_at: string
@@ -158,17 +159,21 @@ export type Database = {
           event_code: string
           id: string
           match_number: number
+          motif: string
           notes: string
           on_launch_line: boolean
           penalty_status: Database["public"]["Enums"]["penalty_status"]
           scouter_id: string
           team_number: number
+          teleop_depot: number
+          teleop_pattern_matches: number
           teleop_scored_close: number
           teleop_scored_far: number
         }
         Insert: {
           auto_fouls_major?: number
           auto_fouls_minor?: number
+          auto_pattern_matches?: number
           auto_scored_close?: number
           auto_scored_far?: number
           created_at?: string
@@ -177,17 +182,21 @@ export type Database = {
           event_code: string
           id?: string
           match_number: number
+          motif?: string
           notes?: string
           on_launch_line?: boolean
           penalty_status?: Database["public"]["Enums"]["penalty_status"]
           scouter_id: string
           team_number: number
+          teleop_depot?: number
+          teleop_pattern_matches?: number
           teleop_scored_close?: number
           teleop_scored_far?: number
         }
         Update: {
           auto_fouls_major?: number
           auto_fouls_minor?: number
+          auto_pattern_matches?: number
           auto_scored_close?: number
           auto_scored_far?: number
           created_at?: string
@@ -196,11 +205,14 @@ export type Database = {
           event_code?: string
           id?: string
           match_number?: number
+          motif?: string
           notes?: string
           on_launch_line?: boolean
           penalty_status?: Database["public"]["Enums"]["penalty_status"]
           scouter_id?: string
           team_number?: number
+          teleop_depot?: number
+          teleop_pattern_matches?: number
           teleop_scored_close?: number
           teleop_scored_far?: number
         }
@@ -221,6 +233,7 @@ export type Database = {
           reliable_auto_leave: Database["public"]["Enums"]["auto_leave_status"]
           robot_photo_url: string | null
           scores_artifacts: boolean
+          scores_depot: boolean
           scores_motifs: boolean
           team_name: string
           team_number: number
@@ -239,6 +252,7 @@ export type Database = {
           reliable_auto_leave?: Database["public"]["Enums"]["auto_leave_status"]
           robot_photo_url?: string | null
           scores_artifacts?: boolean
+          scores_depot?: boolean
           scores_motifs?: boolean
           team_name: string
           team_number: number
@@ -257,6 +271,7 @@ export type Database = {
           reliable_auto_leave?: Database["public"]["Enums"]["auto_leave_status"]
           robot_photo_url?: string | null
           scores_artifacts?: boolean
+          scores_depot?: boolean
           scores_motifs?: boolean
           team_name?: string
           team_number?: number
