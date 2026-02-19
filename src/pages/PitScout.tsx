@@ -11,9 +11,10 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useFTCRankings } from '@/hooks/useFTCRankings';
-import { Loader2, Save, Search, Wrench, Bot, Flag, User, Camera, X, Image } from 'lucide-react';
+import { Loader2, Save, Search, Wrench, Bot, Flag, User, Camera, X, Image, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DriveType, ConsistencyLevel, AutoLeaveStatus } from '@/types/scouting';
+import { DrawableFieldMap, type DrawnPath } from '@/components/pit-scout/DrawableFieldMap';
 
 const driveOptions: { value: DriveType; label: string }[] = [
   { value: 'tank', label: 'Tank' },
@@ -145,6 +146,7 @@ export default function PitScout() {
   
   // Endgame
   const [preferredStart, setPreferredStart] = useState<'close' | 'far'>('close');
+  const [autoPaths, setAutoPaths] = useState<DrawnPath[]>([]);
   const [endgameConsistency, setEndgameConsistency] = useState<ConsistencyLevel>('low');
   
   // Photo
@@ -174,6 +176,7 @@ export default function PitScout() {
     setAutoConsistency('low');
     setReliableAutoLeave('no');
     setPreferredStart('close');
+    setAutoPaths([]);
     setEndgameConsistency('low');
     setRobotPhotoUrl(null);
   };
@@ -217,6 +220,13 @@ export default function PitScout() {
       setAutoConsistency(data.auto_consistency as ConsistencyLevel);
       setReliableAutoLeave(data.reliable_auto_leave as AutoLeaveStatus);
       setPreferredStart((data as any).preferred_start || 'close');
+      // Load auto paths from JSON
+      const storedPaths = data.auto_paths as any;
+      if (Array.isArray(storedPaths) && storedPaths.length > 0) {
+        setAutoPaths(storedPaths);
+      } else {
+        setAutoPaths([]);
+      }
       setEndgameConsistency(data.endgame_consistency as ConsistencyLevel);
       // Load signed URL for private bucket
       const storedUrl = (data as any).robot_photo_url as string | null;
@@ -351,6 +361,7 @@ export default function PitScout() {
       reliable_auto_leave: reliableAutoLeave,
       preferred_start: preferredStart,
       endgame_consistency: endgameConsistency,
+      auto_paths: JSON.parse(JSON.stringify(autoPaths)),
       robot_photo_url: robotPhotoUrl,
       last_edited_by: user.id,
       last_edited_at: new Date().toISOString(),
@@ -528,6 +539,15 @@ export default function PitScout() {
               label="Endgame Consistency"
             />
           </div>
+        </div>
+
+        {/* Autonomous Field Map */}
+        <div className="data-card">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Map className="w-5 h-5 text-secondary" />
+            Autonomous Paths
+          </h2>
+          <DrawableFieldMap paths={autoPaths} onChange={setAutoPaths} />
         </div>
 
         {/* Robot Photo */}
