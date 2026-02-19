@@ -5,9 +5,10 @@ import { useEvent } from '@/contexts/EventContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { PitSection } from '@/components/match-scout/PitSection';
-import { Loader2, QrCode, ScanLine, Download, Upload, CheckCircle2 } from 'lucide-react';
+import { Loader2, QrCode, ScanLine, Download, Upload, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { QRPayloadSchema } from '@/lib/importValidation';
@@ -24,6 +25,8 @@ interface CompactEntry {
   er: string; // endgame_return
   ps: string; // penalty_status
   f: number; // fouls
+  /** Set client-side: true if this entry already exists in cloud */
+  _dup?: boolean;
 }
 
 // Compress entry data for QR codes
@@ -80,12 +83,15 @@ export default function QRTransfer() {
   const [scanning, setScanning] = useState(false);
   const [scannedEntries, setScannedEntries] = useState<CompactEntry[]>([]);
   const [importing, setImporting] = useState(false);
+  /** Set of "team-match" keys that already exist in cloud */
+  const [cloudKeys, setCloudKeys] = useState<Set<string>>(new Set());
   const scannerRef = useRef<any>(null);
   const videoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!currentEvent) return;
     loadEntries();
+    loadCloudKeys();
   }, [currentEvent]);
 
   const loadEntries = async () => {
@@ -102,6 +108,18 @@ export default function QRTransfer() {
       setQrChunks(chunkData(compressed));
     }
     setLoading(false);
+  };
+
+  /** Load existing cloud entry keys to detect duplicates when scanning */
+  const loadCloudKeys = async () => {
+    if (!currentEvent) return;
+    const { data } = await supabase
+      .from('match_entries')
+      .select('team_number, match_number')
+      .eq('event_code', currentEvent.code);
+    if (data) {
+      setCloudKeys(new Set(data.map(e => `${e.team_number}-${e.match_number}`)));
+    }
   };
 
   const startScanner = useCallback(async () => {
@@ -125,9 +143,16 @@ export default function QRTransfer() {
               const validEntries = result.data.d as CompactEntry[];
               setScannedEntries(prev => {
                 const existing = new Set(prev.map(e => `${e.t}-${e.m}`));
-                const newEntries = validEntries.filter((e) => !existing.has(`${e.t}-${e.m}`));
+                const newEntries = validEntries
+                  .filter((e) => !existing.has(`${e.t}-${e.m}`))
+                  .map(e => ({ ...e, _dup: cloudKeys.has(`${e.t}-${e.m}`) }));
                 if (newEntries.length > 0) {
-                  toast({ title: 'Scanned!', description: `${newEntries.length} new entries found.` });
+                  const dupCount = newEntries.filter(e => e._dup).length;
+                  const freshCount = newEntries.length - dupCount;
+                  toast({
+                    title: 'Scanned!',
+                    description: `${freshCount} new${dupCount > 0 ? `, ${dupCount} duplicate` : ''} entries found.`,
+                  });
                 }
                 return [...prev, ...newEntries];
               });
@@ -163,8 +188,10 @@ export default function QRTransfer() {
     if (!currentEvent || !user || scannedEntries.length === 0) return;
     setImporting(true);
 
+    // Only import non-duplicate entries
+    const toImport = scannedEntries.filter(e => !e._dup);
     let successCount = 0;
-    for (const entry of scannedEntries) {
+    for (const entry of toImport) {
       const { error } = await supabase.from('match_entries').upsert([{
         event_code: currentEvent.code,
         team_number: entry.t,
@@ -186,7 +213,7 @@ export default function QRTransfer() {
     }
 
     setImporting(false);
-    toast({ title: 'Import Complete', description: `${successCount}/${scannedEntries.length} entries imported.` });
+    toast({ title: 'Import Complete', description: `${successCount}/${toImport.length} entries imported.${scannedEntries.length - toImport.length > 0 ? ` ${scannedEntries.length - toImport.length} duplicates skipped.` : ''}` });
     setScannedEntries([]);
     loadEntries();
   };
@@ -293,22 +320,43 @@ export default function QRTransfer() {
 
               <div id="qr-reader" ref={videoRef} className="w-full rounded-xl overflow-hidden" />
 
-              {scannedEntries.length > 0 && (
-                <div className="w-full space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-accent">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span className="font-mono">{scannedEntries.length} entries scanned</span>
+              {scannedEntries.length > 0 && (() => {
+                const dupCount = scannedEntries.filter(e => e._dup).length;
+                const freshCount = scannedEntries.length - dupCount;
+                return (
+                  <div className="w-full space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-accent">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="font-mono">{freshCount} new entries</span>
+                    </div>
+                    {dupCount > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-warning">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span className="font-mono">{dupCount} already in cloud</span>
+                        <Badge variant="outline" className="text-warning border-warning/30 text-[10px]">DUP</Badge>
+                      </div>
+                    )}
+                    {/* Scanned entry list */}
+                    <div className="max-h-40 overflow-y-auto rounded-lg border border-border/40 divide-y divide-border/20">
+                      {scannedEntries.map((e, i) => (
+                        <div key={i} className="flex items-center justify-between px-3 py-1.5 text-xs font-mono">
+                          <span>Team {e.t} · Match {e.m}</span>
+                          {e._dup && <Badge variant="outline" className="text-warning border-warning/30 text-[10px]">DUP</Badge>}
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      onClick={importScannedData}
+                      disabled={importing || freshCount === 0}
+                      className="w-full h-14 gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
+                    >
+                      {importing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                      Import {freshCount} New {freshCount === 1 ? 'Entry' : 'Entries'}
+                      {dupCount > 0 && ` (skip ${dupCount} dup)`}
+                    </Button>
                   </div>
-                  <Button
-                    onClick={importScannedData}
-                    disabled={importing}
-                    className="w-full h-14 gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
-                  >
-                    {importing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-                    Import {scannedEntries.length} Entries
-                  </Button>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </PitSection>
         </div>

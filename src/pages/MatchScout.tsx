@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
-import { useServerMode } from '@/contexts/ServerModeContext';
+
 import { AppLayout } from '@/components/layout/AppLayout';
 import { IntegerStepper } from '@/components/ui/integer-stepper';
 import { ToggleButton } from '@/components/ui/toggle-button';
@@ -12,11 +12,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useFTCMatches } from '@/hooks/useFTCMatches';
 import { useOnlineStatus } from '@/hooks/useOfflineSync';
 import { queueMatchEntry } from '@/lib/offlineDb';
-import { submitToLocalServer, generateEntryId } from '@/lib/localServerApi';
+
 import { MatchInfoSection } from '@/components/match-scout/MatchInfoSection';
 import { PitSection } from '@/components/match-scout/PitSection';
 import { OptionSelector } from '@/components/match-scout/OptionSelector';
-import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil, Crosshair, WifiOff, Server } from 'lucide-react';
+import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil, Crosshair, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
@@ -45,7 +45,7 @@ const defenseOptions = [
 export default function MatchScout() {
   const { user, profile, isApproved } = useAuth();
   const { currentEvent } = useEvent();
-  const { mode, getBaseUrl } = useServerMode();
+  
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const { matches, loading: matchesLoading, refetch: refetchMatches } = useFTCMatches();
@@ -205,64 +205,6 @@ export default function MatchScout() {
     };
 
     let error;
-    const localBaseUrl = getBaseUrl();
-
-    // ── LOCAL SERVER MODE ──
-    if (localBaseUrl && !editingEntry) {
-      // HTTPS pages cannot fetch HTTP local servers (mixed content).
-      // Detect this and fall back to offline queue with a helpful message.
-      const isHttps = window.location.protocol === 'https:';
-
-      if (isHttps) {
-        // Can't reach local server from HTTPS — save to offline queue instead
-        try {
-          await queueMatchEntry({ ...entryData, scouter_id: user.id });
-          setSaving(false);
-          toast({
-            title: 'Saved Offline (HTTPS limitation)',
-            description: `Your browser blocks HTTP requests from HTTPS. Entry queued locally — sync to cloud when online, or use the QR Transfer feature.`,
-          });
-          resetForm();
-        } catch (e) {
-          setSaving(false);
-          toast({
-            title: 'Save Failed',
-            description: 'Could not save entry.',
-            variant: 'destructive',
-          });
-        }
-        return;
-      }
-
-      const entryId = generateEntryId(
-        currentEvent.code,
-        parseInt(matchNumber),
-        parseInt(teamNumber),
-        user.id,
-      );
-
-      const result = await submitToLocalServer(localBaseUrl, {
-        id: entryId,
-        payload: { ...entryData, scouter_id: user.id },
-      });
-
-      setSaving(false);
-
-      if (result.ok) {
-        toast({
-          title: 'Saved to Local Server',
-          description: `Match ${matchNumber} data for Team ${teamNumber} saved.`,
-        });
-        resetForm();
-      } else {
-        toast({
-          title: 'Local Server Error',
-          description: result.error || 'Failed to reach local server.',
-          variant: 'destructive',
-        });
-      }
-      return;
-    }
 
     // ── CLOUD MODES (edit, offline queue, or direct upsert) ──
     if (editingEntry && isAdmin) {
@@ -334,12 +276,6 @@ export default function MatchScout() {
           <h1 className="font-display text-2xl tracking-wide text-glow">
             {editingEntry ? "Edit Entry" : "Match Scout"}
           </h1>
-          {mode === 'local' && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-mono bg-warning/15 text-warning border border-warning/30">
-              <Server className="w-3 h-3" />
-              Local
-            </span>
-          )}
         </div>
         <p className="text-sm text-muted-foreground font-mono mt-1">
           {currentEvent.name}
@@ -489,14 +425,12 @@ export default function MatchScout() {
           >
             {saving ? (
               <Loader2 className="w-5 h-5 animate-spin" />
-            ) : mode === 'local' ? (
-              <Server className="w-5 h-5" />
             ) : !isOnline ? (
               <WifiOff className="w-5 h-5" />
             ) : (
               <Save className="w-5 h-5" />
             )}
-            {mode === 'local' ? 'Save Local' : isOnline ? 'Save Match' : 'Save Offline'}
+            {isOnline ? 'Save Match' : 'Save Offline'}
           </Button>
         </div>
       </form>
