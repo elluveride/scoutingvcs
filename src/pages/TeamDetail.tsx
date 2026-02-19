@@ -6,7 +6,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, ArrowLeft, Bot, Gamepad2, Flag, TrendingUp, MessageSquare } from 'lucide-react';
+import { Loader2, ArrowLeft, Bot, Gamepad2, Flag, TrendingUp, MessageSquare, Map } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, RadarChart, PolarGrid,
@@ -14,6 +14,8 @@ import {
 } from 'recharts';
 import { StatCard } from '@/components/team-detail/TeamStatCards';
 import { MatchLogTable } from '@/components/team-detail/MatchLogTable';
+import { AutoPathsViewer } from '@/components/team-detail/AutoPathsViewer';
+import type { DrawnPath } from '@/components/pit-scout/DrawableFieldMap';
 
 interface MatchEntry {
   match_number: number;
@@ -38,6 +40,7 @@ export default function TeamDetail() {
   const teamNumber = searchParams.get('team');
 
   const [entries, setEntries] = useState<MatchEntry[]>([]);
+  const [autoPaths, setAutoPaths] = useState<DrawnPath[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,14 +50,26 @@ export default function TeamDetail() {
 
   const loadData = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('match_entries')
-      .select('*')
-      .eq('event_code', currentEvent!.code)
-      .eq('team_number', parseInt(teamNumber!))
-      .order('match_number', { ascending: true });
+    const [matchResult, pitResult] = await Promise.all([
+      supabase
+        .from('match_entries')
+        .select('*')
+        .eq('event_code', currentEvent!.code)
+        .eq('team_number', parseInt(teamNumber!))
+        .order('match_number', { ascending: true }),
+      supabase
+        .from('pit_entries')
+        .select('auto_paths')
+        .eq('event_code', currentEvent!.code)
+        .eq('team_number', parseInt(teamNumber!))
+        .maybeSingle(),
+    ]);
 
-    if (data) setEntries(data.map(e => ({ ...e, notes: (e as any).notes || '' })));
+    if (matchResult.data) setEntries(matchResult.data.map(e => ({ ...e, notes: (e as any).notes || '' })));
+    if (pitResult.data) {
+      const stored = pitResult.data.auto_paths as any;
+      if (Array.isArray(stored)) setAutoPaths(stored);
+    }
     setLoading(false);
   };
 
@@ -195,6 +210,17 @@ export default function TeamDetail() {
               </div>
             </div>
           </div>
+
+          {/* Autonomous Paths from Pit Scouting */}
+          {autoPaths.length > 0 && (
+            <div className="data-card">
+              <h3 className="font-display text-lg mb-4 flex items-center gap-2">
+                <Map className="w-5 h-5 text-secondary" />
+                Autonomous Paths
+              </h3>
+              <AutoPathsViewer paths={autoPaths} />
+            </div>
+          )}
 
           {/* Per-Match Close/Far Breakdown */}
           <div className="data-card">
