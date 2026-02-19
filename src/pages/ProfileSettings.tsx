@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
 import { Loader2, Save, User, KeyRound, Sun, Moon, Send, CheckCircle2, Clock } from 'lucide-react';
 import { PitSection } from '@/components/match-scout/PitSection';
-import { ServerModeSettings } from '@/components/settings/ServerModeSettings';
+
 
 export default function ProfileSettings() {
   const { user, profile, refreshProfile } = useAuth();
@@ -163,8 +163,6 @@ export default function ProfileSettings() {
           </div>
         </PitSection>
 
-        {/* Server Mode */}
-        <ServerModeSettings />
 
         {/* Profile Info Form */}
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -7,7 +7,6 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { EventProvider } from "@/contexts/EventContext";
 import { AllianceProvider } from "@/contexts/AllianceContext";
-import { ServerModeProvider } from "@/contexts/ServerModeContext";
 import { AnimatedRoutes } from "@/components/layout/AnimatedRoutes";
 import { OfflineIndicator } from "@/components/layout/OfflineIndicator";
 
@@ -23,10 +22,8 @@ const App = () => (
           <AuthProvider>
             <EventProvider>
               <AllianceProvider>
-                <ServerModeProvider>
-                  <AnimatedRoutes />
-                  <OfflineIndicator />
-                </ServerModeProvider>
+                <AnimatedRoutes />
+                <OfflineIndicator />
               </AllianceProvider>
             </EventProvider>
           </AuthProvider>
