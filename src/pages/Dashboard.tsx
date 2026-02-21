@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { useFTCRankings } from '@/hooks/useFTCRankings';
-import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2, Trophy, Save, CheckCircle2, Info } from 'lucide-react';
+import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2, Trophy, Save, CheckCircle2, Info, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TeamStats, SortWeight, SortConfig } from '@/types/scouting';
 import {
@@ -111,6 +111,7 @@ export default function Dashboard() {
   const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showAllTeamsData, setShowAllTeamsData] = useState(false);
   const [configsLoaded, setConfigsLoaded] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -217,7 +218,7 @@ export default function Dashboard() {
     if (currentEvent?.code) {
       calculateStats();
     }
-  }, [currentEvent?.code]);
+  }, [currentEvent?.code, showAllTeamsData]);
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -252,13 +253,12 @@ export default function Dashboard() {
     const scouterTeamMap = new Map<string, number | null>();
     scouterProfiles?.forEach(p => scouterTeamMap.set(p.id, p.team_number));
 
-    // Only keep entries scouted by our team (or allied team)
-    const data = allEntries.filter(entry => {
+    // Only keep entries scouted by our team (or allied team) unless toggle is on
+    const data = showAllTeamsData ? allEntries : allEntries.filter(entry => {
       if (!myTeam) return true;
       const scouterTeam = scouterTeamMap.get(entry.scouter_id);
       if (!scouterTeam) return true;
       if (scouterTeam === myTeam) return true;
-      // Allied teams
       if ((myTeam === 12841 && scouterTeam === 2844) || (myTeam === 2844 && scouterTeam === 12841)) return true;
       return false;
     });
@@ -595,8 +595,8 @@ export default function Dashboard() {
         description="Dual team ranking lists with configurable weights"
       />
 
-      <div className="flex items-center justify-between mb-4">
-        <div className="relative flex-1 mr-4">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
             value={searchTerm}
@@ -605,7 +605,23 @@ export default function Dashboard() {
             className="pl-12 h-12"
           />
         </div>
-        {isAdmin && <SaveIndicator />}
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2 shrink-0">
+                <Users className={cn("w-4 h-4", showAllTeamsData ? "text-primary" : "text-muted-foreground")} />
+                <Switch
+                  checked={showAllTeamsData}
+                  onCheckedChange={setShowAllTeamsData}
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">{showAllTeamsData ? "Showing all teams' scouting data" : "Showing only your team's data"}</p>
+            </TooltipContent>
+          </Tooltip>
+          {isAdmin && <SaveIndicator />}
+        </div>
       </div>
 
       {loading ? (
