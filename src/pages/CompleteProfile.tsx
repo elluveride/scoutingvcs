@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -19,13 +19,18 @@ const profileSchema = z.object({
 });
 
 export default function CompleteProfile() {
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, needsProfile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [name, setName] = useState(user?.user_metadata?.full_name || user?.user_metadata?.name || '');
   const [teamNumber, setTeamNumber] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // If profile already exists, redirect away
+  if (profile) {
+    return <Navigate to="/event-select" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,19 +58,17 @@ export default function CompleteProfile() {
 
     if (rpcError) {
       if (rpcError.message.includes('already exists')) {
-        // Profile was created in the meantime, just refresh
         await refreshProfile();
-        navigate('/event-select', { replace: true });
       } else {
         setError(rpcError.message);
       }
     } else {
-      await refreshProfile();
       toast({
         title: `Welcome to Cipher, ${name.trim()}! 🎉`,
         description: 'Your account is pending admin approval. You\'ll be notified once approved.',
       });
-      navigate('/event-select', { replace: true });
+      await refreshProfile();
+      // Navigation happens automatically via the profile redirect check above
     }
 
     setSubmitting(false);
