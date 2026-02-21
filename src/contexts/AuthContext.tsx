@@ -23,6 +23,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   isAdmin: boolean;
   isApproved: boolean;
+  needsProfile: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -125,6 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isAdmin = profile?.role === 'admin';
   const isApproved = profile?.status === 'approved';
+  const needsProfile = !!user && !loading && !profile;
 
   const refreshProfile = async () => {
     if (user) {
@@ -145,6 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshProfile,
         isAdmin,
         isApproved,
+        needsProfile,
       }}
     >
       {children}
