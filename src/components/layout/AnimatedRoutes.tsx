@@ -20,6 +20,7 @@ import DataSharing from '@/pages/DataSharing';
 import Admin from '@/pages/Admin';
 import ProfileSettings from '@/pages/ProfileSettings';
 import NotFound from '@/pages/NotFound';
+import CompleteProfile from '@/pages/CompleteProfile';
 import LandingHome from '@/pages/landing/LandingHome';
 import LandingFeatures from '@/pages/landing/LandingFeatures';
 import LandingAbout from '@/pages/landing/LandingAbout';
@@ -37,6 +38,7 @@ export function AnimatedRoutes() {
         <Route path="/docs" element={<PageTransition><LandingDocs /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+        <Route path="/complete-profile" element={<PageTransition><CompleteProfile /></PageTransition>} />
         <Route path="/event-select" element={<ApprovalGate><PageTransition><EventSelect /></PageTransition></ApprovalGate>} />
         <Route path="/scout" element={<ApprovalGate><PageTransition><MatchScout /></PageTransition></ApprovalGate>} />
         <Route path="/pit" element={<ApprovalGate><PageTransition><PitScout /></PageTransition></ApprovalGate>} />

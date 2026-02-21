@@ -11,7 +11,7 @@ interface ApprovalGateProps {
 }
 
 export function ApprovalGate({ children, requireApproval = true }: ApprovalGateProps) {
-  const { user, profile, loading, signOut, isApproved } = useAuth();
+  const { user, profile, loading, signOut, isApproved, needsProfile } = useAuth();
 
   if (loading) {
     return <FullPageLoader text="Checking authentication..." />;
@@ -19,6 +19,10 @@ export function ApprovalGate({ children, requireApproval = true }: ApprovalGateP
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (needsProfile) {
+    return <Navigate to="/complete-profile" replace />;
   }
 
   if (!requireApproval) {

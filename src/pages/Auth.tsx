@@ -26,7 +26,7 @@ const signInSchema = z.object({
 });
 
 export default function Auth() {
-  const { user, loading, signUp, signIn } = useAuth();
+  const { user, loading, signUp, signIn, needsProfile } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -44,6 +44,10 @@ export default function Auth() {
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (user && needsProfile) {
+    return <Navigate to="/complete-profile" replace />;
   }
 
   if (user) {
