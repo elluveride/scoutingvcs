@@ -257,29 +257,12 @@ export default function Dashboard() {
           matchGroups.set(e.match_number, group);
         });
 
-        // For each match, average the scouter entries into one representative entry
+        // For each match, keep only the most recently created/edited entry
         const deduped: typeof data = [];
-        matchGroups.forEach((group, matchNum) => {
-          if (group.length === 1) {
-            deduped.push(group[0]);
-          } else {
-            // Average numeric fields across scouters for this match
-            const avg = (arr: typeof group, fn: (e: typeof group[0]) => number) =>
-              Math.round((arr.reduce((s, e) => s + fn(e), 0) / arr.length) * 10) / 10;
-            deduped.push({
-              ...group[0],
-              auto_scored_close: avg(group, e => e.auto_scored_close),
-              auto_scored_far: avg(group, e => e.auto_scored_far),
-              auto_fouls_minor: avg(group, e => e.auto_fouls_minor),
-              auto_fouls_major: avg(group, e => e.auto_fouls_major),
-              on_launch_line: group.some(e => e.on_launch_line),
-              teleop_scored_close: avg(group, e => e.teleop_scored_close),
-              teleop_scored_far: avg(group, e => e.teleop_scored_far),
-              defense_rating: avg(group, e => e.defense_rating),
-              endgame_return: group[group.length - 1].endgame_return,
-              penalty_status: group.some(e => e.penalty_status !== 'none') ? group.find(e => e.penalty_status !== 'none')!.penalty_status : 'none' as const,
-            });
-          }
+        matchGroups.forEach((group) => {
+          // Sort by created_at descending and take the latest entry
+          group.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          deduped.push(group[0]);
         });
 
         teamMap.set(teamNumber, deduped);
