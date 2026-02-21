@@ -236,12 +236,53 @@ export default function Dashboard() {
       .eq('event_code', currentEvent.code);
 
     if (data && !error) {
+      // Deduplicate: when multiple scouters scout the same match/team,
+      // average their values per match first, then average across matches
       const teamMap = new Map<number, typeof data>();
 
+      // Group by team first
+      const rawTeamMap = new Map<number, typeof data>();
       data.forEach(entry => {
-        const existing = teamMap.get(entry.team_number) || [];
+        const existing = rawTeamMap.get(entry.team_number) || [];
         existing.push(entry);
-        teamMap.set(entry.team_number, existing);
+        rawTeamMap.set(entry.team_number, existing);
+      });
+
+      // Deduplicate per match_number within each team
+      rawTeamMap.forEach((entries, teamNumber) => {
+        const matchGroups = new Map<number, typeof data>();
+        entries.forEach(e => {
+          const group = matchGroups.get(e.match_number) || [];
+          group.push(e);
+          matchGroups.set(e.match_number, group);
+        });
+
+        // For each match, average the scouter entries into one representative entry
+        const deduped: typeof data = [];
+        matchGroups.forEach((group, matchNum) => {
+          if (group.length === 1) {
+            deduped.push(group[0]);
+          } else {
+            // Average numeric fields across scouters for this match
+            const avg = (arr: typeof group, fn: (e: typeof group[0]) => number) =>
+              Math.round((arr.reduce((s, e) => s + fn(e), 0) / arr.length) * 10) / 10;
+            deduped.push({
+              ...group[0],
+              auto_scored_close: avg(group, e => e.auto_scored_close),
+              auto_scored_far: avg(group, e => e.auto_scored_far),
+              auto_fouls_minor: avg(group, e => e.auto_fouls_minor),
+              auto_fouls_major: avg(group, e => e.auto_fouls_major),
+              on_launch_line: group.some(e => e.on_launch_line),
+              teleop_scored_close: avg(group, e => e.teleop_scored_close),
+              teleop_scored_far: avg(group, e => e.teleop_scored_far),
+              defense_rating: avg(group, e => e.defense_rating),
+              endgame_return: group[group.length - 1].endgame_return,
+              penalty_status: group.some(e => e.penalty_status !== 'none') ? group.find(e => e.penalty_status !== 'none')!.penalty_status : 'none' as const,
+            });
+          }
+        });
+
+        teamMap.set(teamNumber, deduped);
       });
 
       const stats: TeamStats[] = [];
