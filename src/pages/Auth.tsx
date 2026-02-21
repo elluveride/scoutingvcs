@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import cipherLogo from '@/assets/cipher-icon.png';
 import { lovable } from '@/integrations/lovable/index';
 import { z } from 'zod';
@@ -27,6 +28,7 @@ const signInSchema = z.object({
 
 export default function Auth() {
   const { user, loading, signUp, signIn, needsProfile } = useAuth();
+  const { toast } = useToast();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -103,7 +105,10 @@ export default function Auth() {
             setError(error.message);
           }
         } else {
-          setSuccessMessage('Account created! Please check your email to verify your account.');
+          toast({
+            title: `Welcome to Cipher, ${name}! 🎉`,
+            description: 'Your account is pending admin approval. You\'ll be notified once approved.',
+          });
         }
       } else {
         const validation = signInSchema.safeParse({ email, password });
