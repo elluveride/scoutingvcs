@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useSearchParams, useNavigate } from 'react-router-dom';
+import { useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -33,7 +34,7 @@ interface MatchEntry {
 }
 
 export default function TeamDetail() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { currentEvent } = useEvent();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -65,7 +66,46 @@ export default function TeamDetail() {
         .maybeSingle(),
     ]);
 
-    if (matchResult.data) setEntries(matchResult.data.map(e => ({ ...e, notes: (e as any).notes || '' })));
+    if (matchResult.data) {
+      // Filter to only entries scouted by our team (or allied team)
+      const myTeam = profile?.teamNumber;
+      let filtered = matchResult.data;
+
+      if (myTeam) {
+        const scouterIds = [...new Set(matchResult.data.map(e => e.scouter_id))];
+        const { data: scouterProfiles } = await supabase
+          .from('profiles')
+          .select('id, team_number')
+          .in('id', scouterIds);
+
+        const scouterTeamMap: Record<string, number | null> = {};
+        scouterProfiles?.forEach(p => { scouterTeamMap[p.id] = p.team_number; });
+        
+
+        filtered = matchResult.data.filter(entry => {
+          const scouterTeam = scouterTeamMap[entry.scouter_id];
+          if (!scouterTeam) return true;
+          if (scouterTeam === myTeam) return true;
+          if ((myTeam === 12841 && scouterTeam === 2844) || (myTeam === 2844 && scouterTeam === 12841)) return true;
+          return false;
+        });
+      }
+
+      // Deduplicate: keep only the latest entry per match
+      const matchGroupsObj: Record<number, typeof filtered> = {};
+      filtered.forEach(e => {
+        if (!matchGroupsObj[e.match_number]) matchGroupsObj[e.match_number] = [];
+        matchGroupsObj[e.match_number].push(e);
+      });
+      const deduped: typeof filtered = [];
+      Object.values(matchGroupsObj).forEach((group) => {
+        group.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        deduped.push(group[0]);
+      });
+      deduped.sort((a, b) => a.match_number - b.match_number);
+
+      setEntries(deduped.map(e => ({ ...e, notes: (e as any).notes || '' })));
+    }
     if (pitResult.data) {
       const stored = pitResult.data.auto_paths as any;
       if (Array.isArray(stored)) setAutoPaths(stored);
