@@ -230,12 +230,40 @@ export default function Dashboard() {
   const calculateStats = async () => {
     setLoading(true);
 
-    const { data, error } = await supabase
+    // Fetch match entries and filter to only our team's scouted data
+    const myTeam = profile?.teamNumber;
+    const { data: allEntries, error } = await supabase
       .from('match_entries')
       .select('*')
       .eq('event_code', currentEvent.code);
 
-    if (data && !error) {
+    if (!allEntries || error) {
+      setLoading(false);
+      return;
+    }
+
+    // Get scouter team numbers to filter by own team only
+    const scouterIds = [...new Set(allEntries.map(e => e.scouter_id))];
+    const { data: scouterProfiles } = await supabase
+      .from('profiles')
+      .select('id, team_number')
+      .in('id', scouterIds);
+
+    const scouterTeamMap = new Map<string, number | null>();
+    scouterProfiles?.forEach(p => scouterTeamMap.set(p.id, p.team_number));
+
+    // Only keep entries scouted by our team (or allied team)
+    const data = allEntries.filter(entry => {
+      if (!myTeam) return true;
+      const scouterTeam = scouterTeamMap.get(entry.scouter_id);
+      if (!scouterTeam) return true;
+      if (scouterTeam === myTeam) return true;
+      // Allied teams
+      if ((myTeam === 12841 && scouterTeam === 2844) || (myTeam === 2844 && scouterTeam === 12841)) return true;
+      return false;
+    });
+
+    if (data.length > 0) {
       // Deduplicate: when multiple scouters scout the same match/team,
       // average their values per match first, then average across matches
       const teamMap = new Map<number, typeof data>();
