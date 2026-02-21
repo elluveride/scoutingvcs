@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2, AlertCircle } from 'lucide-react';
 import cipherLogo from '@/assets/cipher-icon.png';
 import { z } from 'zod';
@@ -20,6 +21,7 @@ const profileSchema = z.object({
 export default function CompleteProfile() {
   const { user, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [name, setName] = useState(user?.user_metadata?.full_name || user?.user_metadata?.name || '');
   const [teamNumber, setTeamNumber] = useState('');
   const [error, setError] = useState('');
@@ -59,6 +61,10 @@ export default function CompleteProfile() {
       }
     } else {
       await refreshProfile();
+      toast({
+        title: `Welcome to Cipher, ${name.trim()}! 🎉`,
+        description: 'Your account is pending admin approval. You\'ll be notified once approved.',
+      });
       navigate('/event-select', { replace: true });
     }
 
