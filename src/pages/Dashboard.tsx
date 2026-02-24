@@ -117,7 +117,7 @@ export default function Dashboard() {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { rankings: apiRankings, getRankForTeam, getRecordForTeam } = useFTCRankings();
+  const { rankings: apiRankings, getRankForTeam, getRecordForTeam, getTeamName } = useFTCRankings();
 
   const [config1, setConfig1] = useState<SortConfig>({
     name: 'List 1',
@@ -501,6 +501,7 @@ export default function Dashboard() {
 
   const TeamCard = ({ team }: { team: TeamStats }) => {
     const officialRank = getRankForTeam(team.teamNumber);
+    const teamName = getTeamName(team.teamNumber);
 
     return (
       <div
@@ -511,6 +512,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <div>
               <h3 className="text-xl font-bold font-mono">{team.teamNumber}</h3>
+              {teamName && <p className="text-xs text-muted-foreground truncate max-w-[160px]">{teamName}</p>}
               <p className="text-xs text-muted-foreground">{team.matchesPlayed} matches</p>
             </div>
             {officialRank !== null && (
