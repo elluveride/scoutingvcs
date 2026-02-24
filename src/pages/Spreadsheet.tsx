@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useFTCRankings } from '@/hooks/useFTCRankings';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -57,6 +58,7 @@ export default function Spreadsheet() {
   const { currentEvent } = useEvent();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { getTeamName } = useFTCRankings();
   const [entries, setEntries] = useState<MatchRow[]>([]);
   const [allEntries, setAllEntries] = useState<MatchRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -384,7 +386,12 @@ export default function Spreadsheet() {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="font-mono font-semibold">{entry.team_number}</TableCell>
+                  <TableCell className="font-mono font-semibold">
+                    {entry.team_number}
+                    {getTeamName(entry.team_number) && (
+                      <span className="ml-1.5 text-xs font-sans font-normal text-muted-foreground">{getTeamName(entry.team_number)}</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{entry.scouter_name}</TableCell>
                   <TableCell className="text-center">{entry.auto_scored_close}</TableCell>
                   <TableCell className="text-center">{entry.auto_scored_far}</TableCell>

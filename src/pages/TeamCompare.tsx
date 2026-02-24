@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useFTCRankings } from '@/hooks/useFTCRankings';
 import { Loader2, Plus, X, Bot, Gamepad2, Flag, TrendingUp } from 'lucide-react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -34,6 +35,7 @@ const COLORS = ['hsl(210 100% 50%)', 'hsl(0 85% 55%)', 'hsl(260 60% 60%)'];
 export default function TeamCompare() {
   const { user } = useAuth();
   const { currentEvent } = useEvent();
+  const { getTeamName } = useFTCRankings();
   const [teamInput, setTeamInput] = useState('');
   const [selectedTeams, setSelectedTeams] = useState<number[]>([]);
   const [teamStats, setTeamStats] = useState<TeamCompareStats[]>([]);
@@ -142,6 +144,7 @@ export default function TeamCompare() {
               style={{ borderColor: COLORS[i], color: COLORS[i] }}
             >
               {num}
+              {getTeamName(num) && <span className="text-xs font-sans font-normal text-muted-foreground">{getTeamName(num)}</span>}
               <button onClick={() => removeTeam(num)} className="hover:opacity-70">
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -168,8 +171,9 @@ export default function TeamCompare() {
                 <tr className="border-b border-border">
                   <th className="text-left py-2 px-3 text-muted-foreground font-mono">Metric</th>
                   {teamStats.map((t, i) => (
-                    <th key={t.teamNumber} className="text-center py-2 px-3 font-mono font-bold" style={{ color: COLORS[i] }}>
-                      {t.teamNumber}
+                    <th key={t.teamNumber} className="text-center py-2 px-3" style={{ color: COLORS[i] }}>
+                      <span className="font-mono font-bold">{t.teamNumber}</span>
+                      {getTeamName(t.teamNumber) && <div className="text-xs font-sans font-normal text-muted-foreground">{getTeamName(t.teamNumber)}</div>}
                     </th>
                   ))}
                 </tr>

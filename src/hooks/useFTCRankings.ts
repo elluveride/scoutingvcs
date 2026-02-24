@@ -40,6 +40,7 @@ interface UseFTCRankingsResult {
   refetch: () => Promise<void>;
   getRankForTeam: (teamNumber: number) => number | null;
   getRecordForTeam: (teamNumber: number) => { wins: number; losses: number; ties: number } | null;
+  getTeamName: (teamNumber: number) => string | null;
 }
 
 export function useFTCRankings(includeScores = false): UseFTCRankingsResult {
@@ -99,6 +100,11 @@ export function useFTCRankings(includeScores = false): UseFTCRankingsResult {
     return team ? { wins: team.wins, losses: team.losses, ties: team.ties } : null;
   }, [rankings]);
 
+  const getTeamName = useCallback((teamNumber: number): string | null => {
+    const team = rankings.find(r => r.teamNumber === teamNumber);
+    return team ? team.teamName : null;
+  }, [rankings]);
+
   // Fetch on mount and when event changes
   useEffect(() => {
     if (currentEvent?.code) {
@@ -114,5 +120,6 @@ export function useFTCRankings(includeScores = false): UseFTCRankingsResult {
     refetch: fetchRankings,
     getRankForTeam,
     getRecordForTeam,
+    getTeamName,
   };
 }

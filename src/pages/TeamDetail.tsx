@@ -7,6 +7,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useFTCRankings } from '@/hooks/useFTCRankings';
 import { Loader2, ArrowLeft, Bot, Gamepad2, Flag, TrendingUp, MessageSquare, Map } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -36,9 +37,11 @@ interface MatchEntry {
 export default function TeamDetail() {
   const { user, profile } = useAuth();
   const { currentEvent } = useEvent();
+  const { getTeamName } = useFTCRankings();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const teamNumber = searchParams.get('team');
+  const teamName = teamNumber ? getTeamName(parseInt(teamNumber)) : null;
 
   const [entries, setEntries] = useState<MatchEntry[]>([]);
   const [autoPaths, setAutoPaths] = useState<DrawnPath[]>([]);
@@ -172,7 +175,7 @@ export default function TeamDetail() {
   return (
     <AppLayout>
       <PageHeader
-        title={`Team ${teamNumber}`}
+        title={`Team ${teamNumber}${teamName ? ` – ${teamName}` : ''}`}
         description={`${entries.length} matches at ${currentEvent.name}`}
       >
         <Button variant="outline" onClick={() => navigate('/dashboard')}>
