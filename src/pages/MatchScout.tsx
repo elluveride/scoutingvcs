@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useFTCMatches } from '@/hooks/useFTCMatches';
+import { useFTCRankings } from '@/hooks/useFTCRankings';
 import { useOnlineStatus } from '@/hooks/useOfflineSync';
 import { queueMatchEntry } from '@/lib/offlineDb';
 
@@ -49,6 +50,7 @@ export default function MatchScout() {
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const { matches, loading: matchesLoading, refetch: refetchMatches } = useFTCMatches();
+  const { getTeamName } = useFTCRankings();
   const isOnline = useOnlineStatus();
   
   const isAdmin = profile?.role === 'admin';
@@ -280,6 +282,11 @@ export default function MatchScout() {
         <p className="text-sm text-muted-foreground font-mono mt-1">
           {currentEvent.name}
         </p>
+        {teamNumber && getTeamName(parseInt(teamNumber)) && (
+          <p className="text-sm text-primary font-mono mt-1">
+            {getTeamName(parseInt(teamNumber))}
+          </p>
+        )}
       </div>
 
       {editingEntry && (

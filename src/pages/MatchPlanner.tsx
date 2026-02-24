@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useFTCMatches } from '@/hooks/useFTCMatches';
+import { useFTCRankings } from '@/hooks/useFTCRankings';
 import { PitSection } from '@/components/match-scout/PitSection';
 import {
   Loader2, Swords, TrendingUp, Bot, Gamepad2, Flag,
@@ -192,6 +193,7 @@ export default function MatchPlanner() {
   const { user } = useAuth();
   const { currentEvent } = useEvent();
   const { matches } = useFTCMatches();
+  const { getTeamName } = useFTCRankings();
 
   const [allEntries, setAllEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -338,13 +340,25 @@ export default function MatchPlanner() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-sm font-mono text-alliance-blue font-semibold">Blue Alliance</Label>
-                  <Input value={blueTeam1} onChange={e => setBlueTeam1(e.target.value)} placeholder="Team 1" type="number" className="h-12 font-mono" />
-                  <Input value={blueTeam2} onChange={e => setBlueTeam2(e.target.value)} placeholder="Team 2" type="number" className="h-12 font-mono" />
+                  <div>
+                    <Input value={blueTeam1} onChange={e => setBlueTeam1(e.target.value)} placeholder="Team 1" type="number" className="h-12 font-mono" />
+                    {blueTeam1 && getTeamName(parseInt(blueTeam1)) && <p className="text-xs text-muted-foreground mt-1 truncate">{getTeamName(parseInt(blueTeam1))}</p>}
+                  </div>
+                  <div>
+                    <Input value={blueTeam2} onChange={e => setBlueTeam2(e.target.value)} placeholder="Team 2" type="number" className="h-12 font-mono" />
+                    {blueTeam2 && getTeamName(parseInt(blueTeam2)) && <p className="text-xs text-muted-foreground mt-1 truncate">{getTeamName(parseInt(blueTeam2))}</p>}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-mono text-alliance-red font-semibold">Red Alliance</Label>
-                  <Input value={redTeam1} onChange={e => setRedTeam1(e.target.value)} placeholder="Team 1" type="number" className="h-12 font-mono" />
-                  <Input value={redTeam2} onChange={e => setRedTeam2(e.target.value)} placeholder="Team 2" type="number" className="h-12 font-mono" />
+                  <div>
+                    <Input value={redTeam1} onChange={e => setRedTeam1(e.target.value)} placeholder="Team 1" type="number" className="h-12 font-mono" />
+                    {redTeam1 && getTeamName(parseInt(redTeam1)) && <p className="text-xs text-muted-foreground mt-1 truncate">{getTeamName(parseInt(redTeam1))}</p>}
+                  </div>
+                  <div>
+                    <Input value={redTeam2} onChange={e => setRedTeam2(e.target.value)} placeholder="Team 2" type="number" className="h-12 font-mono" />
+                    {redTeam2 && getTeamName(parseInt(redTeam2)) && <p className="text-xs text-muted-foreground mt-1 truncate">{getTeamName(parseInt(redTeam2))}</p>}
+                  </div>
                 </div>
               </div>
             </div>
@@ -415,6 +429,7 @@ export default function MatchPlanner() {
                     <div className="flex items-center gap-2 mb-3">
                       <div className={`w-3 h-3 rounded-full ${i < bluePreds.length ? 'bg-alliance-blue' : 'bg-alliance-red'}`} />
                       <span className="font-display font-bold text-lg">{pred.teamNumber}</span>
+                      {getTeamName(pred.teamNumber) && <span className="text-xs text-muted-foreground truncate">{getTeamName(pred.teamNumber)}</span>}
                       <span className="text-xs font-mono text-muted-foreground ml-auto">{pred.matchCount} matches</span>
                     </div>
 
