@@ -14,7 +14,6 @@ serve(async (req) => {
   }
 
   try {
-    // Auth check
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
@@ -52,26 +51,31 @@ serve(async (req) => {
 
     const nexusHeaders = { 'Nexus-Api-Key': NEXUS_KEY, 'Accept': 'application/json' };
 
-    const [mapResp, pitsResp] = await Promise.all([
-      fetch(`${NEXUS_BASE}/event/${encodeURIComponent(eventKey)}/map`, { headers: nexusHeaders }),
+    const [statusResp, pitsResp] = await Promise.all([
+      fetch(`${NEXUS_BASE}/event/${encodeURIComponent(eventKey)}`, { headers: nexusHeaders }),
       fetch(`${NEXUS_BASE}/event/${encodeURIComponent(eventKey)}/pits`, { headers: nexusHeaders }),
     ]);
 
-    if (pitsResp.status === 404 && mapResp.status === 404) {
-      return new Response(JSON.stringify({ error: 'Event not found on Nexus' }), {
-        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    if (pitsResp.status === 401 || pitsResp.status === 403 || mapResp.status === 401 || mapResp.status === 403) {
+    if (statusResp.status === 401 || statusResp.status === 403) {
       return new Response(JSON.stringify({ error: 'Nexus API key rejected' }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    if (statusResp.status === 404) {
+      return new Response(JSON.stringify({ error: 'Event not found on Nexus. The event may not be using Nexus for queuing.' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (!statusResp.ok) {
+      return new Response(JSON.stringify({ error: `Nexus API error: ${statusResp.status}` }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    const map = mapResp.ok ? await mapResp.json() : null;
+    const status = await statusResp.json();
     const pitAddresses = pitsResp.ok ? await pitsResp.json() : {};
 
-    return new Response(JSON.stringify({ map, pitAddresses, eventKey }), {
+    return new Response(JSON.stringify({ status, pitAddresses, eventKey }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {

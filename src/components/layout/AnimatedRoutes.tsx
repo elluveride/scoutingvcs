@@ -8,7 +8,7 @@ import ResetPassword from '@/pages/ResetPassword';
 import EventSelect from '@/pages/EventSelect';
 import MatchScout from '@/pages/MatchScout';
 import PitScout from '@/pages/PitScout';
-import PitMap from '@/pages/PitMap';
+import PitDisplay from '@/pages/PitDisplay';
 import Spreadsheet from '@/pages/Spreadsheet';
 import Dashboard from '@/pages/Dashboard';
 import TeamDetail from '@/pages/TeamDetail';
@@ -43,7 +43,7 @@ export function AnimatedRoutes() {
         <Route path="/event-select" element={<ApprovalGate><PageTransition><EventSelect /></PageTransition></ApprovalGate>} />
         <Route path="/scout" element={<ApprovalGate><PageTransition><MatchScout /></PageTransition></ApprovalGate>} />
         <Route path="/pit" element={<ApprovalGate><PageTransition><PitScout /></PageTransition></ApprovalGate>} />
-        <Route path="/pit-map" element={<ApprovalGate><PageTransition><PitMap /></PageTransition></ApprovalGate>} />
+        <Route path="/pit-display" element={<ApprovalGate><PageTransition><PitDisplay /></PageTransition></ApprovalGate>} />
         <Route path="/spreadsheet" element={<ApprovalGate><PageTransition><Spreadsheet /></PageTransition></ApprovalGate>} />
         <Route path="/dashboard" element={<ApprovalGate><PageTransition><Dashboard /></PageTransition></ApprovalGate>} />
         <Route path="/team" element={<ApprovalGate><PageTransition><TeamDetail /></PageTransition></ApprovalGate>} />

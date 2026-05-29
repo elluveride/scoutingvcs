@@ -21,7 +21,7 @@ import {
   Users,
   Share2,
   GitCompareArrows,
-  MapPin,
+  MonitorPlay,
 } from 'lucide-react';
 import { OfflineIndicator } from '@/components/layout/OfflineIndicator';
 import { BugReportButton } from '@/components/layout/BugReportButton';
@@ -42,7 +42,7 @@ interface AppLayoutProps {
 const navItems = [
   { to: '/scout', icon: ClipboardList, label: 'Match Scout' },
   { to: '/pit', icon: Wrench, label: 'Pit Scout' },
-  { to: '/pit-map', icon: MapPin, label: 'Pit Map' },
+  { to: '/pit-display', icon: MonitorPlay, label: 'Pit Display' },
   { to: '/spreadsheet', icon: Table, label: 'Spreadsheet' },
   { to: '/dashboard', icon: BarChart3, label: 'Dashboard' },
   { to: '/compare', icon: GitCompareArrows, label: 'Compare' },
