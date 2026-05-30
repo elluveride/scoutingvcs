@@ -23,6 +23,9 @@ import {
 
 import { POINTS, predictTeam, type TeamPrediction, type MatchEntryLite as MatchEntry } from '@/lib/prediction';
 
+const round1 = (v: number) => Math.round(v * 10) / 10;
+
+
 
 /*──────────────────────────────────────────────────────────────
   Component
