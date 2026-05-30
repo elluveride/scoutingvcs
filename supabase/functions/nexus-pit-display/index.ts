@@ -51,17 +51,32 @@ serve(async (req) => {
 
     const nexusHeaders = { 'Nexus-Api-Key': NEXUS_KEY, 'Accept': 'application/json' };
 
-    const [statusResp, pitsResp] = await Promise.all([
-      fetch(`${NEXUS_BASE}/event/${encodeURIComponent(eventKey)}`, { headers: nexusHeaders }),
-      fetch(`${NEXUS_BASE}/event/${encodeURIComponent(eventKey)}/pits`, { headers: nexusHeaders }),
-    ]);
+    // FTC API event codes lack year prefix, but Nexus keys often use "2024xxx" / "2025xxx".
+    // Try the user-provided key plus common season-prefixed variants.
+    const stripped = eventKey.replace(/^20\d{2}/, '');
+    const year = new Date().getUTCFullYear();
+    const variants = Array.from(new Set([
+      eventKey,
+      `${year}${stripped}`,
+      `${year - 1}${stripped}`,
+      `${year + 1}${stripped}`,
+      stripped,
+    ]));
 
-    if (statusResp.status === 401 || statusResp.status === 403) {
-      return new Response(JSON.stringify({ error: 'Nexus API key rejected' }), {
-        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    let statusResp: Response | null = null;
+    let resolvedKey = eventKey;
+    for (const key of variants) {
+      const r = await fetch(`${NEXUS_BASE}/event/${encodeURIComponent(key)}`, { headers: nexusHeaders });
+      if (r.status === 401 || r.status === 403) {
+        return new Response(JSON.stringify({ error: 'Nexus API key rejected' }), {
+          status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (r.ok) { statusResp = r; resolvedKey = key; break; }
+      if (r.status !== 404) { statusResp = r; resolvedKey = key; break; }
     }
-    if (statusResp.status === 404) {
+
+    if (!statusResp || statusResp.status === 404) {
       return new Response(JSON.stringify({ error: 'Event not found on Nexus. The event may not be using Nexus for queuing.' }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -72,10 +87,11 @@ serve(async (req) => {
       });
     }
 
+    const pitsResp = await fetch(`${NEXUS_BASE}/event/${encodeURIComponent(resolvedKey)}/pits`, { headers: nexusHeaders });
     const status = await statusResp.json();
     const pitAddresses = pitsResp.ok ? await pitsResp.json() : {};
 
-    return new Response(JSON.stringify({ status, pitAddresses, eventKey }), {
+    return new Response(JSON.stringify({ status, pitAddresses, eventKey: resolvedKey }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
