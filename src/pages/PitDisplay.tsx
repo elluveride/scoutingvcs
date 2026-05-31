@@ -147,11 +147,57 @@ export default function PitDisplay() {
   if (!user) return <Navigate to="/auth" replace />;
 
   /*──────────────── derived ────────────────*/
-  const status = data?.status;
+  // If Nexus has no usable data, synthesize from FTC API schedule + scores
+  const fallback = useMemo<NexusStatus | null>(() => {
+    if (data?.status?.matches?.length) return null;
+    if (!ftcMatches.length) return null;
+    const playedNums = new Set(matchScores.map((s) => s.matchNumber));
+    const sorted = [...ftcMatches].sort((a, b) => a.matchNumber - b.matchNumber);
+    const nextIdx = sorted.findIndex((m) => !playedNums.has(m.matchNumber));
+    if (nextIdx === -1) return null;
+    const toNexus = (mm: typeof sorted[number], status: string): NexusMatch => {
+      const red = mm.positions.filter((p) => p.position.startsWith('R')).map((p) => String(p.teamNumber));
+      const blue = mm.positions.filter((p) => p.position.startsWith('B')).map((p) => String(p.teamNumber));
+      return { label: `Q-${mm.matchNumber}`, status, redTeams: red, blueTeams: blue, times: {} };
+    };
+    const synth: NexusMatch[] = [];
+    if (sorted[nextIdx]) synth.push(toNexus(sorted[nextIdx], 'On field'));
+    if (sorted[nextIdx + 1]) synth.push(toNexus(sorted[nextIdx + 1], 'On deck'));
+    if (sorted[nextIdx + 2]) synth.push(toNexus(sorted[nextIdx + 2], 'Now queuing'));
+    sorted.slice(nextIdx + 3, nextIdx + 12).forEach((m) => synth.push(toNexus(m, 'Scheduled')));
+    return {
+      eventKey: eventKey || '',
+      dataAsOfTime: Date.now(),
+      matches: synth,
+    };
+  }, [data, ftcMatches, matchScores, eventKey]);
+
+  const usingFallback = !!fallback && !data?.status?.matches?.length;
+  const status = usingFallback ? fallback : data?.status;
   const matches = status?.matches || [];
-  const onField = findByStatus(matches, 'On field') || findByStatus(matches, 'In progress');
-  const queuing = findByStatus(matches, 'Now queuing');
-  const onDeck = findByStatus(matches, 'On deck');
+
+  // Sanity: on-field number must be one less than on-deck
+  const extractNum = (label?: string) => {
+    if (!label) return null;
+    const m = label.match(/(\d+)/);
+    return m ? parseInt(m[1]) : null;
+  };
+  let onField = findByStatus(matches, 'On field') || findByStatus(matches, 'In progress');
+  let queuing = findByStatus(matches, 'Now queuing');
+  let onDeck = findByStatus(matches, 'On deck');
+  const fNum = extractNum(onField?.label);
+  const dNum = extractNum(onDeck?.label);
+  const qNum = extractNum(queuing?.label);
+  // If on-deck != on-field + 1, prefer trusting on-deck (newest signal) and rebuild
+  if (fNum !== null && dNum !== null && dNum !== fNum + 1) {
+    const corrected = matches.find((m) => extractNum(m.label) === dNum - 1);
+    if (corrected) onField = corrected;
+  }
+  // Queuing should be on-deck + 1 (or on-field + 2)
+  if (dNum !== null && qNum !== null && qNum !== dNum + 1) {
+    const corrected = matches.find((m) => extractNum(m.label) === dNum + 1);
+    if (corrected) queuing = corrected;
+  }
 
   const teamPredictions = useMemo(() => {
     const teamMap = new Map<number, MatchEntryLite[]>();
