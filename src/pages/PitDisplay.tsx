@@ -838,15 +838,27 @@ function AlliancePrediction({ label, stats, teams, myTeam, color, winning, predi
   );
 }
 
-function TeamBreakdownRow({ teamNumber, isMe, prediction, opr, pit, color }: {
+function TeamBreakdownRow({ teamNumber, isMe, prediction, opr, pit, color, allianceTotal }: {
   teamNumber: string;
   isMe: boolean;
   prediction?: TeamPrediction;
   opr?: number;
   pit?: PitRow;
   color: 'red' | 'blue';
+  allianceTotal?: number;
 }) {
   const chipMe = color === 'red' ? 'bg-alliance-red text-white' : 'bg-alliance-blue text-white';
+  const deltaPct = prediction && allianceTotal && allianceTotal > 0
+    ? (prediction.predictedTotal / allianceTotal) * 100
+    : null;
+  const teamConfidence = prediction
+    ? Math.round(prediction.consistency * Math.min(1, prediction.matchCount / 4))
+    : 0;
+  const confTone =
+    teamConfidence >= 70 ? 'text-success' :
+    teamConfidence >= 40 ? 'text-warning' :
+    'text-destructive';
+
   return (
     <div className={cn(
       'rounded border px-2 py-1.5 grid grid-cols-[64px_1fr_auto] gap-2 items-center text-xs',
@@ -868,7 +880,32 @@ function TeamBreakdownRow({ teamNumber, isMe, prediction, opr, pit, color }: {
       </div>
       <div className="text-right font-mono text-[10px] text-muted-foreground leading-tight">
         <div>OPR <span className="text-foreground font-display text-sm">{opr !== undefined ? opr.toFixed(1) : '—'}</span></div>
-        <div>Pred <span className="text-foreground font-display text-sm">{prediction ? prediction.predictedTotal.toFixed(0) : '—'}</span></div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="cursor-help inline-flex items-baseline gap-1 justify-end">
+              <span>+</span>
+              <span className="text-foreground font-display text-sm">{prediction ? prediction.predictedTotal.toFixed(0) : '—'}</span>
+              {deltaPct !== null && (
+                <span className="text-muted-foreground">({deltaPct.toFixed(0)}%)</span>
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-xs text-xs">
+            <p className="font-display uppercase tracking-wider mb-1">Team {teamNumber} contribution</p>
+            {prediction ? (
+              <ul className="space-y-0.5 font-mono">
+                <li>Auto: <span className="text-foreground">{prediction.predictedAuto.toFixed(1)}</span></li>
+                <li>Teleop: <span className="text-foreground">{prediction.predictedTeleop.toFixed(1)}</span></li>
+                <li>Endgame: <span className="text-foreground">{prediction.predictedEndgame.toFixed(1)}</span></li>
+                <li>Total: <span className="text-foreground">{prediction.predictedTotal.toFixed(1)}</span>{deltaPct !== null && ` (${deltaPct.toFixed(0)}% of alliance)`}</li>
+                <li>Sample: <span className="text-foreground">{prediction.matchCount} match{prediction.matchCount === 1 ? '' : 'es'}</span></li>
+                <li>Confidence: <span className={confTone}>{teamConfidence}%</span></li>
+              </ul>
+            ) : (
+              <p className="text-muted-foreground">No scouting data yet for this team.</p>
+            )}
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );
