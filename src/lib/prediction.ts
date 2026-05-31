@@ -71,17 +71,17 @@ export function predictTeam(teamNumber: number, entries: MatchEntryLite[]): Team
 
   const leaveRate = rate(e => e.on_launch_line);
   const autoLeavePoints = leaveRate * POINTS.LEAVE;
-  const avgAutoClassified = wAvg(e => e.auto_scored_close);
-  const avgAutoOverflow = wAvg(e => e.auto_scored_far);
-  const autoClassifiedPoints = avgAutoClassified * POINTS.CLASSIFIED_AUTO;
-  const autoOverflowPoints = avgAutoOverflow * POINTS.OVERFLOW_AUTO;
-  const predictedAuto = autoLeavePoints + autoClassifiedPoints + autoOverflowPoints;
+  // Ignore overflow distinction — all auto scores count as classified
+  const avgAutoTotal = wAvg(e => e.auto_scored_close + e.auto_scored_far);
+  const autoClassifiedPoints = avgAutoTotal * POINTS.CLASSIFIED_AUTO;
+  const autoOverflowPoints = 0;
+  const predictedAuto = autoLeavePoints + autoClassifiedPoints;
 
-  const avgTeleopClassified = wAvg(e => e.teleop_scored_close);
-  const avgTeleopOverflow = wAvg(e => e.teleop_scored_far);
-  const teleopClassifiedPoints = avgTeleopClassified * POINTS.CLASSIFIED_TELEOP;
-  const teleopOverflowPoints = avgTeleopOverflow * POINTS.OVERFLOW_TELEOP;
-  const predictedTeleop = teleopClassifiedPoints + teleopOverflowPoints;
+  // Ignore overflow distinction — all teleop scores count as classified
+  const avgTeleopTotal = wAvg(e => e.teleop_scored_close + e.teleop_scored_far);
+  const teleopClassifiedPoints = avgTeleopTotal * POINTS.CLASSIFIED_TELEOP;
+  const teleopOverflowPoints = 0;
+  const predictedTeleop = teleopClassifiedPoints;
 
   const fullReturnRate = rate(e => e.endgame_return === 'full');
   const partialReturnRate = rate(e => e.endgame_return === 'partial');
@@ -98,10 +98,8 @@ export function predictTeam(teamNumber: number, entries: MatchEntryLite[]): Team
 
   const matchTotals = entries.map(e => {
     const a = (e.on_launch_line ? POINTS.LEAVE : 0) +
-      e.auto_scored_close * POINTS.CLASSIFIED_AUTO +
-      e.auto_scored_far * POINTS.OVERFLOW_AUTO;
-    const t = e.teleop_scored_close * POINTS.CLASSIFIED_TELEOP +
-      e.teleop_scored_far * POINTS.OVERFLOW_TELEOP;
+      (e.auto_scored_close + e.auto_scored_far) * POINTS.CLASSIFIED_AUTO;
+    const t = (e.teleop_scored_close + e.teleop_scored_far) * POINTS.CLASSIFIED_TELEOP;
     const eg = (e.endgame_return === 'full' || e.endgame_return === 'lift') ? POINTS.BASE_FULL :
       e.endgame_return === 'partial' ? POINTS.BASE_PARTIAL : 0;
     return a + t + eg;
