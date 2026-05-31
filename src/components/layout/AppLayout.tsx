@@ -101,9 +101,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Logo */}
       <div className="p-4 md:p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <img src={cipherLogo} alt="Cipher" className="w-10 h-10 rounded-xl" />
+          <img src={cipherLogo} alt="Apex Scout" className="w-10 h-10 rounded-xl" />
           <div>
-            <h1 className="font-bold text-lg text-sidebar-foreground">Cipher</h1>
+            <h1 className="font-bold text-lg text-sidebar-foreground">Apex Scout</h1>
             <p className="text-xs text-muted-foreground">12841×2844</p>
           </div>
         </div>
@@ -208,8 +208,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Mobile Header */}
         <header className="sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-sidebar border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <img src={cipherLogo} alt="Cipher" className="w-8 h-8 rounded-lg" />
-            <span className="font-bold text-sidebar-foreground">Cipher</span>
+            <img src={cipherLogo} alt="Apex Scout" className="w-8 h-8 rounded-lg" />
+            <span className="font-bold text-sidebar-foreground">Apex Scout</span>
           </div>
           
           <Sheet open={open} onOpenChange={setOpen}>

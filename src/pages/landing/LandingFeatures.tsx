@@ -69,7 +69,7 @@ export default function LandingFeatures() {
   return (
     <LandingLayout>
       <SEOHead
-        title="Features — Cipher Scout"
+        title="Features — Apex Scout"
         description="Match scouting, pit scouting, analytics dashboard, team comparison, QR transfer, and more. Every tool you need for FTC competition strategy."
         path="/features"
       />

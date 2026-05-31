@@ -178,7 +178,7 @@ export default function EventSelect() {
         <div className="text-center mb-8">
           <img
             src={cipherLogo}
-            alt="Cipher logo"
+            alt="Apex Scout logo"
             className="w-16 h-16 rounded-2xl mx-auto mb-4"
           />
           <h1 className="text-3xl font-bold mb-2">Select Event</h1>

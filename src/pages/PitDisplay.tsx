@@ -8,13 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useFTCRankings, type TeamRanking } from '@/hooks/useFTCRankings';
 import { useFTCMatches } from '@/hooks/useFTCMatches';
 import {
   Loader2, RefreshCw, Radio, Trophy, Clock, Activity, Target,
-  Flame, ShieldCheck, Sparkles, Zap, ParkingSquare, Crosshair,
+  Flame, ShieldCheck, Sparkles, Zap, ParkingSquare, Crosshair, Info, AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { predictTeam, type TeamPrediction, type MatchEntryLite } from '@/lib/prediction';
@@ -146,11 +147,57 @@ export default function PitDisplay() {
   if (!user) return <Navigate to="/auth" replace />;
 
   /*──────────────── derived ────────────────*/
-  const status = data?.status;
+  // If Nexus has no usable data, synthesize from FTC API schedule + scores
+  const fallback = useMemo<NexusStatus | null>(() => {
+    if (data?.status?.matches?.length) return null;
+    if (!ftcMatches.length) return null;
+    const playedNums = new Set(matchScores.map((s) => s.matchNumber));
+    const sorted = [...ftcMatches].sort((a, b) => a.matchNumber - b.matchNumber);
+    const nextIdx = sorted.findIndex((m) => !playedNums.has(m.matchNumber));
+    if (nextIdx === -1) return null;
+    const toNexus = (mm: typeof sorted[number], status: string): NexusMatch => {
+      const red = mm.positions.filter((p) => p.position.startsWith('R')).map((p) => String(p.teamNumber));
+      const blue = mm.positions.filter((p) => p.position.startsWith('B')).map((p) => String(p.teamNumber));
+      return { label: `Q-${mm.matchNumber}`, status, redTeams: red, blueTeams: blue, times: {} };
+    };
+    const synth: NexusMatch[] = [];
+    if (sorted[nextIdx]) synth.push(toNexus(sorted[nextIdx], 'On field'));
+    if (sorted[nextIdx + 1]) synth.push(toNexus(sorted[nextIdx + 1], 'On deck'));
+    if (sorted[nextIdx + 2]) synth.push(toNexus(sorted[nextIdx + 2], 'Now queuing'));
+    sorted.slice(nextIdx + 3, nextIdx + 12).forEach((m) => synth.push(toNexus(m, 'Scheduled')));
+    return {
+      eventKey: eventKey || '',
+      dataAsOfTime: Date.now(),
+      matches: synth,
+    };
+  }, [data, ftcMatches, matchScores, eventKey]);
+
+  const usingFallback = !!fallback && !data?.status?.matches?.length;
+  const status = usingFallback ? fallback : data?.status;
   const matches = status?.matches || [];
-  const onField = findByStatus(matches, 'On field') || findByStatus(matches, 'In progress');
-  const queuing = findByStatus(matches, 'Now queuing');
-  const onDeck = findByStatus(matches, 'On deck');
+
+  // Sanity: on-field number must be one less than on-deck
+  const extractNum = (label?: string) => {
+    if (!label) return null;
+    const m = label.match(/(\d+)/);
+    return m ? parseInt(m[1]) : null;
+  };
+  let onField = findByStatus(matches, 'On field') || findByStatus(matches, 'In progress');
+  let queuing = findByStatus(matches, 'Now queuing');
+  let onDeck = findByStatus(matches, 'On deck');
+  const fNum = extractNum(onField?.label);
+  const dNum = extractNum(onDeck?.label);
+  const qNum = extractNum(queuing?.label);
+  // If on-deck != on-field + 1, prefer trusting on-deck (newest signal) and rebuild
+  if (fNum !== null && dNum !== null && dNum !== fNum + 1) {
+    const corrected = matches.find((m) => extractNum(m.label) === dNum - 1);
+    if (corrected) onField = corrected;
+  }
+  // Queuing should be on-deck + 1 (or on-field + 2)
+  if (dNum !== null && qNum !== null && qNum !== dNum + 1) {
+    const corrected = matches.find((m) => extractNum(m.label) === dNum + 1);
+    if (corrected) queuing = corrected;
+  }
 
   const teamPredictions = useMemo(() => {
     const teamMap = new Map<number, MatchEntryLite[]>();
@@ -198,6 +245,7 @@ export default function PitDisplay() {
 
   return (
     <AppLayout>
+      <TooltipProvider delayDuration={150}>
       <div className="space-y-3">
         {/* PITSTOP-STYLE HEADER */}
         <header className="rounded-lg border border-border bg-card overflow-hidden">
@@ -221,6 +269,12 @@ export default function PitDisplay() {
                   <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground inline-flex items-center gap-1.5">
                     <Radio className="w-3 h-3 text-success animate-pulse" />
                     Live • {formatTime(lastUpdated)} • 15s
+                  </span>
+                )}
+                {usingFallback && (
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-warning inline-flex items-center gap-1.5">
+                    <AlertTriangle className="w-3 h-3" />
+                    Nexus unavailable — using FTC schedule fallback
                   </span>
                 )}
               </div>
@@ -258,14 +312,17 @@ export default function PitDisplay() {
 
         {/* MATCH STATUS TRIPLE */}
         <div className="grid grid-cols-3 gap-2">
-          <StatusCard label="On Field" match={onField} myTeam={myTeam} variant="active" />
-          <StatusCard label="Queuing" match={queuing} myTeam={myTeam} variant="warning" />
-          <StatusCard label="On Deck" match={onDeck} myTeam={myTeam} variant="info" />
+          <StatusCard label="On Field" match={onField} myTeam={myTeam} variant="active"
+            predictions={teamPredictions} />
+          <StatusCard label="On Deck" match={onDeck} myTeam={myTeam} variant="info"
+            predictions={teamPredictions} />
+          <StatusCard label="Queuing" match={queuing} myTeam={myTeam} variant="warning"
+            predictions={teamPredictions} />
         </div>
 
         {/* TABS */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+          <TabsList className="grid grid-cols-4 w-full h-10">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="matches">Matches</TabsTrigger>
             <TabsTrigger value="teams">Teams &amp; OPR</TabsTrigger>
@@ -453,6 +510,7 @@ export default function PitDisplay() {
 
         {loading && !data && <div className="data-card"><Skeleton className="w-full h-32" /></div>}
       </div>
+      </TooltipProvider>
     </AppLayout>
   );
 }
@@ -490,14 +548,28 @@ function MiniStat({ label, value, highlight }: { label: string; value: string | 
   );
 }
 
-function StatusCard({ label, match, myTeam, variant }: { label: string; match?: NexusMatch; myTeam: string; variant: 'active' | 'warning' | 'info' }) {
+function StatusCard({ label, match, myTeam, variant, predictions }: {
+  label: string; match?: NexusMatch; myTeam: string;
+  variant: 'active' | 'warning' | 'info';
+  predictions: Map<number, TeamPrediction>;
+}) {
   const styles = {
     active: 'border-l-primary bg-primary/10',
     warning: 'border-l-secondary bg-secondary/10',
     info: 'border-l-accent bg-accent/10',
   }[variant];
 
-  const hasMyTeam = myTeam && match && [...match.redTeams, ...match.blueTeams].includes(myTeam);
+  const hasMyTeam = !!myTeam && !!match && [...match.redTeams, ...match.blueTeams].includes(myTeam);
+
+  // My team's contribution / impact in this match
+  let impact: { delta: number; allianceTotal: number; pct: number; isRed: boolean } | null = null;
+  if (hasMyTeam && match) {
+    const isRed = match.redTeams.includes(myTeam);
+    const teams = isRed ? match.redTeams : match.blueTeams;
+    const allianceTotal = teams.reduce((s, t) => s + (predictions.get(parseInt(t))?.predictedTotal ?? 0), 0);
+    const mine = predictions.get(parseInt(myTeam))?.predictedTotal ?? 0;
+    impact = { delta: mine, allianceTotal, pct: allianceTotal > 0 ? (mine / allianceTotal) * 100 : 0, isRed };
+  }
 
   return (
     <div className={cn(
@@ -518,6 +590,17 @@ function StatusCard({ label, match, myTeam, variant }: { label: string; match?: 
             <TeamLine teams={match.redTeams} myTeam={myTeam} color="red" />
             <TeamLine teams={match.blueTeams} myTeam={myTeam} color="blue" />
           </div>
+          {impact && (
+            <div className={cn(
+              'mt-2 rounded border px-2 py-1 text-[10px] font-mono uppercase tracking-wider flex items-center justify-between gap-2',
+              impact.isRed ? 'border-alliance-red/40 bg-alliance-red/10' : 'border-alliance-blue/40 bg-alliance-blue/10'
+            )}>
+              <span className="text-muted-foreground">Your impact</span>
+              <span className="font-display text-foreground">
+                +{impact.delta.toFixed(0)} <span className="text-muted-foreground">({impact.pct.toFixed(0)}%)</span>
+              </span>
+            </div>
+          )}
         </>
       ) : (
         <p className="text-3xl font-display mt-0.5 text-muted-foreground">—</p>
@@ -648,7 +731,7 @@ function MatchPredictionCard({ match, predictions, oprMap, pitMap, myTeam }: {
               {redWinning ? <span className="text-alliance-red">RED</span> : <span className="text-alliance-blue">BLUE</span>} +{margin}
             </span>
           )}
-          <ConfidenceBar value={combinedConfidence} />
+          <ConfidenceBar value={combinedConfidence} preds={[...red.preds, ...blue.preds]} />
         </div>
       </div>
       {!hasAnyData ? (
@@ -665,16 +748,43 @@ function MatchPredictionCard({ match, predictions, oprMap, pitMap, myTeam }: {
   );
 }
 
-function ConfidenceBar({ value }: { value: number }) {
+function ConfidenceBar({ value, preds }: { value: number; preds?: TeamPrediction[] }) {
   const tone =
     value >= 70 ? 'bg-success text-success-foreground' :
     value >= 40 ? 'bg-warning text-warning-foreground' :
     'bg-destructive text-destructive-foreground';
+  const totalMatches = preds?.reduce((s, p) => s + p.matchCount, 0) ?? 0;
+  const avgMatches = preds && preds.length ? totalMatches / preds.length : 0;
+  const teamsWithData = preds?.filter((p) => p.matchCount > 0).length ?? 0;
+  const teamsTotal = preds?.length ?? 0;
+  const sampleLabel =
+    avgMatches >= 4 ? 'Strong sample' :
+    avgMatches >= 2 ? 'Moderate sample' :
+    avgMatches > 0 ? 'Small sample' : 'No sample';
+
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="text-muted-foreground">Confidence</span>
-      <span className={cn('px-1.5 py-0.5 rounded font-display tracking-wider', tone)}>{value}%</span>
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex items-center gap-1.5 cursor-help">
+          <span className="text-muted-foreground">Confidence</span>
+          <span className={cn('px-1.5 py-0.5 rounded font-display tracking-wider', tone)}>{value}%</span>
+          <Info className="w-3 h-3 text-muted-foreground" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-xs text-xs">
+        <p className="font-display uppercase tracking-wider mb-1">Prediction confidence</p>
+        <p className="text-muted-foreground mb-1.5">
+          Weighted by per-team consistency and scaled down for small sample sizes.
+        </p>
+        {preds && (
+          <ul className="space-y-0.5 font-mono">
+            <li>Teams with scouting: <span className="text-foreground">{teamsWithData}/{teamsTotal}</span></li>
+            <li>Avg matches scouted: <span className="text-foreground">{avgMatches.toFixed(1)}</span></li>
+            <li>Sample: <span className="text-foreground">{sampleLabel}</span></li>
+          </ul>
+        )}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -720,6 +830,7 @@ function AlliancePrediction({ label, stats, teams, myTeam, color, winning, predi
             opr={oprMap.get(parseInt(t))}
             pit={pitMap.get(parseInt(t))}
             color={color}
+            allianceTotal={stats.total}
           />
         ))}
       </div>
@@ -727,15 +838,27 @@ function AlliancePrediction({ label, stats, teams, myTeam, color, winning, predi
   );
 }
 
-function TeamBreakdownRow({ teamNumber, isMe, prediction, opr, pit, color }: {
+function TeamBreakdownRow({ teamNumber, isMe, prediction, opr, pit, color, allianceTotal }: {
   teamNumber: string;
   isMe: boolean;
   prediction?: TeamPrediction;
   opr?: number;
   pit?: PitRow;
   color: 'red' | 'blue';
+  allianceTotal?: number;
 }) {
   const chipMe = color === 'red' ? 'bg-alliance-red text-white' : 'bg-alliance-blue text-white';
+  const deltaPct = prediction && allianceTotal && allianceTotal > 0
+    ? (prediction.predictedTotal / allianceTotal) * 100
+    : null;
+  const teamConfidence = prediction
+    ? Math.round(prediction.consistency * Math.min(1, prediction.matchCount / 4))
+    : 0;
+  const confTone =
+    teamConfidence >= 70 ? 'text-success' :
+    teamConfidence >= 40 ? 'text-warning' :
+    'text-destructive';
+
   return (
     <div className={cn(
       'rounded border px-2 py-1.5 grid grid-cols-[64px_1fr_auto] gap-2 items-center text-xs',
@@ -757,7 +880,32 @@ function TeamBreakdownRow({ teamNumber, isMe, prediction, opr, pit, color }: {
       </div>
       <div className="text-right font-mono text-[10px] text-muted-foreground leading-tight">
         <div>OPR <span className="text-foreground font-display text-sm">{opr !== undefined ? opr.toFixed(1) : '—'}</span></div>
-        <div>Pred <span className="text-foreground font-display text-sm">{prediction ? prediction.predictedTotal.toFixed(0) : '—'}</span></div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="cursor-help inline-flex items-baseline gap-1 justify-end">
+              <span>+</span>
+              <span className="text-foreground font-display text-sm">{prediction ? prediction.predictedTotal.toFixed(0) : '—'}</span>
+              {deltaPct !== null && (
+                <span className="text-muted-foreground">({deltaPct.toFixed(0)}%)</span>
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-xs text-xs">
+            <p className="font-display uppercase tracking-wider mb-1">Team {teamNumber} contribution</p>
+            {prediction ? (
+              <ul className="space-y-0.5 font-mono">
+                <li>Auto: <span className="text-foreground">{prediction.predictedAuto.toFixed(1)}</span></li>
+                <li>Teleop: <span className="text-foreground">{prediction.predictedTeleop.toFixed(1)}</span></li>
+                <li>Endgame: <span className="text-foreground">{prediction.predictedEndgame.toFixed(1)}</span></li>
+                <li>Total: <span className="text-foreground">{prediction.predictedTotal.toFixed(1)}</span>{deltaPct !== null && ` (${deltaPct.toFixed(0)}% of alliance)`}</li>
+                <li>Sample: <span className="text-foreground">{prediction.matchCount} match{prediction.matchCount === 1 ? '' : 'es'}</span></li>
+                <li>Confidence: <span className={confTone}>{teamConfidence}%</span></li>
+              </ul>
+            ) : (
+              <p className="text-muted-foreground">No scouting data yet for this team.</p>
+            )}
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

@@ -89,9 +89,9 @@ const docSections: DocSection[] = [
       },
       {
         title: 'Installing as a PWA',
-        body: 'Cipher Scout is a Progressive Web App (PWA). Installing it on your phone gives you an app icon, full-screen experience, and better offline support. This is strongly recommended for competition day — the installed app works without internet and feels like a native app.',
+        body: 'Apex Scout is a Progressive Web App (PWA). Installing it on your phone gives you an app icon, full-screen experience, and better offline support. This is strongly recommended for competition day — the installed app works without internet and feels like a native app.',
         steps: [
-          'Open Cipher Scout in Chrome (Android) or Safari (iOS)',
+          'Open Apex Scout in Chrome (Android) or Safari (iOS)',
           'Android: tap the three-dot menu → "Add to Home Screen" → "Install"',
           'iOS: tap the Share button (box with arrow) → "Add to Home Screen"',
           'The app icon appears on your home screen — tap it to launch in full-screen mode',
@@ -114,7 +114,7 @@ const docSections: DocSection[] = [
     content: [
       {
         title: 'Recording a Match',
-        body: 'Match scouting is the core of Cipher Scout. The mobile-first interface lets you record every detail during a match — autonomous scoring, teleop performance, defense, penalties, and endgame status. Each entry is tied to a specific event, match number, team number, and scouter. You can submit multiple entries for the same team/match if different scouters observe the same robot.',
+        body: 'Match scouting is the core of Apex Scout. The mobile-first interface lets you record every detail during a match — autonomous scoring, teleop performance, defense, penalties, and endgame status. Each entry is tied to a specific event, match number, team number, and scouter. You can submit multiple entries for the same team/match if different scouters observe the same robot.',
         steps: [
           'Navigate to the Scout page from the sidebar',
           'Enter the match number and team number you\'re scouting (or tap your assignment to auto-fill)',
@@ -527,7 +527,7 @@ const docSections: DocSection[] = [
     content: [
       {
         title: 'Overview: Offline Strategy',
-        body: 'Cipher Scout is built for FTC events where Wi-Fi is unreliable or banned. As a PWA, it automatically queues scouting submissions in IndexedDB when offline and syncs to the cloud when internet returns. For fully offline events, scouters collect data on their phones and transfer it to a central device via QR codes.',
+        body: 'Apex Scout is built for FTC events where Wi-Fi is unreliable or banned. As a PWA, it automatically queues scouting submissions in IndexedDB when offline and syncs to the cloud when internet returns. For fully offline events, scouters collect data on their phones and transfer it to a central device via QR codes.',
         tips: [
           'PWA offline mode works automatically — no setup needed beyond installing the app',
           'QR Transfer lets scouters beam data to a central "hub" device (laptop or tablet) that has internet',
@@ -850,8 +850,8 @@ export default function LandingDocs() {
   return (
     <LandingLayout>
       <SEOHead
-        title="Documentation — Cipher Scout"
-        description="Complete guide to using Cipher Scout for FTC competition scouting. Match scouting, pit scouting, analytics, offline mode, local server setup, and more."
+        title="Documentation — Apex Scout"
+        description="Complete guide to using Apex Scout for FTC competition scouting. Match scouting, pit scouting, analytics, offline mode, local server setup, and more."
         path="/docs"
       />
 
@@ -879,7 +879,7 @@ export default function LandingDocs() {
             transition={{ delay: 0.1 }}
             className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto"
           >
-            Everything you need to know to master Cipher Scout at your next FTC competition. No question left unanswered.
+            Everything you need to know to master Apex Scout at your next FTC competition. No question left unanswered.
           </motion.p>
         </div>
       </section>

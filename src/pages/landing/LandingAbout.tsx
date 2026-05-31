@@ -25,19 +25,19 @@ export default function LandingAbout() {
   return (
     <LandingLayout>
       <SEOHead
-        title="About — Cipher Scout"
-        description="Built by FTC Teams 12841 and 2844. Learn about the mission behind Cipher Scout and why we built the ultimate FTC scouting platform."
+        title="About — Apex Scout"
+        description="Built by FTC Teams 12841 and 2844. Learn about the mission behind Apex Scout and why we built the ultimate FTC scouting platform."
         path="/about"
       />
       {/* Header */}
       <section className="pt-20 pb-8 px-6 text-center">
         <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-          <img src={cipherIcon} alt="Cipher" className="w-16 h-16 mx-auto mb-6 rounded-2xl shadow-[0_0_30px_hsl(210_100%_50%/0.3)]" />
+          <img src={cipherIcon} alt="Apex Scout" className="w-16 h-16 mx-auto mb-6 rounded-2xl shadow-[0_0_30px_hsl(210_100%_50%/0.3)]" />
         </motion.div>
         <motion.h1 custom={1} variants={fadeUp} initial="hidden" animate="visible"
           className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4"
         >
-          About Cipher Scout
+          About Apex Scout
         </motion.h1>
         <motion.p custom={2} variants={fadeUp} initial="hidden" animate="visible"
           className="text-lg text-muted-foreground max-w-2xl mx-auto"
@@ -82,13 +82,13 @@ export default function LandingAbout() {
               </div>
               <div className="space-y-4 text-muted-foreground leading-relaxed">
                 <p>
-                  Cipher Scout was born from a simple problem: FTC scouting is hard. Paper sheets get lost, spreadsheets are slow, and most apps don't work without Wi-Fi — which competition venues notoriously lack.
+                  Apex Scout was born from a simple problem: FTC scouting is hard. Paper sheets get lost, spreadsheets are slow, and most apps don't work without Wi-Fi — which competition venues notoriously lack.
                 </p>
                 <p>
                   FTC Teams <strong className="text-foreground">12841</strong> and <strong className="text-foreground">2844</strong> decided to build something better. A scouting platform that works offline first, syncs via QR codes, and turns raw match data into actionable strategy.
                 </p>
                 <p>
-                  The result is Cipher Scout — a comprehensive, real-time scouting application designed specifically for the demands of FTC competitions. From pit scouting to match analytics to alliance selection, every feature was built with the field in mind.
+                  The result is Apex Scout — a comprehensive, real-time scouting application designed specifically for the demands of FTC competitions. From pit scouting to match analytics to alliance selection, every feature was built with the field in mind.
                 </p>
               </div>
             </div>
@@ -98,7 +98,7 @@ export default function LandingAbout() {
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-alliance-red to-alliance-red/30" />
                 <h3 className="font-display font-bold text-foreground mb-2 ml-3">FTC Team 12841</h3>
                 <p className="text-sm text-muted-foreground ml-3 leading-relaxed">
-                  Driving innovation in FTC scouting technology. Team 12841 brings the vision and competitive experience that shaped Cipher Scout's core design philosophy.
+                  Driving innovation in FTC scouting technology. Team 12841 brings the vision and competitive experience that shaped Apex Scout's core design philosophy.
                 </p>
               </div>
 
@@ -135,7 +135,7 @@ export default function LandingAbout() {
           <Heart className="w-10 h-10 text-alliance-red mx-auto mb-4" />
           <h2 className="text-2xl font-display font-bold text-foreground mb-3">Made with Love</h2>
           <p className="text-muted-foreground mb-6">
-            Cipher Scout is proudly built with{' '}
+            Apex Scout is proudly built with{' '}
             <a href="https://lovable.dev" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors font-medium">
               Lovable
             </a>

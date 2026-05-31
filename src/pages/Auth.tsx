@@ -106,7 +106,7 @@ export default function Auth() {
           }
         } else {
           toast({
-            title: `Welcome to Cipher, ${name}! 🎉`,
+            title: `Welcome to Apex Scout, ${name}! 🎉`,
             description: 'Your account is pending admin approval. You\'ll be notified once approved.',
           });
         }
@@ -139,7 +139,7 @@ export default function Auth() {
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex flex-1 bg-card items-center justify-center p-12">
         <div className="max-w-md text-center">
-          <img src={cipherLogo} alt="Cipher" className="w-20 h-20 rounded-2xl mx-auto mb-8" />
+          <img src={cipherLogo} alt="Apex Scout" className="w-20 h-20 rounded-2xl mx-auto mb-8" />
           <h1 className="text-4xl font-bold mb-4 text-glow">2844 × 12841</h1>
           <p className="text-xl text-muted-foreground mb-2">
             Scouting App

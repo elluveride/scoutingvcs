@@ -31,7 +31,7 @@ export default function LandingHome() {
   return (
     <LandingLayout>
       <SEOHead
-        title="Cipher Scout — FTC Scouting Platform"
+        title="Apex Scout — FTC Scouting Platform"
         description="The competitive edge your alliance needs. Real-time match scouting, analytics, team comparison, and offline QR transfer for FTC competitions."
         path="/"
       />
@@ -44,7 +44,7 @@ export default function LandingHome() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
           <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-            <img src={cipherIcon} alt="Cipher" className="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-[0_0_40px_hsl(210_100%_50%/0.4)]" />
+            <img src={cipherIcon} alt="Apex Scout" className="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-[0_0_40px_hsl(210_100%_50%/0.4)]" />
           </motion.div>
 
           <motion.h1
@@ -54,7 +54,7 @@ export default function LandingHome() {
             animate="visible"
             className="text-5xl md:text-7xl font-display font-bold text-foreground mb-4 tracking-tight"
           >
-            <span className="text-glow-red">Cipher</span>{' '}
+            <span className="text-glow-red">Apex</span>{' '}
             <span className="text-glow-blue">Scout</span>
           </motion.h1>
 
@@ -245,7 +245,7 @@ export default function LandingHome() {
             Ready to Dominate the Field?
           </h2>
           <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-            Join teams already using Cipher Scout to gain the competitive advantage at every event.
+            Join teams already using Apex Scout to gain the competitive advantage at every event.
           </p>
           <Link
             to="/auth"
