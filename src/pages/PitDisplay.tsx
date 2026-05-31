@@ -510,6 +510,7 @@ export default function PitDisplay() {
 
         {loading && !data && <div className="data-card"><Skeleton className="w-full h-32" /></div>}
       </div>
+      </TooltipProvider>
     </AppLayout>
   );
 }
