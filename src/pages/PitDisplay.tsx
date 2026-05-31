@@ -748,16 +748,43 @@ function MatchPredictionCard({ match, predictions, oprMap, pitMap, myTeam }: {
   );
 }
 
-function ConfidenceBar({ value }: { value: number }) {
+function ConfidenceBar({ value, preds }: { value: number; preds?: TeamPrediction[] }) {
   const tone =
     value >= 70 ? 'bg-success text-success-foreground' :
     value >= 40 ? 'bg-warning text-warning-foreground' :
     'bg-destructive text-destructive-foreground';
+  const totalMatches = preds?.reduce((s, p) => s + p.matchCount, 0) ?? 0;
+  const avgMatches = preds && preds.length ? totalMatches / preds.length : 0;
+  const teamsWithData = preds?.filter((p) => p.matchCount > 0).length ?? 0;
+  const teamsTotal = preds?.length ?? 0;
+  const sampleLabel =
+    avgMatches >= 4 ? 'Strong sample' :
+    avgMatches >= 2 ? 'Moderate sample' :
+    avgMatches > 0 ? 'Small sample' : 'No sample';
+
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="text-muted-foreground">Confidence</span>
-      <span className={cn('px-1.5 py-0.5 rounded font-display tracking-wider', tone)}>{value}%</span>
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex items-center gap-1.5 cursor-help">
+          <span className="text-muted-foreground">Confidence</span>
+          <span className={cn('px-1.5 py-0.5 rounded font-display tracking-wider', tone)}>{value}%</span>
+          <Info className="w-3 h-3 text-muted-foreground" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-xs text-xs">
+        <p className="font-display uppercase tracking-wider mb-1">Prediction confidence</p>
+        <p className="text-muted-foreground mb-1.5">
+          Weighted by per-team consistency and scaled down for small sample sizes.
+        </p>
+        {preds && (
+          <ul className="space-y-0.5 font-mono">
+            <li>Teams with scouting: <span className="text-foreground">{teamsWithData}/{teamsTotal}</span></li>
+            <li>Avg matches scouted: <span className="text-foreground">{avgMatches.toFixed(1)}</span></li>
+            <li>Sample: <span className="text-foreground">{sampleLabel}</span></li>
+          </ul>
+        )}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
