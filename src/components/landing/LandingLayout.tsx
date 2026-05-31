@@ -27,7 +27,7 @@ function LandingNav() {
         <Link to="/" className="flex items-center gap-3 group">
           <img src={cipherIcon} alt="Cipher" className="w-8 h-8 rounded-lg" />
           <span className="font-display font-bold text-lg text-foreground group-hover:text-primary transition-colors">
-            Cipher Scout
+            Apex Scout
           </span>
         </Link>
 
@@ -113,7 +113,7 @@ function LandingFooter() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <img src={cipherIcon} alt="Cipher" className="w-8 h-8 rounded-lg" />
-              <span className="font-display font-bold text-lg text-foreground">Cipher Scout</span>
+              <span className="font-display font-bold text-lg text-foreground">Apex Scout</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               The ultimate FTC scouting platform built by teams, for teams. Gain the competitive edge your alliance needs.
@@ -156,7 +156,7 @@ function LandingFooter() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-border/20 flex items-center justify-between text-xs text-muted-foreground/50">
-          <span>© {new Date().getFullYear()} Cipher Scout. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} Apex Scout. All rights reserved.</span>
           <span>FTC Teams 12841 × 2844</span>
         </div>
       </div>

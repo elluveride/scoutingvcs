@@ -31,7 +31,7 @@ export default function LandingHome() {
   return (
     <LandingLayout>
       <SEOHead
-        title="Cipher Scout — FTC Scouting Platform"
+        title="Apex Scout — FTC Scouting Platform"
         description="The competitive edge your alliance needs. Real-time match scouting, analytics, team comparison, and offline QR transfer for FTC competitions."
         path="/"
       />
@@ -245,7 +245,7 @@ export default function LandingHome() {
             Ready to Dominate the Field?
           </h2>
           <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-            Join teams already using Cipher Scout to gain the competitive advantage at every event.
+            Join teams already using Apex Scout to gain the competitive advantage at every event.
           </p>
           <Link
             to="/auth"
