@@ -106,7 +106,7 @@ export default function Auth() {
           }
         } else {
           toast({
-            title: `Welcome to Cipher, ${name}! 🎉`,
+            title: `Welcome to Apex Scout, ${name}! 🎉`,
             description: 'Your account is pending admin approval. You\'ll be notified once approved.',
           });
         }

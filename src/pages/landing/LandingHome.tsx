@@ -54,7 +54,7 @@ export default function LandingHome() {
             animate="visible"
             className="text-5xl md:text-7xl font-display font-bold text-foreground mb-4 tracking-tight"
           >
-            <span className="text-glow-red">Cipher</span>{' '}
+            <span className="text-glow-red">Apex</span>{' '}
             <span className="text-glow-blue">Scout</span>
           </motion.h1>
 

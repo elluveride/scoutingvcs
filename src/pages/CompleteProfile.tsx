@@ -64,7 +64,7 @@ export default function CompleteProfile() {
       }
     } else {
       toast({
-        title: `Welcome to Cipher, ${name.trim()}! 🎉`,
+        title: `Welcome to Apex Scout, ${name.trim()}! 🎉`,
         description: 'Your account is pending admin approval. You\'ll be notified once approved.',
       });
       await refreshProfile();
@@ -80,7 +80,7 @@ export default function CompleteProfile() {
         <div className="flex items-center gap-3 mb-8 justify-center">
           <img src={cipherLogo} alt="Cipher" className="w-12 h-12 rounded-xl" />
           <div>
-            <h1 className="font-bold text-xl">Cipher</h1>
+            <h1 className="font-bold text-xl">Apex Scout</h1>
             <p className="text-xs text-muted-foreground">12841×2844</p>
           </div>
         </div>
