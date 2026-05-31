@@ -731,7 +731,7 @@ function MatchPredictionCard({ match, predictions, oprMap, pitMap, myTeam }: {
               {redWinning ? <span className="text-alliance-red">RED</span> : <span className="text-alliance-blue">BLUE</span>} +{margin}
             </span>
           )}
-          <ConfidenceBar value={combinedConfidence} />
+          <ConfidenceBar value={combinedConfidence} preds={[...red.preds, ...blue.preds]} />
         </div>
       </div>
       {!hasAnyData ? (
@@ -830,6 +830,7 @@ function AlliancePrediction({ label, stats, teams, myTeam, color, winning, predi
             opr={oprMap.get(parseInt(t))}
             pit={pitMap.get(parseInt(t))}
             color={color}
+            allianceTotal={stats.total}
           />
         ))}
       </div>
