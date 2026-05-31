@@ -270,6 +270,12 @@ export default function PitDisplay() {
                     Live • {formatTime(lastUpdated)} • 15s
                   </span>
                 )}
+                {usingFallback && (
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-warning inline-flex items-center gap-1.5">
+                    <AlertTriangle className="w-3 h-3" />
+                    Nexus unavailable — using FTC schedule fallback
+                  </span>
+                )}
               </div>
             </div>
 
@@ -305,14 +311,17 @@ export default function PitDisplay() {
 
         {/* MATCH STATUS TRIPLE */}
         <div className="grid grid-cols-3 gap-2">
-          <StatusCard label="On Field" match={onField} myTeam={myTeam} variant="active" />
-          <StatusCard label="Queuing" match={queuing} myTeam={myTeam} variant="warning" />
-          <StatusCard label="On Deck" match={onDeck} myTeam={myTeam} variant="info" />
+          <StatusCard label="On Field" match={onField} myTeam={myTeam} variant="active"
+            predictions={teamPredictions} />
+          <StatusCard label="On Deck" match={onDeck} myTeam={myTeam} variant="info"
+            predictions={teamPredictions} />
+          <StatusCard label="Queuing" match={queuing} myTeam={myTeam} variant="warning"
+            predictions={teamPredictions} />
         </div>
 
         {/* TABS */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+          <TabsList className="grid grid-cols-4 w-full h-10">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="matches">Matches</TabsTrigger>
             <TabsTrigger value="teams">Teams &amp; OPR</TabsTrigger>
