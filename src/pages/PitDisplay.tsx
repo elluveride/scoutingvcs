@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useFTCRankings, type TeamRanking, type MatchScore } from '@/hooks/useFTCRankings';
+import { useFTCRankings, type TeamRanking } from '@/hooks/useFTCRankings';
 import { useFTCMatches } from '@/hooks/useFTCMatches';
 import {
   Loader2, RefreshCw, Radio, Trophy, Clock, Activity, Target,
