@@ -8,13 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useFTCRankings, type TeamRanking } from '@/hooks/useFTCRankings';
+import { useFTCRankings, type TeamRanking, type MatchScore } from '@/hooks/useFTCRankings';
 import { useFTCMatches } from '@/hooks/useFTCMatches';
 import {
   Loader2, RefreshCw, Radio, Trophy, Clock, Activity, Target,
-  Flame, ShieldCheck, Sparkles, Zap, ParkingSquare, Crosshair,
+  Flame, ShieldCheck, Sparkles, Zap, ParkingSquare, Crosshair, Info, AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { predictTeam, type TeamPrediction, type MatchEntryLite } from '@/lib/prediction';
