@@ -32,7 +32,7 @@ export default function LandingAbout() {
       {/* Header */}
       <section className="pt-20 pb-8 px-6 text-center">
         <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-          <img src={cipherIcon} alt="Cipher" className="w-16 h-16 mx-auto mb-6 rounded-2xl shadow-[0_0_30px_hsl(210_100%_50%/0.3)]" />
+          <img src={cipherIcon} alt="Apex Scout" className="w-16 h-16 mx-auto mb-6 rounded-2xl shadow-[0_0_30px_hsl(210_100%_50%/0.3)]" />
         </motion.div>
         <motion.h1 custom={1} variants={fadeUp} initial="hidden" animate="visible"
           className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4"

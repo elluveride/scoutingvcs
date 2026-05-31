@@ -44,7 +44,7 @@ export default function LandingHome() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
           <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-            <img src={cipherIcon} alt="Cipher" className="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-[0_0_40px_hsl(210_100%_50%/0.4)]" />
+            <img src={cipherIcon} alt="Apex Scout" className="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-[0_0_40px_hsl(210_100%_50%/0.4)]" />
           </motion.div>
 
           <motion.h1

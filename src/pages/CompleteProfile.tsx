@@ -78,7 +78,7 @@ export default function CompleteProfile() {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-8 justify-center">
-          <img src={cipherLogo} alt="Cipher" className="w-12 h-12 rounded-xl" />
+          <img src={cipherLogo} alt="Apex Scout" className="w-12 h-12 rounded-xl" />
           <div>
             <h1 className="font-bold text-xl">Apex Scout</h1>
             <p className="text-xs text-muted-foreground">12841×2844</p>
