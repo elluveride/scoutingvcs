@@ -245,6 +245,7 @@ export default function PitDisplay() {
 
   return (
     <AppLayout>
+      <TooltipProvider delayDuration={150}>
       <div className="space-y-3">
         {/* PITSTOP-STYLE HEADER */}
         <header className="rounded-lg border border-border bg-card overflow-hidden">
