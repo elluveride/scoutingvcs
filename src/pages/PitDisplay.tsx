@@ -546,14 +546,28 @@ function MiniStat({ label, value, highlight }: { label: string; value: string | 
   );
 }
 
-function StatusCard({ label, match, myTeam, variant }: { label: string; match?: NexusMatch; myTeam: string; variant: 'active' | 'warning' | 'info' }) {
+function StatusCard({ label, match, myTeam, variant, predictions }: {
+  label: string; match?: NexusMatch; myTeam: string;
+  variant: 'active' | 'warning' | 'info';
+  predictions: Map<number, TeamPrediction>;
+}) {
   const styles = {
     active: 'border-l-primary bg-primary/10',
     warning: 'border-l-secondary bg-secondary/10',
     info: 'border-l-accent bg-accent/10',
   }[variant];
 
-  const hasMyTeam = myTeam && match && [...match.redTeams, ...match.blueTeams].includes(myTeam);
+  const hasMyTeam = !!myTeam && !!match && [...match.redTeams, ...match.blueTeams].includes(myTeam);
+
+  // My team's contribution / impact in this match
+  let impact: { delta: number; allianceTotal: number; pct: number; isRed: boolean } | null = null;
+  if (hasMyTeam && match) {
+    const isRed = match.redTeams.includes(myTeam);
+    const teams = isRed ? match.redTeams : match.blueTeams;
+    const allianceTotal = teams.reduce((s, t) => s + (predictions.get(parseInt(t))?.predictedTotal ?? 0), 0);
+    const mine = predictions.get(parseInt(myTeam))?.predictedTotal ?? 0;
+    impact = { delta: mine, allianceTotal, pct: allianceTotal > 0 ? (mine / allianceTotal) * 100 : 0, isRed };
+  }
 
   return (
     <div className={cn(
@@ -574,6 +588,17 @@ function StatusCard({ label, match, myTeam, variant }: { label: string; match?: 
             <TeamLine teams={match.redTeams} myTeam={myTeam} color="red" />
             <TeamLine teams={match.blueTeams} myTeam={myTeam} color="blue" />
           </div>
+          {impact && (
+            <div className={cn(
+              'mt-2 rounded border px-2 py-1 text-[10px] font-mono uppercase tracking-wider flex items-center justify-between gap-2',
+              impact.isRed ? 'border-alliance-red/40 bg-alliance-red/10' : 'border-alliance-blue/40 bg-alliance-blue/10'
+            )}>
+              <span className="text-muted-foreground">Your impact</span>
+              <span className="font-display text-foreground">
+                +{impact.delta.toFixed(0)} <span className="text-muted-foreground">({impact.pct.toFixed(0)}%)</span>
+              </span>
+            </div>
+          )}
         </>
       ) : (
         <p className="text-3xl font-display mt-0.5 text-muted-foreground">—</p>
