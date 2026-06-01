@@ -359,22 +359,30 @@ export default function PitDisplay() {
             )}
 
             <div className="px-4 py-3 flex items-center">
-              <Button
-                onClick={() => { fetchNexus(eventKey); fetchScouting(); refetchRankings(); refetchMatches('Q'); }}
-                disabled={!eventKey || loading}
-                size="sm"
-                variant="outline"
-                className="h-9 gap-2"
-              >
-                {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                Refresh
-              </Button>
+              <div className="flex items-center gap-3 flex-wrap justify-end">
+                <div className="flex items-center gap-2 rounded-md border border-border bg-muted/20 px-2.5 py-1.5">
+                  <Label htmlFor="pit-debug-toggle" className="text-[10px] font-display uppercase tracking-[0.2em] text-muted-foreground cursor-pointer">
+                    Debug
+                  </Label>
+                  <Switch id="pit-debug-toggle" checked={showDebugPanel} onCheckedChange={setShowDebugPanel} />
+                </div>
+                <Button
+                  onClick={() => { fetchNexus(eventKey); fetchScouting(); refetchRankings(); refetchMatches('Q'); }}
+                  disabled={!eventKey || loading}
+                  size="sm"
+                  variant="outline"
+                  className="h-9 gap-2"
+                >
+                  {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                  Refresh
+                </Button>
+              </div>
             </div>
           </div>
         </header>
 
         {/* MATCH STATUS TRIPLE */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <StatusCard label="On Field" match={onField} myTeam={myTeam} variant="active"
             predictions={teamPredictions} />
           <StatusCard label="On Deck" match={onDeck} myTeam={myTeam} variant="info"
@@ -385,7 +393,7 @@ export default function PitDisplay() {
 
         {/* TABS */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid grid-cols-4 w-full h-10">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 md:grid-cols-4 bg-muted/30 p-1">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="matches">Matches</TabsTrigger>
             <TabsTrigger value="teams">Teams &amp; OPR</TabsTrigger>
