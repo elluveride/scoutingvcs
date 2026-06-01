@@ -290,6 +290,22 @@ export default function PitDisplay() {
   const myPrediction = myTeam ? teamPredictions.get(parseInt(myTeam)) : undefined;
   const myOPR = myTeam ? oprMap.get(parseInt(myTeam)) : undefined;
 
+  const manualPredictionMatch = useMemo<NexusMatch | null>(() => {
+    const clean = (value: string) => value.trim();
+    const blueTeams = [clean(manualBlueTeam1), clean(manualBlueTeam2)].filter(Boolean);
+    const redTeams = [clean(manualRedTeam1), clean(manualRedTeam2)].filter(Boolean);
+
+    if (blueTeams.length === 0 && redTeams.length === 0) return null;
+
+    return {
+      label: 'Manual Prediction',
+      status: 'Manual',
+      redTeams,
+      blueTeams,
+      times: {},
+    };
+  }, [manualBlueTeam1, manualBlueTeam2, manualRedTeam1, manualRedTeam2]);
+
   return (
     <AppLayout>
       <TooltipProvider delayDuration={150}>
