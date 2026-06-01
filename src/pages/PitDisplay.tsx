@@ -87,6 +87,36 @@ const findByStatus = (matches: NexusMatch[], status: string) =>
 const formatTime = (ms?: number) =>
   !ms ? '—' : new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
+const sampleSizeLabel = (avgMatches: number) =>
+  avgMatches >= 4 ? 'Strong sample' :
+  avgMatches >= 2 ? 'Moderate sample' :
+  avgMatches > 0 ? 'Small sample' : 'No sample';
+
+const confidenceToneClasses = (value: number) =>
+  value >= 70 ? 'bg-success text-success-foreground' :
+  value >= 40 ? 'bg-warning text-warning-foreground' :
+  'bg-destructive text-destructive-foreground';
+
+function computeTeamConfidenceDebug(prediction?: TeamPrediction, allianceTotal?: number): TeamConfidenceDebug | null {
+  if (!prediction) return null;
+  const sampleCoverage = Math.min(1, prediction.matchCount / 4);
+  const confidence = Math.round(prediction.consistency * sampleCoverage);
+  const deltaPct = allianceTotal && allianceTotal > 0
+    ? (prediction.predictedTotal / allianceTotal) * 100
+    : null;
+
+  return {
+    teamNumber: prediction.teamNumber,
+    consistency: prediction.consistency,
+    sampleCoverage,
+    confidence,
+    matchCount: prediction.matchCount,
+    sampleLabel: sampleSizeLabel(prediction.matchCount),
+    delta: prediction.predictedTotal,
+    deltaPct,
+  };
+}
+
 export default function PitDisplay() {
   const { user, profile } = useAuth();
   const { currentEvent } = useEvent();
@@ -102,6 +132,11 @@ export default function PitDisplay() {
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const [scoutingEntries, setScoutingEntries] = useState<any[]>([]);
   const [pitEntries, setPitEntries] = useState<PitRow[]>([]);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [manualBlueTeam1, setManualBlueTeam1] = useState('');
+  const [manualBlueTeam2, setManualBlueTeam2] = useState('');
+  const [manualRedTeam1, setManualRedTeam1] = useState('');
+  const [manualRedTeam2, setManualRedTeam2] = useState('');
 
   /*──────────────── fetching ────────────────*/
   const fetchNexus = async (key: string, silent = false) => {
