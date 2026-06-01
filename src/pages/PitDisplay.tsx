@@ -402,6 +402,29 @@ export default function PitDisplay() {
 
           {/* OVERVIEW */}
           <TabsContent value="overview" className="space-y-3 mt-3">
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.5fr_1fr]">
+              <ManualPredictionPanel
+                manualPredictionMatch={manualPredictionMatch}
+                predictions={teamPredictions}
+                oprMap={oprMap}
+                pitMap={pitMap}
+                myTeam={myTeam}
+                manualBlueTeam1={manualBlueTeam1}
+                manualBlueTeam2={manualBlueTeam2}
+                manualRedTeam1={manualRedTeam1}
+                manualRedTeam2={manualRedTeam2}
+                setManualBlueTeam1={setManualBlueTeam1}
+                setManualBlueTeam2={setManualBlueTeam2}
+                setManualRedTeam1={setManualRedTeam1}
+                setManualRedTeam2={setManualRedTeam2}
+              />
+              <ConfidenceLegendCard />
+            </div>
+
+            {showDebugPanel && (
+              <ConfidenceDebugPanel match={manualPredictionMatch ?? onField} predictions={teamPredictions} />
+            )}
+
             {onField ? (
               <MatchPredictionCard
                 match={onField}
@@ -409,6 +432,7 @@ export default function PitDisplay() {
                 oprMap={oprMap}
                 pitMap={pitMap}
                 myTeam={myTeam}
+                showDebugPanel={showDebugPanel}
               />
             ) : (
               <div className="data-card text-sm text-muted-foreground">Waiting for match on field…</div>
