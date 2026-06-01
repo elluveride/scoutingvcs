@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,7 +19,7 @@ import {
   Flame, ShieldCheck, Sparkles, Zap, ParkingSquare, Crosshair, Info, AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { predictTeam, type TeamPrediction, type MatchEntryLite } from '@/lib/prediction';
+import { POINTS, predictTeam, type TeamPrediction, type MatchEntryLite } from '@/lib/prediction';
 import { computeOPR } from '@/lib/opr';
 
 /*──────────────── types ────────────────*/
@@ -59,6 +60,17 @@ interface PitRow {
   reliable_auto_leave: string;
   endgame_consistency: string;
   drive_type: string;
+}
+
+interface TeamConfidenceDebug {
+  teamNumber: number;
+  consistency: number;
+  sampleCoverage: number;
+  confidence: number;
+  matchCount: number;
+  sampleLabel: string;
+  delta: number;
+  deltaPct: number | null;
 }
 
 const STATUS_PRIORITY: Record<string, number> = {
