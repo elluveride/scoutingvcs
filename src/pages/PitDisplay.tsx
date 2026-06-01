@@ -611,6 +611,209 @@ export default function PitDisplay() {
 
 /*──────────────── subcomponents ────────────────*/
 
+function ManualPredictionPanel({
+  manualPredictionMatch,
+  predictions,
+  oprMap,
+  pitMap,
+  myTeam,
+  manualBlueTeam1,
+  manualBlueTeam2,
+  manualRedTeam1,
+  manualRedTeam2,
+  setManualBlueTeam1,
+  setManualBlueTeam2,
+  setManualRedTeam1,
+  setManualRedTeam2,
+}: {
+  manualPredictionMatch: NexusMatch | null;
+  predictions: Map<number, TeamPrediction>;
+  oprMap: Map<number, number>;
+  pitMap: Map<number, PitRow>;
+  myTeam: string;
+  manualBlueTeam1: string;
+  manualBlueTeam2: string;
+  manualRedTeam1: string;
+  manualRedTeam2: string;
+  setManualBlueTeam1: (value: string) => void;
+  setManualBlueTeam2: (value: string) => void;
+  setManualRedTeam1: (value: string) => void;
+  setManualRedTeam2: (value: string) => void;
+}) {
+  return (
+    <div className="data-card space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <SectionTitle icon={Target} label="Manual Match Prediction" tone="primary" />
+        <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          Enter teams to simulate a matchup
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="space-y-2 rounded-md border border-alliance-blue/30 bg-alliance-blue/10 p-3">
+          <Label className="text-[10px] font-display uppercase tracking-[0.2em] text-alliance-blue">Blue Alliance</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <Input value={manualBlueTeam1} onChange={(e) => setManualBlueTeam1(e.target.value)} placeholder="Blue 1" inputMode="numeric" className="font-mono" />
+            <Input value={manualBlueTeam2} onChange={(e) => setManualBlueTeam2(e.target.value)} placeholder="Blue 2" inputMode="numeric" className="font-mono" />
+          </div>
+        </div>
+
+        <div className="space-y-2 rounded-md border border-alliance-red/30 bg-alliance-red/10 p-3">
+          <Label className="text-[10px] font-display uppercase tracking-[0.2em] text-alliance-red">Red Alliance</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <Input value={manualRedTeam1} onChange={(e) => setManualRedTeam1(e.target.value)} placeholder="Red 1" inputMode="numeric" className="font-mono" />
+            <Input value={manualRedTeam2} onChange={(e) => setManualRedTeam2(e.target.value)} placeholder="Red 2" inputMode="numeric" className="font-mono" />
+          </div>
+        </div>
+      </div>
+
+      {manualPredictionMatch ? (
+        <MatchPredictionCard
+          match={manualPredictionMatch}
+          predictions={predictions}
+          oprMap={oprMap}
+          pitMap={pitMap}
+          myTeam={myTeam}
+        />
+      ) : (
+        <div className="rounded-md border border-dashed border-border bg-muted/10 px-4 py-5 text-sm text-muted-foreground">
+          Enter at least one team to show a prediction breakdown.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConfidenceLegendCard() {
+  const tiers = [
+    { label: 'High confidence', range: '70–100%', classes: confidenceToneClasses(85) },
+    { label: 'Medium confidence', range: '40–69%', classes: confidenceToneClasses(55) },
+    { label: 'Low confidence', range: '0–39%', classes: confidenceToneClasses(20) },
+  ];
+  const sampleMap = [
+    '0 matches = No sample',
+    '1 match = Small sample',
+    '2–3 matches = Moderate sample',
+    '4+ matches = Strong sample',
+  ];
+
+  return (
+    <div className="data-card space-y-3">
+      <SectionTitle icon={Info} label="Confidence Legend" tone="accent" />
+      <div className="space-y-2">
+        {tiers.map((tier) => (
+          <div key={tier.label} className="flex items-center justify-between gap-3 rounded-md border border-border bg-card/50 px-3 py-2">
+            <div>
+              <p className="text-sm font-display">{tier.label}</p>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{tier.range}</p>
+            </div>
+            <span className={cn('rounded px-2 py-1 text-[10px] font-display uppercase tracking-wider', tier.classes)}>
+              {tier.range}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-md border border-border bg-muted/15 px-3 py-2">
+        <p className="text-[10px] font-display uppercase tracking-[0.2em] text-muted-foreground mb-2">Sample size mapping</p>
+        <ul className="space-y-1 text-xs font-mono text-muted-foreground">
+          {sampleMap.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Team confidence uses consistency × sample coverage. Delta is each team’s estimated share of alliance score.
+      </p>
+    </div>
+  );
+}
+
+function ConfidenceDebugPanel({ match, predictions }: { match: NexusMatch | null; predictions: Map<number, TeamPrediction> }) {
+  if (!match) {
+    return <div className="data-card text-sm text-muted-foreground">Enable debug, then enter teams or wait for an on-field match.</div>;
+  }
+
+  const renderAlliance = (label: string, teams: string[], color: 'red' | 'blue') => {
+    const allianceTotal = teams.reduce((sum, team) => sum + (predictions.get(parseInt(team, 10))?.predictedTotal ?? 0), 0);
+
+    return (
+      <div className={cn('rounded-md border p-3 space-y-2', color === 'red' ? 'border-alliance-red/40 bg-alliance-red/10' : 'border-alliance-blue/40 bg-alliance-blue/10')}>
+        <div className="flex items-center justify-between gap-2">
+          <p className={cn('text-xs font-display uppercase tracking-[0.2em]', color === 'red' ? 'text-alliance-red' : 'text-alliance-blue')}>
+            {label}
+          </p>
+          <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            Alliance total {allianceTotal.toFixed(1)}
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          {teams.map((team) => {
+            const prediction = predictions.get(parseInt(team, 10));
+            const debug = computeTeamConfidenceDebug(prediction, allianceTotal);
+
+            return (
+              <div key={`${label}-${team}`} className="rounded border border-border bg-card/70 px-3 py-2">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="font-display text-lg">{team}</span>
+                  {debug ? (
+                    <span className={cn('rounded px-2 py-1 text-[10px] font-display uppercase tracking-wider', confidenceToneClasses(debug.confidence))}>
+                      {debug.confidence}% confidence
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">No scouting data</span>
+                  )}
+                </div>
+
+                {debug && prediction ? (
+                  <div className="mt-2 grid grid-cols-1 gap-2 text-xs md:grid-cols-2 xl:grid-cols-4">
+                    <DebugValue label="Consistency" value={`${debug.consistency}%`} />
+                    <DebugValue label="Sample coverage" value={`${Math.round(debug.sampleCoverage * 100)}%`} />
+                    <DebugValue label="Delta" value={`+${debug.delta.toFixed(1)}`} />
+                    <DebugValue label="Alliance share" value={debug.deltaPct !== null ? `${debug.deltaPct.toFixed(0)}%` : '—'} />
+                    <DebugValue label="Matches" value={`${debug.matchCount}`} />
+                    <DebugValue label="Sample tier" value={debug.sampleLabel} />
+                    <DebugValue label="Auto / Tele / End" value={`${prediction.predictedAuto.toFixed(1)} / ${prediction.predictedTeleop.toFixed(1)} / ${prediction.predictedEndgame.toFixed(1)}`} />
+                    <DebugValue label="Formula" value={`${debug.consistency}% × ${Math.round(debug.sampleCoverage * 100)}%`} />
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs text-muted-foreground">No scouting entries are available for this team yet, so confidence and delta cannot be computed.</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="data-card space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <SectionTitle icon={Activity} label={`Confidence Debug • ${match.label}`} tone="secondary" />
+        <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          Raw inputs used for confidence and delta
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+        {renderAlliance('Blue Alliance', match.blueTeams, 'blue')}
+        {renderAlliance('Red Alliance', match.redTeams, 'red')}
+      </div>
+    </div>
+  );
+}
+
+function DebugValue({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded border border-border bg-muted/10 px-2.5 py-2">
+      <p className="text-[9px] font-display uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-mono text-foreground break-words">{value}</p>
+    </div>
+  );
+}
+
 function SectionTitle({ icon: Icon, label, tone }: { icon: React.ElementType; label: string; tone: 'primary' | 'secondary' | 'accent' }) {
   const tones = { primary: 'text-primary', secondary: 'text-secondary', accent: 'text-accent' };
   return (
