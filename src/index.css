@@ -440,11 +440,11 @@
   }
 
   /* Alliance Badges */
-  .alliance-red {
+  .alliance-badge-red {
     @apply bg-alliance-red text-white rounded-xl;
   }
 
-  .alliance-blue {
+  .alliance-badge-blue {
     @apply bg-alliance-blue text-white rounded-xl;
   }
 
