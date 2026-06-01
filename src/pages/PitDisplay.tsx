@@ -432,7 +432,6 @@ export default function PitDisplay() {
                 oprMap={oprMap}
                 pitMap={pitMap}
                 myTeam={myTeam}
-                showDebugPanel={showDebugPanel}
               />
             ) : (
               <div className="data-card text-sm text-muted-foreground">Waiting for match on field…</div>
