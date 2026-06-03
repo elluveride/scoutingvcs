@@ -39,18 +39,33 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
-  { to: '/scout', icon: ClipboardList, label: 'Match Scout' },
-  { to: '/pit', icon: Wrench, label: 'Pit Scout' },
-  { to: '/pit-display', icon: MonitorPlay, label: 'Pit Display' },
-  { to: '/spreadsheet', icon: Table, label: 'Spreadsheet' },
-  { to: '/dashboard', icon: BarChart3, label: 'Dashboard' },
-  { to: '/compare', icon: GitCompareArrows, label: 'Compare' },
-  { to: '/live-stats', icon: Radio, label: 'Live Stats' },
-  { to: '/planner', icon: Swords, label: 'Planner' },
-  { to: '/assignments', icon: Users, label: 'Assignments' },
-  { to: '/qr-transfer', icon: QrCode, label: 'QR Transfer' },
-  { to: '/sharing', icon: Share2, label: 'Data Sharing' },
+const navSections: { label: string; items: { to: string; icon: any; label: string }[] }[] = [
+  {
+    label: 'Scouting',
+    items: [
+      { to: '/scout', icon: ClipboardList, label: 'Match Scout' },
+      { to: '/pit', icon: Wrench, label: 'Pit Scout' },
+      { to: '/assignments', icon: Users, label: 'Assignments' },
+    ],
+  },
+  {
+    label: 'Strategy',
+    items: [
+      { to: '/pit-display', icon: MonitorPlay, label: 'Pit Display' },
+      { to: '/dashboard', icon: BarChart3, label: 'Dashboard' },
+      { to: '/compare', icon: GitCompareArrows, label: 'Compare' },
+      { to: '/planner', icon: Swords, label: 'Planner' },
+      { to: '/live-stats', icon: Radio, label: 'Live Stats' },
+    ],
+  },
+  {
+    label: 'Data',
+    items: [
+      { to: '/spreadsheet', icon: Table, label: 'Spreadsheet' },
+      { to: '/qr-transfer', icon: QrCode, label: 'QR Transfer' },
+      { to: '/sharing', icon: Share2, label: 'Data Sharing' },
+    ],
+  },
 ];
 
 function AllianceSelector() {
@@ -126,20 +141,32 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 md:p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              cn('nav-item', isActive && 'nav-item-active')
-            }
-          >
-            <item.icon className="w-5 h-5" />
-            <span>{item.label}</span>
-          </NavLink>
+      <nav className="flex-1 p-3 md:p-4 space-y-4 overflow-y-auto">
+        {navSections.map((section) => (
+          <div key={section.label} className="space-y-1">
+            <p className="px-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-medium">
+              {section.label}
+            </p>
+            {section.items.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={onNavigate}
+                className={({ isActive }) =>
+                  cn('nav-item', isActive && 'nav-item-active')
+                }
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </div>
         ))}
+
+        <div className="space-y-1 pt-2 border-t border-sidebar-border/60">
+          <p className="px-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-medium">
+            Account
+          </p>
         
         <NavLink
           to="/profile"
@@ -164,6 +191,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <span>Admin</span>
           </NavLink>
         )}
+        </div>
       </nav>
 
       {/* User Info */}
