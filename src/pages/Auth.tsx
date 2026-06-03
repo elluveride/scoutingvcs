@@ -137,29 +137,29 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex flex-1 bg-card items-center justify-center p-12">
-        <div className="max-w-md text-center">
+      <div className="hidden lg:flex flex-1 bg-card items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-alliance-blue/5 via-transparent to-alliance-red/5 pointer-events-none" />
+        <div className="max-w-md text-center relative">
           <img src={cipherLogo} alt="Apex Scout" className="w-20 h-20 rounded-2xl mx-auto mb-8" />
-          <h1 className="text-4xl font-bold mb-4 text-glow">2844 × 12841</h1>
-          <p className="text-xl text-muted-foreground mb-2">
-            Scouting App
+          <h1 className="text-4xl font-bold mb-3 text-glow">Apex Scout</h1>
+          <p className="text-base text-muted-foreground mb-1">
+            Competition-grade FTC scouting
           </p>
-          <p className="text-sm text-muted-foreground mb-8">
-            Competition-Grade Scouting
+          <p className="text-xs text-muted-foreground/70 mb-8 font-mono uppercase tracking-widest">
+            Teams 2844 × 12841
           </p>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="data-card">
-              <p className="stat-value text-primary">500+</p>
-              <p className="stat-label">Matches</p>
-            </div>
-            <div className="data-card">
-              <p className="stat-value text-secondary">Live</p>
-              <p className="stat-label">Sync</p>
-            </div>
-            <div className="data-card">
-              <p className="stat-value text-accent">Fast</p>
-              <p className="stat-label">Input</p>
-            </div>
+          <div className="grid grid-cols-2 gap-3 text-left">
+            {[
+              { k: 'Offline', v: 'PWA + QR sync' },
+              { k: 'Live', v: 'FTC + Nexus' },
+              { k: 'Analytics', v: 'OPR & weights' },
+              { k: 'Private', v: 'Team-scoped' },
+            ].map((c) => (
+              <div key={c.k} className="data-card !p-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">{c.k}</p>
+                <p className="text-sm font-medium text-foreground mt-0.5">{c.v}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
