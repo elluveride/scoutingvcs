@@ -195,28 +195,32 @@ export default function PitDisplay() {
 
   /*──────────────── derived ────────────────*/
   // If Nexus has no usable data, synthesize from FTC API schedule + scores
+  // Convention when Nexus is unavailable:
+  // last scored match + 1 = On Field, +2 = On Deck, +3 = Queuing
   const fallback = useMemo<NexusStatus | null>(() => {
     if (data?.status?.matches?.length) return null;
     if (!ftcMatches.length) return null;
-    const playedNums = new Set(matchScores.map((s) => s.matchNumber));
     const sorted = [...ftcMatches].sort((a, b) => a.matchNumber - b.matchNumber);
-    const nextIdx = sorted.findIndex((m) => !playedNums.has(m.matchNumber));
-    if (nextIdx === -1) return null;
+    const lastScored = matchScores.length
+      ? Math.max(...matchScores.map((s) => s.matchNumber))
+      : 0;
+    const find = (num: number) => sorted.find((m) => m.matchNumber === num);
     const toNexus = (mm: typeof sorted[number], status: string): NexusMatch => {
       const red = mm.positions.filter((p) => p.position.startsWith('R')).map((p) => String(p.teamNumber));
       const blue = mm.positions.filter((p) => p.position.startsWith('B')).map((p) => String(p.teamNumber));
       return { label: `Q-${mm.matchNumber}`, status, redTeams: red, blueTeams: blue, times: {} };
     };
     const synth: NexusMatch[] = [];
-    if (sorted[nextIdx]) synth.push(toNexus(sorted[nextIdx], 'On field'));
-    if (sorted[nextIdx + 1]) synth.push(toNexus(sorted[nextIdx + 1], 'On deck'));
-    if (sorted[nextIdx + 2]) synth.push(toNexus(sorted[nextIdx + 2], 'Now queuing'));
-    sorted.slice(nextIdx + 3, nextIdx + 12).forEach((m) => synth.push(toNexus(m, 'Scheduled')));
-    return {
-      eventKey: eventKey || '',
-      dataAsOfTime: Date.now(),
-      matches: synth,
-    };
+    const onF = find(lastScored + 1);
+    const onD = find(lastScored + 2);
+    const onQ = find(lastScored + 3);
+    if (onF) synth.push(toNexus(onF, 'On field'));
+    if (onD) synth.push(toNexus(onD, 'On deck'));
+    if (onQ) synth.push(toNexus(onQ, 'Now queuing'));
+    sorted.filter((m) => m.matchNumber > lastScored + 3).slice(0, 9)
+      .forEach((m) => synth.push(toNexus(m, 'Scheduled')));
+    if (synth.length === 0) return null;
+    return { eventKey: eventKey || '', dataAsOfTime: Date.now(), matches: synth };
   }, [data, ftcMatches, matchScores, eventKey]);
 
   const usingFallback = !!fallback && !data?.status?.matches?.length;
@@ -776,7 +780,9 @@ function ConfidenceDebugPanel({ match, predictions }: { match: NexusMatch | null
                     <DebugValue label="Matches" value={`${debug.matchCount}`} />
                     <DebugValue label="Sample tier" value={debug.sampleLabel} />
                     <DebugValue label="Auto / Tele / End" value={`${prediction.predictedAuto.toFixed(1)} / ${prediction.predictedTeleop.toFixed(1)} / ${prediction.predictedEndgame.toFixed(1)}`} />
-                    <DebugValue label="Formula" value={`${debug.consistency}% × ${Math.round(debug.sampleCoverage * 100)}%`} />
+                    <DebugValue label="Formula" value={`${debug.consistency}% × ${Math.round(debug.sampleCoverage * 100)}% = ${debug.confidence}%`} />
+                    <DebugValue label="Delta math" value={debug.deltaPct !== null ? `${debug.delta.toFixed(1)} / ${(debug.delta / (debug.deltaPct / 100)).toFixed(1)} = ${debug.deltaPct.toFixed(0)}%` : `${debug.delta.toFixed(1)} (no alliance total)`} />
+                    <DebugValue label="Reliability" value={prediction.consistency >= 70 ? 'Stable' : prediction.consistency >= 40 ? 'Mixed' : 'Volatile'} />
                   </div>
                 ) : (
                   <p className="mt-2 text-xs text-muted-foreground">No scouting entries are available for this team yet, so confidence and delta cannot be computed.</p>
@@ -801,6 +807,47 @@ function ConfidenceDebugPanel({ match, predictions }: { match: NexusMatch | null
         {renderAlliance('Blue Alliance', match.blueTeams, 'blue')}
         {renderAlliance('Red Alliance', match.redTeams, 'red')}
       </div>
+    </div>
+  );
+}
+
+function MissingInputsFallback({ match, predictions, oprMap }: {
+  match: NexusMatch;
+  predictions: Map<number, TeamPrediction>;
+  oprMap: Map<number, number>;
+}) {
+  const allTeams = [...match.redTeams, ...match.blueTeams].filter(Boolean);
+  const missingScouting = allTeams.filter((t) => !predictions.get(parseInt(t))?.matchCount);
+  const missingOPR = allTeams.filter((t) => oprMap.get(parseInt(t)) === undefined);
+  const noTeams = allTeams.length === 0;
+
+  return (
+    <div className="rounded-md border border-dashed border-warning/50 bg-warning/5 px-3 py-3 space-y-2">
+      <div className="flex items-center gap-2 text-warning">
+        <AlertTriangle className="w-4 h-4" />
+        <p className="text-xs font-display uppercase tracking-[0.2em]">No prediction available</p>
+      </div>
+      {noTeams ? (
+        <p className="text-xs text-muted-foreground">No teams set on either alliance.</p>
+      ) : (
+        <ul className="text-xs space-y-1 font-mono">
+          {missingScouting.length > 0 && (
+            <li>
+              <span className="text-muted-foreground">Missing scouting:</span>{' '}
+              <span className="text-foreground">{missingScouting.join(', ')}</span>
+            </li>
+          )}
+          {missingOPR.length > 0 && (
+            <li>
+              <span className="text-muted-foreground">Missing OPR (need played matches):</span>{' '}
+              <span className="text-foreground">{missingOPR.join(', ')}</span>
+            </li>
+          )}
+          <li className="text-muted-foreground pt-1">
+            Add pit/match scouting for the listed teams, or wait until they have played matches scored on the FTC API.
+          </li>
+        </ul>
+      )}
     </div>
   );
 }
@@ -1032,7 +1079,7 @@ function MatchPredictionCard({ match, predictions, oprMap, pitMap, myTeam }: {
         </div>
       </div>
       {!hasAnyData ? (
-        <p className="text-xs text-muted-foreground">No scouting data yet for teams in this match.</p>
+        <MissingInputsFallback match={match} predictions={predictions} oprMap={oprMap} />
       ) : (
         <div className="grid grid-cols-2 gap-3">
           <AlliancePrediction label="Red" stats={red} teams={match.redTeams} myTeam={myTeam} color="red"
