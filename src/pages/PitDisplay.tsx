@@ -811,6 +811,47 @@ function ConfidenceDebugPanel({ match, predictions }: { match: NexusMatch | null
   );
 }
 
+function MissingInputsFallback({ match, predictions, oprMap }: {
+  match: NexusMatch;
+  predictions: Map<number, TeamPrediction>;
+  oprMap: Map<number, number>;
+}) {
+  const allTeams = [...match.redTeams, ...match.blueTeams].filter(Boolean);
+  const missingScouting = allTeams.filter((t) => !predictions.get(parseInt(t))?.matchCount);
+  const missingOPR = allTeams.filter((t) => oprMap.get(parseInt(t)) === undefined);
+  const noTeams = allTeams.length === 0;
+
+  return (
+    <div className="rounded-md border border-dashed border-warning/50 bg-warning/5 px-3 py-3 space-y-2">
+      <div className="flex items-center gap-2 text-warning">
+        <AlertTriangle className="w-4 h-4" />
+        <p className="text-xs font-display uppercase tracking-[0.2em]">No prediction available</p>
+      </div>
+      {noTeams ? (
+        <p className="text-xs text-muted-foreground">No teams set on either alliance.</p>
+      ) : (
+        <ul className="text-xs space-y-1 font-mono">
+          {missingScouting.length > 0 && (
+            <li>
+              <span className="text-muted-foreground">Missing scouting:</span>{' '}
+              <span className="text-foreground">{missingScouting.join(', ')}</span>
+            </li>
+          )}
+          {missingOPR.length > 0 && (
+            <li>
+              <span className="text-muted-foreground">Missing OPR (need played matches):</span>{' '}
+              <span className="text-foreground">{missingOPR.join(', ')}</span>
+            </li>
+          )}
+          <li className="text-muted-foreground pt-1">
+            Add pit/match scouting for the listed teams, or wait until they have played matches scored on the FTC API.
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function DebugValue({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded border border-border bg-muted/10 px-2.5 py-2">
