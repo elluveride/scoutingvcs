@@ -1036,7 +1036,7 @@ function MatchPredictionCard({ match, predictions, oprMap, pitMap, myTeam }: {
         </div>
       </div>
       {!hasAnyData ? (
-        <p className="text-xs text-muted-foreground">No scouting data yet for teams in this match.</p>
+        <MissingInputsFallback match={match} predictions={predictions} oprMap={oprMap} />
       ) : (
         <div className="grid grid-cols-2 gap-3">
           <AlliancePrediction label="Red" stats={red} teams={match.redTeams} myTeam={myTeam} color="red"
