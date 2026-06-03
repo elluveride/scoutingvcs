@@ -141,20 +141,32 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 md:p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              cn('nav-item', isActive && 'nav-item-active')
-            }
-          >
-            <item.icon className="w-5 h-5" />
-            <span>{item.label}</span>
-          </NavLink>
+      <nav className="flex-1 p-3 md:p-4 space-y-4 overflow-y-auto">
+        {navSections.map((section) => (
+          <div key={section.label} className="space-y-1">
+            <p className="px-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-medium">
+              {section.label}
+            </p>
+            {section.items.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={onNavigate}
+                className={({ isActive }) =>
+                  cn('nav-item', isActive && 'nav-item-active')
+                }
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </div>
         ))}
+
+        <div className="space-y-1 pt-2 border-t border-sidebar-border/60">
+          <p className="px-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-medium">
+            Account
+          </p>
         
         <NavLink
           to="/profile"
