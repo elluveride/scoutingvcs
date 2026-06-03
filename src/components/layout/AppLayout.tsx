@@ -39,18 +39,33 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
-  { to: '/scout', icon: ClipboardList, label: 'Match Scout' },
-  { to: '/pit', icon: Wrench, label: 'Pit Scout' },
-  { to: '/pit-display', icon: MonitorPlay, label: 'Pit Display' },
-  { to: '/spreadsheet', icon: Table, label: 'Spreadsheet' },
-  { to: '/dashboard', icon: BarChart3, label: 'Dashboard' },
-  { to: '/compare', icon: GitCompareArrows, label: 'Compare' },
-  { to: '/live-stats', icon: Radio, label: 'Live Stats' },
-  { to: '/planner', icon: Swords, label: 'Planner' },
-  { to: '/assignments', icon: Users, label: 'Assignments' },
-  { to: '/qr-transfer', icon: QrCode, label: 'QR Transfer' },
-  { to: '/sharing', icon: Share2, label: 'Data Sharing' },
+const navSections: { label: string; items: { to: string; icon: any; label: string }[] }[] = [
+  {
+    label: 'Scouting',
+    items: [
+      { to: '/scout', icon: ClipboardList, label: 'Match Scout' },
+      { to: '/pit', icon: Wrench, label: 'Pit Scout' },
+      { to: '/assignments', icon: Users, label: 'Assignments' },
+    ],
+  },
+  {
+    label: 'Strategy',
+    items: [
+      { to: '/pit-display', icon: MonitorPlay, label: 'Pit Display' },
+      { to: '/dashboard', icon: BarChart3, label: 'Dashboard' },
+      { to: '/compare', icon: GitCompareArrows, label: 'Compare' },
+      { to: '/planner', icon: Swords, label: 'Planner' },
+      { to: '/live-stats', icon: Radio, label: 'Live Stats' },
+    ],
+  },
+  {
+    label: 'Data',
+    items: [
+      { to: '/spreadsheet', icon: Table, label: 'Spreadsheet' },
+      { to: '/qr-transfer', icon: QrCode, label: 'QR Transfer' },
+      { to: '/sharing', icon: Data­Sharing as any, label: 'Data Sharing' },
+    ],
+  },
 ];
 
 function AllianceSelector() {
