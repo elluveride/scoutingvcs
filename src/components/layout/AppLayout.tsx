@@ -63,7 +63,7 @@ const navSections: { label: string; items: { to: string; icon: any; label: strin
     items: [
       { to: '/spreadsheet', icon: Table, label: 'Spreadsheet' },
       { to: '/qr-transfer', icon: QrCode, label: 'QR Transfer' },
-      { to: '/sharing', icon: Data­Sharing as any, label: 'Data Sharing' },
+      { to: '/sharing', icon: Share2, label: 'Data Sharing' },
     ],
   },
 ];
