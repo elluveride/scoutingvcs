@@ -191,6 +191,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <span>Admin</span>
           </NavLink>
         )}
+        </div>
       </nav>
 
       {/* User Info */}
