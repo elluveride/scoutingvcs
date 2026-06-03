@@ -63,9 +63,9 @@ export default function LandingHome() {
             variants={fadeUp}
             initial="hidden"
             animate="visible"
-            className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-4"
+            className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-3"
           >
-            The competitive edge your alliance needs.
+            Real-time match data, weighted analytics, and offline-first sync — built for the way FTC events actually run.
           </motion.p>
 
           <motion.p
@@ -73,9 +73,9 @@ export default function LandingHome() {
             variants={fadeUp}
             initial="hidden"
             animate="visible"
-            className="text-sm text-muted-foreground/60 mb-10"
+            className="text-xs uppercase tracking-[0.25em] text-muted-foreground/60 mb-10 font-mono"
           >
-            Built by FTC Teams 12841 & 2844
+            Built by FTC Teams 12841 × 2844 · Season-independent
           </motion.p>
 
           <motion.div
@@ -83,7 +83,7 @@ export default function LandingHome() {
             variants={fadeUp}
             initial="hidden"
             animate="visible"
-            className="flex gap-4 justify-center flex-wrap"
+            className="flex gap-3 justify-center flex-wrap"
           >
             <Link
               to="/auth"
@@ -97,6 +97,27 @@ export default function LandingHome() {
             >
               Explore Features
             </Link>
+          </motion.div>
+
+          {/* Capability strip — honest, no fake metrics */}
+          <motion.div
+            custom={5}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-2 max-w-3xl mx-auto"
+          >
+            {[
+              { k: 'Offline', v: 'PWA + QR sync' },
+              { k: 'Live', v: 'FTC + Nexus API' },
+              { k: 'Analytics', v: 'OPR + weighted' },
+              { k: 'Private', v: 'Team-scoped RLS' },
+            ].map((c) => (
+              <div key={c.k} className="rounded-lg border border-border/40 bg-card/40 backdrop-blur px-3 py-2 text-left">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">{c.k}</p>
+                <p className="text-sm text-foreground font-medium mt-0.5">{c.v}</p>
+              </div>
+            ))}
           </motion.div>
         </div>
       </section>
