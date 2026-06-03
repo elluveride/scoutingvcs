@@ -780,7 +780,9 @@ function ConfidenceDebugPanel({ match, predictions }: { match: NexusMatch | null
                     <DebugValue label="Matches" value={`${debug.matchCount}`} />
                     <DebugValue label="Sample tier" value={debug.sampleLabel} />
                     <DebugValue label="Auto / Tele / End" value={`${prediction.predictedAuto.toFixed(1)} / ${prediction.predictedTeleop.toFixed(1)} / ${prediction.predictedEndgame.toFixed(1)}`} />
-                    <DebugValue label="Formula" value={`${debug.consistency}% × ${Math.round(debug.sampleCoverage * 100)}%`} />
+                    <DebugValue label="Formula" value={`${debug.consistency}% × ${Math.round(debug.sampleCoverage * 100)}% = ${debug.confidence}%`} />
+                    <DebugValue label="Delta math" value={debug.deltaPct !== null ? `${debug.delta.toFixed(1)} / ${(debug.delta / (debug.deltaPct / 100)).toFixed(1)} = ${debug.deltaPct.toFixed(0)}%` : `${debug.delta.toFixed(1)} (no alliance total)`} />
+                    <DebugValue label="Reliability" value={prediction.consistency >= 70 ? 'Stable' : prediction.consistency >= 40 ? 'Mixed' : 'Volatile'} />
                   </div>
                 ) : (
                   <p className="mt-2 text-xs text-muted-foreground">No scouting entries are available for this team yet, so confidence and delta cannot be computed.</p>
