@@ -499,70 +499,139 @@ export default function Dashboard() {
     );
   };
 
-  const TeamCard = ({ team }: { team: TeamStats }) => {
+  const TeamCard = ({ team, rank }: { team: TeamStats; rank: number }) => {
     const officialRank = getRankForTeam(team.teamNumber);
     const teamName = getTeamName(team.teamNumber);
 
+    // Reliability: combine sample size + variance into a 0–100 score.
+    // Sample weight maxes at ~6 matches; lower variance = higher reliability.
+    const sampleWeight = Math.min(1, team.matchesPlayed / 6);
+    const varianceFactor = Math.max(0, 1 - team.varianceScore / 20); // var 0 = 1, var 20+ = 0
+    const reliability = Math.round(sampleWeight * varianceFactor * 100);
+    const reliabilityTier =
+      reliability >= 70 ? { label: 'Stable', color: 'text-accent', bg: 'bg-accent/15 border-accent/30' } :
+      reliability >= 40 ? { label: 'Mixed', color: 'text-warning', bg: 'bg-warning/15 border-warning/30' } :
+                          { label: 'Volatile', color: 'text-secondary', bg: 'bg-secondary/15 border-secondary/30' };
+
+    // Failure rate: penalty rate is already 0–100. Treat >25% as warn, >50% as fail.
+    const failureRate = team.penaltyRate;
+    const failureTier =
+      failureRate >= 50 ? 'text-secondary' :
+      failureRate >= 25 ? 'text-warning' :
+                          'text-muted-foreground';
+
+    const lowSample = team.matchesPlayed < 3;
+    const isMyTeam = profile?.teamNumber === team.teamNumber;
+
     return (
-      <div
-        className="data-card cursor-pointer hover:border-primary/40 transition-colors"
+      <button
+        type="button"
+        className={cn(
+          "w-full text-left data-card transition-all active:scale-[0.99] hover:border-primary/50",
+          "min-h-[140px] p-4 md:p-5",
+          isMyTeam && "border-primary/60 ring-1 ring-primary/30"
+        )}
         onClick={() => navigate(`/team?team=${team.teamNumber}`)}
       >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div>
-              <h3 className="text-xl font-bold font-mono">{team.teamNumber}</h3>
-              {teamName && <p className="text-xs text-muted-foreground truncate max-w-[160px]">{teamName}</p>}
-              <p className="text-xs text-muted-foreground">{team.matchesPlayed} matches</p>
+        {/* Header: rank + team + score */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="shrink-0 w-10 h-10 rounded-md bg-muted/60 border border-border flex items-center justify-center font-display text-base">
+              {rank}
             </div>
-            {officialRank !== null && (
-              <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-accent/20 border border-accent/30">
-                <Trophy className="w-3 h-3 text-accent" />
-                <span className="text-xs font-mono font-semibold text-accent">#{officialRank}</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-xl font-bold font-mono leading-tight">{team.teamNumber}</h3>
+                {isMyTeam && (
+                  <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/20 text-primary border border-primary/40">
+                    My Team
+                  </span>
+                )}
+                {officialRank !== null && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent/15 border border-accent/30 text-[11px] font-mono text-accent">
+                    <Trophy className="w-3 h-3" />#{officialRank}
+                  </span>
+                )}
               </div>
-            )}
+              {teamName && <p className="text-xs text-muted-foreground truncate">{teamName}</p>}
+            </div>
           </div>
-          <div className="text-right">
-            <div className="flex items-center gap-1">
+          <div className="text-right shrink-0">
+            <div className="flex items-center justify-end gap-1">
               <TrendingUp className="w-4 h-4 text-primary" />
-              <span className="text-lg font-bold text-primary">{team.selectionScore}</span>
+              <span className="text-2xl font-display font-bold text-primary leading-none">{team.selectionScore}</span>
             </div>
+            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">score</span>
           </div>
         </div>
 
+        {/* Reliability + failure strip */}
+        <div className="flex items-center gap-2 mb-3 text-[11px] font-mono">
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded border", reliabilityTier.bg, reliabilityTier.color)}>
+                <Activity className="w-3 h-3" />
+                {reliabilityTier.label} · {reliability}%
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[240px]">
+              <p className="text-xs">
+                Reliability = sample coverage × consistency.
+                {' '}{team.matchesPlayed} match{team.matchesPlayed === 1 ? '' : 'es'} scouted, variance ±{team.varianceScore.toFixed(1)}.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded border border-border bg-muted/40", failureTier)}>
+                <ShieldAlert className="w-3 h-3" />
+                Fail {failureRate}%
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[240px]">
+              <p className="text-xs">% of matches ending in card, dead robot, or penalty status.</p>
+            </TooltipContent>
+          </Tooltip>
+          <span className="ml-auto text-muted-foreground">{team.matchesPlayed} match{team.matchesPlayed === 1 ? '' : 'es'}</span>
+        </div>
+
+        {lowSample && (
+          <div className="mb-3 flex items-center gap-2 px-2 py-1.5 rounded border border-warning/30 bg-warning/10 text-[11px] text-warning">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>Low sample — needs at least 3 matches for trustworthy stats.</span>
+          </div>
+        )}
+
+        {/* Stat grid */}
         <div className="grid grid-cols-3 gap-2 text-xs">
-          <div className="bg-muted/50 rounded p-2">
+          <div className="bg-muted/40 rounded-md p-2.5 min-h-[64px]">
             <div className="flex items-center gap-1 mb-1">
-              <Bot className="w-3 h-3 text-primary" />
-              <span className="text-muted-foreground">Auto</span>
+              <Bot className="w-3.5 h-3.5 text-primary" />
+              <span className="text-muted-foreground text-[10px] uppercase tracking-wider">Auto</span>
             </div>
-            <div className="font-mono font-semibold">
-              {team.autoTotalAvg} <span className="text-muted-foreground">({team.avgAutoClose}C/{team.avgAutoFar}F)</span>
-            </div>
-            <div className="text-muted-foreground">Line: {team.onLaunchLinePercent}%</div>
+            <div className="font-mono font-semibold text-sm">{team.autoTotalAvg}</div>
+            <div className="text-muted-foreground text-[10px]">{team.avgAutoClose}C / {team.avgAutoFar}F · LL {team.onLaunchLinePercent}%</div>
           </div>
 
-          <div className="bg-muted/50 rounded p-2">
+          <div className="bg-muted/40 rounded-md p-2.5 min-h-[64px]">
             <div className="flex items-center gap-1 mb-1">
-              <Gamepad2 className="w-3 h-3 text-secondary" />
-              <span className="text-muted-foreground">TeleOp</span>
+              <Gamepad2 className="w-3.5 h-3.5 text-secondary" />
+              <span className="text-muted-foreground text-[10px] uppercase tracking-wider">TeleOp</span>
             </div>
-            <div className="font-mono font-semibold">
-              {team.teleopTotalAvg} <span className="text-muted-foreground">({team.avgTeleopClose}C/{team.avgTeleopFar}F)</span>
-            </div>
-            <div className="text-muted-foreground">Def: {team.avgDefense}</div>
+            <div className="font-mono font-semibold text-sm">{team.teleopTotalAvg}</div>
+            <div className="text-muted-foreground text-[10px]">{team.avgTeleopClose}C / {team.avgTeleopFar}F · Def {team.avgDefense}</div>
           </div>
 
-          <div className="bg-muted/50 rounded p-2">
+          <div className="bg-muted/40 rounded-md p-2.5 min-h-[64px]">
             <div className="flex items-center gap-1 mb-1">
-              <Flag className="w-3 h-3 text-accent" />
-              <span className="text-muted-foreground">End</span>
+              <Flag className="w-3.5 h-3.5 text-accent" />
+              <span className="text-muted-foreground text-[10px] uppercase tracking-wider">End</span>
             </div>
-            <div className="font-mono font-semibold">Lift: {team.liftPercent}%</div>
-            <div className="text-muted-foreground">Full: {team.fullReturnPercent}%</div>
+            <div className="font-mono font-semibold text-sm">Lift {team.liftPercent}%</div>
+            <div className="text-muted-foreground text-[10px]">Full {team.fullReturnPercent}% · Part {team.partialReturnPercent}%</div>
           </div>
         </div>
-      </div>
+      </button>
     );
   };
 
