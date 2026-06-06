@@ -21,6 +21,7 @@ import {
 import { cn } from '@/lib/utils';
 import { POINTS, predictTeam, type TeamPrediction, type MatchEntryLite } from '@/lib/prediction';
 import { computeOPR } from '@/lib/opr';
+import { MissingDataBanner, type TeamMissingInputs } from '@/components/shared/MissingDataBanner';
 
 /*──────────────── types ────────────────*/
 interface NexusMatchTimes {
