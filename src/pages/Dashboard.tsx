@@ -695,6 +695,48 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Reliability / failure chip legend — explains computation */}
+      <details className="mb-4 group rounded-md border border-border bg-muted/20">
+        <summary className="cursor-pointer list-none px-3 py-2 flex items-center gap-2 text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors">
+          <Info className="w-3.5 h-3.5" />
+          <span>Legend — how reliability &amp; failure chips work</span>
+          <span className="ml-auto text-muted-foreground/60 group-open:hidden">show</span>
+          <span className="ml-auto text-muted-foreground/60 hidden group-open:inline">hide</span>
+        </summary>
+        <div className="px-3 pb-3 pt-1 grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] leading-relaxed">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Activity className="w-3 h-3 text-accent" />
+              <span className="font-mono font-semibold text-foreground">Reliability</span>
+            </div>
+            <div className="text-muted-foreground font-mono">
+              <span className="text-foreground">sample × consistency</span>. Sample maxes at 6+ matches.
+              Variance ±0 = full consistency, ±20+ = none.
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <span className="px-1.5 py-0.5 rounded border border-accent/30 bg-accent/15 text-accent font-mono">Stable ≥70%</span>
+              <span className="px-1.5 py-0.5 rounded border border-warning/30 bg-warning/15 text-warning font-mono">Mixed 40–69%</span>
+              <span className="px-1.5 py-0.5 rounded border border-secondary/30 bg-secondary/15 text-secondary font-mono">Volatile &lt;40%</span>
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <ShieldAlert className="w-3 h-3 text-warning" />
+              <span className="font-mono font-semibold text-foreground">Failure rate</span>
+            </div>
+            <div className="text-muted-foreground font-mono">
+              % of scouted matches ending in card, dead robot, or penalty.
+              Lower is better — high failure means risky alliance pick.
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <span className="px-1.5 py-0.5 rounded border border-border bg-muted/40 font-mono text-muted-foreground">&lt;25% safe</span>
+              <span className="px-1.5 py-0.5 rounded border border-border bg-muted/40 font-mono text-warning">25–49% watch</span>
+              <span className="px-1.5 py-0.5 rounded border border-border bg-muted/40 font-mono text-secondary">≥50% risky</span>
+            </div>
+          </div>
+        </div>
+      </details>
+
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
