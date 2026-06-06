@@ -128,6 +128,18 @@ export default function MatchPlanner() {
 
   const allPreds = [...bluePreds, ...redPreds];
 
+  // Per-team missing-input audit — only flag teams the user actually entered.
+  const enteredTeams = [blueTeam1, blueTeam2, redTeam1, redTeam2]
+    .map(s => parseInt(s))
+    .filter(n => !isNaN(n));
+  const missingInputs: TeamMissingInputs[] = enteredTeams.flatMap(num => {
+    const pred = teamPredictions.get(num);
+    const reasons: TeamMissingInputs['reasons'] = [];
+    if (!pred || pred.matchCount === 0) reasons.push('no_match_data');
+    else if (pred.matchCount < 3) reasons.push('low_sample');
+    return reasons.length ? [{ teamNumber: num, reasons, detail: pred ? `${pred.matchCount} match${pred.matchCount === 1 ? '' : 'es'}` : undefined }] : [];
+  });
+
   const comparisonData = allPreds.map(p => ({
     team: `${p.teamNumber}`,
     auto: p.predictedAuto,
