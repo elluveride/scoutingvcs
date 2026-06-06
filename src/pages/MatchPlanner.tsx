@@ -218,6 +218,16 @@ export default function MatchPlanner() {
             </div>
           </PitSection>
 
+          {/* Missing-data audit (consistent across prediction surfaces) */}
+          {enteredTeams.length > 0 && missingInputs.length > 0 && (
+            <MissingDataBanner
+              variant={allPreds.length === 0 ? 'error' : 'warn'}
+              title={allPreds.length === 0 ? 'No prediction yet — every entered team is missing data' : 'Prediction confidence reduced'}
+              description="Predictions only run on teams with scouted matches. Add match scouting for the teams below to improve accuracy."
+              teams={missingInputs}
+            />
+          )}
+
           {/* Score Prediction */}
           {allPreds.length > 0 && (
             <>
