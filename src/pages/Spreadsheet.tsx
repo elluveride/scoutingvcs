@@ -477,7 +477,8 @@ export default function Spreadsheet() {
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </div>
