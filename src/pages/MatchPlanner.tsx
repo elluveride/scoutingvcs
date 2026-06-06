@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 
 import { POINTS, predictTeam, type TeamPrediction, type MatchEntryLite as MatchEntry } from '@/lib/prediction';
+import { MissingDataBanner, type TeamMissingInputs } from '@/components/shared/MissingDataBanner';
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
@@ -127,6 +128,18 @@ export default function MatchPlanner() {
 
   const allPreds = [...bluePreds, ...redPreds];
 
+  // Per-team missing-input audit — only flag teams the user actually entered.
+  const enteredTeams = [blueTeam1, blueTeam2, redTeam1, redTeam2]
+    .map(s => parseInt(s))
+    .filter(n => !isNaN(n));
+  const missingInputs: TeamMissingInputs[] = enteredTeams.flatMap(num => {
+    const pred = teamPredictions.get(num);
+    const reasons: TeamMissingInputs['reasons'] = [];
+    if (!pred || pred.matchCount === 0) reasons.push('no_match_data');
+    else if (pred.matchCount < 3) reasons.push('low_sample');
+    return reasons.length ? [{ teamNumber: num, reasons, detail: pred ? `${pred.matchCount} match${pred.matchCount === 1 ? '' : 'es'}` : undefined }] : [];
+  });
+
   const comparisonData = allPreds.map(p => ({
     team: `${p.teamNumber}`,
     auto: p.predictedAuto,
@@ -204,6 +217,16 @@ export default function MatchPlanner() {
               </div>
             </div>
           </PitSection>
+
+          {/* Missing-data audit (consistent across prediction surfaces) */}
+          {enteredTeams.length > 0 && missingInputs.length > 0 && (
+            <MissingDataBanner
+              variant={allPreds.length === 0 ? 'error' : 'warn'}
+              title={allPreds.length === 0 ? 'No prediction yet — every entered team is missing data' : 'Prediction confidence reduced'}
+              description="Predictions only run on teams with scouted matches. Add match scouting for the teams below to improve accuracy."
+              teams={missingInputs}
+            />
+          )}
 
           {/* Score Prediction */}
           {allPreds.length > 0 && (

@@ -414,6 +414,25 @@ export default function MatchScout() {
           <p className="text-xs text-muted-foreground mt-1">{notes.length}/500</p>
         </PitSection>
 
+        {/* Validation summary — surfaces missing fields before save */}
+        {(() => {
+          const issues: string[] = [];
+          if (!matchNumber) issues.push('match number');
+          if (!teamNumber) issues.push('team number');
+          else if (isNaN(parseInt(teamNumber)) || parseInt(teamNumber) < 1) issues.push('valid team number');
+          if (!isApproved) issues.push('account approval');
+          if (issues.length === 0) return null;
+          return (
+            <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2.5 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+              <div className="text-xs font-mono">
+                <span className="text-warning font-semibold">Before saving:</span>
+                <span className="text-muted-foreground"> needs {issues.join(', ')}.</span>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Actions */}
         <div className="flex gap-3 pt-2 pb-8">
           <Button
@@ -428,7 +447,7 @@ export default function MatchScout() {
           <Button
             type="submit"
             className="flex-1 h-14 text-base gap-2 font-display bg-primary text-primary-foreground hover:bg-primary/90 bg-glow"
-            disabled={saving || !isApproved}
+            disabled={saving || !isApproved || !teamNumber || !matchNumber}
           >
             {saving ? (
               <Loader2 className="w-5 h-5 animate-spin" />

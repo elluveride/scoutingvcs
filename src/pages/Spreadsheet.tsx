@@ -224,22 +224,41 @@ export default function Spreadsheet() {
     return result;
   }, [entries, teamFilter, matchMin, matchMax, scouterFilter, sortKey, sortDir]);
 
-  // Detect duplicate entries (same match + team + scouter)
-  const duplicateIds = useMemo(() => {
-    const ids = new Set<string>();
-    const keyMap = new Map<string, string[]>();
+  // Detect duplicate entries (same match + team + scouter) AND
+  // cross-scouter conflicts (same match + team, different totals between scouters).
+  const { duplicateIds, conflictIds } = useMemo(() => {
+    const dupes = new Set<string>();
+    const conflicts = new Set<string>();
+    const dupeKey = new Map<string, string[]>();        // match-team-scouter -> ids
+    const matchTeamMap = new Map<string, MatchRow[]>(); // match-team -> rows (any scouter)
+
     entries.forEach(e => {
-      const key = `${e.match_number}-${e.team_number}-${e.scouter_id}`;
-      const existing = keyMap.get(key) || [];
+      const dk = `${e.match_number}-${e.team_number}-${e.scouter_id}`;
+      const existing = dupeKey.get(dk) || [];
       existing.push(e.id);
-      keyMap.set(key, existing);
+      dupeKey.set(dk, existing);
+
+      const mk = `${e.match_number}-${e.team_number}`;
+      const list = matchTeamMap.get(mk) || [];
+      list.push(e);
+      matchTeamMap.set(mk, list);
     });
-    keyMap.forEach(idList => {
-      if (idList.length > 1) {
-        idList.forEach(id => ids.add(id));
-      }
+
+    dupeKey.forEach(ids => { if (ids.length > 1) ids.forEach(id => dupes.add(id)); });
+
+    // Conflict = ≥2 distinct scouters scouted same match/team and totals differ by ≥4 pts
+    matchTeamMap.forEach(rows => {
+      const distinctScouters = new Set(rows.map(r => r.scouter_id));
+      if (distinctScouters.size < 2) return;
+      const totals = rows.map(r =>
+        r.auto_scored_close + r.auto_scored_far + r.teleop_scored_close + r.teleop_scored_far,
+      );
+      const min = Math.min(...totals);
+      const max = Math.max(...totals);
+      if (max - min >= 4) rows.forEach(r => conflicts.add(r.id));
     });
-    return ids;
+
+    return { duplicateIds: dupes, conflictIds: conflicts };
   }, [entries]);
 
   // Apply filters to all entries too
@@ -322,7 +341,16 @@ export default function Spreadsheet() {
       ) : (
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10 bg-card">
+              {/* Column-group header */}
+              <TableRow className="border-b border-border/30">
+                {isAdmin && !isReadOnly && <TableHead className="w-10 p-0" />}
+                {isAdmin && !isReadOnly && <TableHead className="w-10 p-0" />}
+                <TableHead colSpan={3} className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-mono py-1 border-r border-border/40">Meta</TableHead>
+                <TableHead colSpan={4} className="text-[10px] uppercase tracking-[0.15em] text-primary font-mono py-1 text-center border-r border-border/40 bg-primary/5">Auto</TableHead>
+                <TableHead colSpan={3} className="text-[10px] uppercase tracking-[0.15em] text-secondary font-mono py-1 text-center border-r border-border/40 bg-secondary/5">TeleOp</TableHead>
+                <TableHead colSpan={3} className="text-[10px] uppercase tracking-[0.15em] text-accent font-mono py-1 text-center bg-accent/5">Endgame / Notes</TableHead>
+              </TableRow>
               <TableRow>
                 {isAdmin && !isReadOnly && <TableHead className="w-10"></TableHead>}
                 {isAdmin && !isReadOnly && <TableHead className="w-10"></TableHead>}
@@ -332,7 +360,7 @@ export default function Spreadsheet() {
                 <TableHead className="font-semibold cursor-pointer select-none" onClick={() => handleSort('team_number')}>
                   Team<SortIcon column="team_number" />
                 </TableHead>
-                <TableHead className="font-semibold">Scouter</TableHead>
+                <TableHead className="font-semibold border-r border-border/40">Scouter</TableHead>
                 <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('auto_scored_close')}>
                   Auto C<SortIcon column="auto_scored_close" />
                 </TableHead>
@@ -340,14 +368,14 @@ export default function Spreadsheet() {
                   Auto F<SortIcon column="auto_scored_far" />
                 </TableHead>
                 <TableHead className="font-semibold text-center">Fouls</TableHead>
-                <TableHead className="font-semibold text-center">Line</TableHead>
+                <TableHead className="font-semibold text-center border-r border-border/40">Line</TableHead>
                 <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('teleop_scored_close')}>
                   Tel C<SortIcon column="teleop_scored_close" />
                 </TableHead>
                 <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('teleop_scored_far')}>
                   Tel F<SortIcon column="teleop_scored_far" />
                 </TableHead>
-                <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('defense_rating')}>
+                <TableHead className="font-semibold text-center cursor-pointer select-none border-r border-border/40" onClick={() => handleSort('defense_rating')}>
                   Def<SortIcon column="defense_rating" />
                 </TableHead>
                 <TableHead className="font-semibold text-center">End</TableHead>
@@ -356,10 +384,17 @@ export default function Spreadsheet() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((entry) => (
-                <TableRow 
+              {data.map((entry) => {
+                const isConflict = !isReadOnly && conflictIds.has(entry.id);
+                const isDup = !isReadOnly && duplicateIds.has(entry.id);
+                return (
+                <TableRow
                   key={entry.id}
-                  className={cn(!isReadOnly && isAdmin && "cursor-pointer hover:bg-muted/50")}
+                  className={cn(
+                    !isReadOnly && isAdmin && "cursor-pointer hover:bg-muted/50",
+                    isConflict && "border-l-2 border-l-destructive bg-destructive/5",
+                    !isConflict && isDup && "border-l-2 border-l-warning bg-warning/5",
+                  )}
                   onClick={() => !isReadOnly && isAdmin && handleEditRow(entry)}
                 >
                   {isAdmin && !isReadOnly && (
@@ -380,10 +415,25 @@ export default function Spreadsheet() {
                   )}
                   <TableCell className="font-mono">
                     {entry.match_number}
-                    {!isReadOnly && duplicateIds.has(entry.id) && (
-                      <span className="ml-1.5 px-1 py-0.5 rounded text-[10px] bg-warning/20 text-warning font-semibold">
-                        DUP
-                      </span>
+                    {isDup && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1.5 px-1 py-0.5 rounded text-[10px] bg-warning/20 text-warning font-semibold">DUP</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-[220px]">
+                          <p className="text-xs">Same scouter submitted this match/team more than once.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {isConflict && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1.5 px-1 py-0.5 rounded text-[10px] bg-destructive/20 text-destructive font-semibold">CONFLICT</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-[260px]">
+                          <p className="text-xs">Multiple scouters scored this team in this match with totals differing by 4+ pts. Review and pick the correct entry.</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </TableCell>
                   <TableCell className="font-mono font-semibold">
@@ -427,7 +477,8 @@ export default function Spreadsheet() {
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </div>

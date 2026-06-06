@@ -21,6 +21,7 @@ import {
 import { cn } from '@/lib/utils';
 import { POINTS, predictTeam, type TeamPrediction, type MatchEntryLite } from '@/lib/prediction';
 import { computeOPR } from '@/lib/opr';
+import { MissingDataBanner, type TeamMissingInputs } from '@/components/shared/MissingDataBanner';
 
 /*──────────────── types ────────────────*/
 interface NexusMatchTimes {
@@ -817,38 +818,33 @@ function MissingInputsFallback({ match, predictions, oprMap }: {
   oprMap: Map<number, number>;
 }) {
   const allTeams = [...match.redTeams, ...match.blueTeams].filter(Boolean);
-  const missingScouting = allTeams.filter((t) => !predictions.get(parseInt(t))?.matchCount);
-  const missingOPR = allTeams.filter((t) => oprMap.get(parseInt(t)) === undefined);
-  const noTeams = allTeams.length === 0;
-
+  if (allTeams.length === 0) {
+    return (
+      <MissingDataBanner
+        variant="error"
+        title="No prediction available"
+        description="No teams set on either alliance yet."
+        teams={[]}
+      />
+    );
+  }
+  const teamMissing: TeamMissingInputs[] = allTeams.flatMap((t) => {
+    const num = parseInt(t);
+    const pred = predictions.get(num);
+    const reasons: TeamMissingInputs['reasons'] = [];
+    if (!pred || pred.matchCount === 0) reasons.push('no_match_data');
+    else if (pred.matchCount < 3) reasons.push('low_sample');
+    if (oprMap.get(num) === undefined) reasons.push('no_opr');
+    return reasons.length ? [{ teamNumber: num, reasons, detail: pred?.matchCount ? `${pred.matchCount} match${pred.matchCount === 1 ? '' : 'es'}` : undefined }] : [];
+  });
+  if (teamMissing.length === 0) return null;
   return (
-    <div className="rounded-md border border-dashed border-warning/50 bg-warning/5 px-3 py-3 space-y-2">
-      <div className="flex items-center gap-2 text-warning">
-        <AlertTriangle className="w-4 h-4" />
-        <p className="text-xs font-display uppercase tracking-[0.2em]">No prediction available</p>
-      </div>
-      {noTeams ? (
-        <p className="text-xs text-muted-foreground">No teams set on either alliance.</p>
-      ) : (
-        <ul className="text-xs space-y-1 font-mono">
-          {missingScouting.length > 0 && (
-            <li>
-              <span className="text-muted-foreground">Missing scouting:</span>{' '}
-              <span className="text-foreground">{missingScouting.join(', ')}</span>
-            </li>
-          )}
-          {missingOPR.length > 0 && (
-            <li>
-              <span className="text-muted-foreground">Missing OPR (need played matches):</span>{' '}
-              <span className="text-foreground">{missingOPR.join(', ')}</span>
-            </li>
-          )}
-          <li className="text-muted-foreground pt-1">
-            Add pit/match scouting for the listed teams, or wait until they have played matches scored on the FTC API.
-          </li>
-        </ul>
-      )}
-    </div>
+    <MissingDataBanner
+      variant="error"
+      title="No prediction available"
+      description="Add pit/match scouting for the listed teams, or wait until they have played matches scored on the FTC API."
+      teams={teamMissing}
+    />
   );
 }
 
