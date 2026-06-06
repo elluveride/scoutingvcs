@@ -384,10 +384,17 @@ export default function Spreadsheet() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((entry) => (
-                <TableRow 
+              {data.map((entry) => {
+                const isConflict = !isReadOnly && conflictIds.has(entry.id);
+                const isDup = !isReadOnly && duplicateIds.has(entry.id);
+                return (
+                <TableRow
                   key={entry.id}
-                  className={cn(!isReadOnly && isAdmin && "cursor-pointer hover:bg-muted/50")}
+                  className={cn(
+                    !isReadOnly && isAdmin && "cursor-pointer hover:bg-muted/50",
+                    isConflict && "border-l-2 border-l-destructive bg-destructive/5",
+                    !isConflict && isDup && "border-l-2 border-l-warning bg-warning/5",
+                  )}
                   onClick={() => !isReadOnly && isAdmin && handleEditRow(entry)}
                 >
                   {isAdmin && !isReadOnly && (
@@ -408,10 +415,25 @@ export default function Spreadsheet() {
                   )}
                   <TableCell className="font-mono">
                     {entry.match_number}
-                    {!isReadOnly && duplicateIds.has(entry.id) && (
-                      <span className="ml-1.5 px-1 py-0.5 rounded text-[10px] bg-warning/20 text-warning font-semibold">
-                        DUP
-                      </span>
+                    {isDup && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1.5 px-1 py-0.5 rounded text-[10px] bg-warning/20 text-warning font-semibold">DUP</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-[220px]">
+                          <p className="text-xs">Same scouter submitted this match/team more than once.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {isConflict && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1.5 px-1 py-0.5 rounded text-[10px] bg-destructive/20 text-destructive font-semibold">CONFLICT</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-[260px]">
+                          <p className="text-xs">Multiple scouters scored this team in this match with totals differing by 4+ pts. Review and pick the correct entry.</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </TableCell>
                   <TableCell className="font-mono font-semibold">
