@@ -704,6 +704,21 @@ export default function Dashboard() {
           No match data yet. Start scouting to see stats.
         </div>
       ) : (
+        <>
+          {(() => {
+            const lowSampleTeams = teamStats.filter(t => t.matchesPlayed < 3);
+            if (lowSampleTeams.length === 0) return null;
+            return (
+              <div className="mb-4 flex items-start gap-3 px-3 py-2.5 rounded-md border border-warning/30 bg-warning/10">
+                <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                <div className="text-xs font-mono leading-relaxed">
+                  <span className="text-warning font-semibold">{lowSampleTeams.length}</span>
+                  <span className="text-muted-foreground"> team{lowSampleTeams.length === 1 ? '' : 's'} have fewer than 3 scouted matches — reliability scores will be low. </span>
+                  <span className="text-muted-foreground/80">({lowSampleTeams.slice(0, 6).map(t => t.teamNumber).join(', ')}{lowSampleTeams.length > 6 ? `, +${lowSampleTeams.length - 6} more` : ''})</span>
+                </div>
+              </div>
+            );
+          })()}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* List 1 */}
           <div className="space-y-4">
