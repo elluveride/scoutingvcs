@@ -341,7 +341,16 @@ export default function Spreadsheet() {
       ) : (
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10 bg-card">
+              {/* Column-group header */}
+              <TableRow className="border-b border-border/30">
+                {isAdmin && !isReadOnly && <TableHead className="w-10 p-0" />}
+                {isAdmin && !isReadOnly && <TableHead className="w-10 p-0" />}
+                <TableHead colSpan={3} className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-mono py-1 border-r border-border/40">Meta</TableHead>
+                <TableHead colSpan={4} className="text-[10px] uppercase tracking-[0.15em] text-primary font-mono py-1 text-center border-r border-border/40 bg-primary/5">Auto</TableHead>
+                <TableHead colSpan={3} className="text-[10px] uppercase tracking-[0.15em] text-secondary font-mono py-1 text-center border-r border-border/40 bg-secondary/5">TeleOp</TableHead>
+                <TableHead colSpan={3} className="text-[10px] uppercase tracking-[0.15em] text-accent font-mono py-1 text-center bg-accent/5">Endgame / Notes</TableHead>
+              </TableRow>
               <TableRow>
                 {isAdmin && !isReadOnly && <TableHead className="w-10"></TableHead>}
                 {isAdmin && !isReadOnly && <TableHead className="w-10"></TableHead>}
@@ -351,7 +360,7 @@ export default function Spreadsheet() {
                 <TableHead className="font-semibold cursor-pointer select-none" onClick={() => handleSort('team_number')}>
                   Team<SortIcon column="team_number" />
                 </TableHead>
-                <TableHead className="font-semibold">Scouter</TableHead>
+                <TableHead className="font-semibold border-r border-border/40">Scouter</TableHead>
                 <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('auto_scored_close')}>
                   Auto C<SortIcon column="auto_scored_close" />
                 </TableHead>
@@ -359,14 +368,14 @@ export default function Spreadsheet() {
                   Auto F<SortIcon column="auto_scored_far" />
                 </TableHead>
                 <TableHead className="font-semibold text-center">Fouls</TableHead>
-                <TableHead className="font-semibold text-center">Line</TableHead>
+                <TableHead className="font-semibold text-center border-r border-border/40">Line</TableHead>
                 <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('teleop_scored_close')}>
                   Tel C<SortIcon column="teleop_scored_close" />
                 </TableHead>
                 <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('teleop_scored_far')}>
                   Tel F<SortIcon column="teleop_scored_far" />
                 </TableHead>
-                <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('defense_rating')}>
+                <TableHead className="font-semibold text-center cursor-pointer select-none border-r border-border/40" onClick={() => handleSort('defense_rating')}>
                   Def<SortIcon column="defense_rating" />
                 </TableHead>
                 <TableHead className="font-semibold text-center">End</TableHead>
