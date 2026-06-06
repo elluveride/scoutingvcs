@@ -731,12 +731,7 @@ export default function Dashboard() {
             </div>
             <div className="space-y-3">
               {list1Teams.map((team, idx) => (
-                <div key={team.teamNumber} className="relative">
-                  <div className="absolute -left-6 top-1/2 -translate-y-1/2 text-sm font-mono text-muted-foreground">
-                    {idx + 1}
-                  </div>
-                  <TeamCard team={team} />
-                </div>
+                <TeamCard key={team.teamNumber} team={team} rank={idx + 1} />
               ))}
             </div>
           </div>
