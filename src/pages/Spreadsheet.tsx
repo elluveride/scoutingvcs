@@ -224,22 +224,41 @@ export default function Spreadsheet() {
     return result;
   }, [entries, teamFilter, matchMin, matchMax, scouterFilter, sortKey, sortDir]);
 
-  // Detect duplicate entries (same match + team + scouter)
-  const duplicateIds = useMemo(() => {
-    const ids = new Set<string>();
-    const keyMap = new Map<string, string[]>();
+  // Detect duplicate entries (same match + team + scouter) AND
+  // cross-scouter conflicts (same match + team, different totals between scouters).
+  const { duplicateIds, conflictIds } = useMemo(() => {
+    const dupes = new Set<string>();
+    const conflicts = new Set<string>();
+    const dupeKey = new Map<string, string[]>();        // match-team-scouter -> ids
+    const matchTeamMap = new Map<string, MatchRow[]>(); // match-team -> rows (any scouter)
+
     entries.forEach(e => {
-      const key = `${e.match_number}-${e.team_number}-${e.scouter_id}`;
-      const existing = keyMap.get(key) || [];
+      const dk = `${e.match_number}-${e.team_number}-${e.scouter_id}`;
+      const existing = dupeKey.get(dk) || [];
       existing.push(e.id);
-      keyMap.set(key, existing);
+      dupeKey.set(dk, existing);
+
+      const mk = `${e.match_number}-${e.team_number}`;
+      const list = matchTeamMap.get(mk) || [];
+      list.push(e);
+      matchTeamMap.set(mk, list);
     });
-    keyMap.forEach(idList => {
-      if (idList.length > 1) {
-        idList.forEach(id => ids.add(id));
-      }
+
+    dupeKey.forEach(ids => { if (ids.length > 1) ids.forEach(id => dupes.add(id)); });
+
+    // Conflict = ≥2 distinct scouters scouted same match/team and totals differ by ≥4 pts
+    matchTeamMap.forEach(rows => {
+      const distinctScouters = new Set(rows.map(r => r.scouter_id));
+      if (distinctScouters.size < 2) return;
+      const totals = rows.map(r =>
+        r.auto_scored_close + r.auto_scored_far + r.teleop_scored_close + r.teleop_scored_far,
+      );
+      const min = Math.min(...totals);
+      const max = Math.max(...totals);
+      if (max - min >= 4) rows.forEach(r => conflicts.add(r.id));
     });
-    return ids;
+
+    return { duplicateIds: dupes, conflictIds: conflicts };
   }, [entries]);
 
   // Apply filters to all entries too
