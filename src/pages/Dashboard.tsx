@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { useFTCRankings } from '@/hooks/useFTCRankings';
-import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2, Trophy, Save, CheckCircle2, Info, Users } from 'lucide-react';
+import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2, Trophy, Save, CheckCircle2, Info, Users, ShieldAlert, Activity, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TeamStats, SortWeight, SortConfig } from '@/types/scouting';
 import {
