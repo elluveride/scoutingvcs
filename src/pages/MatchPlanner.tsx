@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 
 import { POINTS, predictTeam, type TeamPrediction, type MatchEntryLite as MatchEntry } from '@/lib/prediction';
+import { MissingDataBanner, type TeamMissingInputs } from '@/components/shared/MissingDataBanner';
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
