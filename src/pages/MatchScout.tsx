@@ -384,15 +384,15 @@ export default function MatchScout() {
         <PitSection title="Endgame" icon={Flag}>
           <div className="space-y-4">
             <OptionSelector
-              label="Return Status"
+              label={findEnum('endgame_return').label}
               options={endgameOptions}
               value={endgameReturn}
               onChange={setEndgameReturn}
               columns={4}
             />
-            
+
             <OptionSelector
-              label="Penalty / Robot Status"
+              label={findEnum('penalty_status').label}
               options={penaltyOptions}
               value={penaltyStatus}
               onChange={setPenaltyStatus}
