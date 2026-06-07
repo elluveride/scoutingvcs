@@ -15,25 +15,24 @@ import { Loader2, Save, Search, Wrench, Bot, Flag, User, Camera, X, Image, Map }
 import { cn } from '@/lib/utils';
 import type { DriveType, ConsistencyLevel, AutoLeaveStatus } from '@/types/scouting';
 import { DrawableFieldMap, type DrawnPath } from '@/components/pit-scout/DrawableFieldMap';
+import { CURRENT_SEASON } from '@/seasons';
 
-const driveOptions: { value: DriveType; label: string }[] = [
-  { value: 'tank', label: 'Tank' },
-  { value: 'mecanum', label: 'Mecanum' },
-  { value: 'swerve', label: 'Swerve' },
-  { value: 'other', label: 'Other' },
-];
-
-const consistencyOptions: { value: ConsistencyLevel; label: string }[] = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-];
-
-const autoLeaveOptions: { value: AutoLeaveStatus; label: string }[] = [
-  { value: 'yes', label: 'Yes' },
-  { value: 'sometimes', label: 'Sometimes' },
-  { value: 'no', label: 'No' },
-];
+// Pit field labels and option lists come from the active season config.
+// Swap seasons by editing src/seasons/index.ts — no edits to this file needed.
+const pitCfg = CURRENT_SEASON.pit;
+const driveOptions = pitCfg.driveOptions.map((o) => ({
+  value: o.value as DriveType,
+  label: o.label,
+}));
+const consistencyOptions = pitCfg.consistencyOptions.map((o) => ({
+  value: o.value as ConsistencyLevel,
+  label: o.label,
+}));
+const autoLeaveOptions = pitCfg.autoLeaveOptions.map((o) => ({
+  value: o.value as AutoLeaveStatus,
+  label: o.label,
+}));
+const preferredStartOptions = pitCfg.preferredStartOptions;
 
 interface SelectorProps<T> {
   options: { value: T; label: string }[];
