@@ -336,22 +336,22 @@ export default function MatchScout() {
             <IntegerStepper
               value={autoScoredClose}
               onChange={setAutoScoredClose}
-              label="Close"
+              label={autoCloseCfg.label}
             />
             <IntegerStepper
               value={autoScoredFar}
               onChange={setAutoScoredFar}
-              label="Far"
+              label={autoFarCfg.label}
             />
           </div>
           <div className="mt-4">
             <ToggleButton
               value={onLaunchLine}
               onChange={setOnLaunchLine}
-              label="Launch Line"
+              label={launchLineCfg.label}
               onLabel="ON"
               offLabel="OFF"
-              invertColors
+              invertColors={launchLineCfg.destructive}
             />
           </div>
         </PitSection>
@@ -362,17 +362,17 @@ export default function MatchScout() {
             <IntegerStepper
               value={teleopScoredClose}
               onChange={setTeleopScoredClose}
-              label="Close"
+              label={teleopCloseCfg.label}
             />
             <IntegerStepper
               value={teleopScoredFar}
               onChange={setTeleopScoredFar}
-              label="Far"
+              label={teleopFarCfg.label}
             />
           </div>
-          
+
           <OptionSelector
-            label="Defense Rating"
+            label={findEnum('defense_rating').label}
             options={defenseOptions}
             value={defenseRating}
             onChange={setDefenseRating}
