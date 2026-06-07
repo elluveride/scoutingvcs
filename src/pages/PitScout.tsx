@@ -512,21 +512,21 @@ export default function PitScout() {
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-muted-foreground">Preferred Start</label>
               <div className="flex gap-2">
-                {(['close', 'far'] as const).map((option) => (
+                {preferredStartOptions.map((option) => (
                   <button
-                    key={option}
+                    key={option.value}
                     type="button"
-                    onClick={() => setPreferredStart(option)}
+                    onClick={() => setPreferredStart(option.value as 'close' | 'far')}
                     className={cn(
                       "flex-1 h-14 rounded-xl font-semibold transition-all duration-150",
                       "flex items-center justify-center gap-2",
-                      "active:scale-95 touch-manipulation capitalize",
-                      preferredStart === option
+                      "active:scale-95 touch-manipulation",
+                      preferredStart === option.value
                         ? "bg-secondary text-secondary-foreground shadow-lg"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
                     )}
                   >
-                    {option}
+                    {option.label}
                   </button>
                 ))}
               </div>
