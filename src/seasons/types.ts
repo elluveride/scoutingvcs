@@ -49,26 +49,43 @@ export interface ToggleField {
   hint?: string;
 }
 
+export interface EnumOption {
+  value: string;
+  label: string;
+  /** Optional secondary label shown beneath the primary (e.g. defense tier description) */
+  sublabel?: string;
+  /** Optional hex/CSS color for badges (e.g. yellow_card) */
+  color?: string;
+}
+
 export interface EnumField {
   key: string;
   label: string;
   phase: 'auto' | 'teleop' | 'endgame';
-  options: { value: string; label: string }[];
+  options: EnumOption[];
+}
+
+export interface PitToggleField {
+  key: string;
+  label: string;
+}
+
+export interface PitConfig {
+  driveOptions: EnumOption[];
+  consistencyOptions: EnumOption[];
+  autoLeaveOptions: EnumOption[];
+  preferredStartOptions: EnumOption[];
+  capabilities: PitToggleField[];
 }
 
 export interface SeasonConfig {
-  /** Internal id, e.g. "decode" */
   id: string;
-  /** Display name, e.g. "DECODE (2025-26)" */
   name: string;
-  /** FTC season year, e.g. 2025 */
   seasonYear: number;
-  /** Point values for prediction math */
   points: ScoringPoints;
-  /** All counter inputs the match scout records */
   counters: CounterField[];
-  /** All boolean toggles the match scout records */
   toggles: ToggleField[];
-  /** All enum / select inputs the match scout records */
   enums: EnumField[];
+  pit: PitConfig;
 }
+

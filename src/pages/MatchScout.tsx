@@ -21,27 +21,35 @@ import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil, C
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
+import { CURRENT_SEASON } from '@/seasons';
 
-const endgameOptions: { value: EndgameReturnStatus; label: string }[] = [
-  { value: 'not_returned', label: 'None' },
-  { value: 'partial', label: 'Partial' },
-  { value: 'full', label: 'Full' },
-  { value: 'lift', label: 'Lift' },
-];
+// All field labels and option lists for the active FTC season come from the
+// season config. To shift to a new season, edit src/seasons/<season>.ts and
+// repoint CURRENT_SEASON — no edits to this file required for label/option swaps.
+const season = CURRENT_SEASON;
+const findEnum = (key: string) => season.enums.find((e) => e.key === key)!;
+const findCounter = (key: string) => season.counters.find((c) => c.key === key)!;
+const findToggle = (key: string) => season.toggles.find((t) => t.key === key)!;
 
-const penaltyOptions: { value: PenaltyStatus; label: string; color?: string }[] = [
-  { value: 'none', label: 'None' },
-  { value: 'dead', label: 'Dead' },
-  { value: 'yellow_card', label: 'Yellow', color: '#eab308' },
-  { value: 'red_card', label: 'Red', color: '#ef4444' },
-];
-
-const defenseOptions = [
-  { value: 0, label: '0', sublabel: 'None' },
-  { value: 1, label: '1', sublabel: 'Partial' },
-  { value: 2, label: '2', sublabel: 'Bad' },
-  { value: 3, label: '3', sublabel: 'Good' },
-];
+const endgameOptions = findEnum('endgame_return').options.map((o) => ({
+  value: o.value as EndgameReturnStatus,
+  label: o.label,
+}));
+const penaltyOptions = findEnum('penalty_status').options.map((o) => ({
+  value: o.value as PenaltyStatus,
+  label: o.label,
+  color: o.color,
+}));
+const defenseOptions = findEnum('defense_rating').options.map((o) => ({
+  value: parseInt(o.value, 10),
+  label: o.label,
+  sublabel: o.sublabel,
+}));
+const launchLineCfg = findToggle('on_launch_line');
+const autoCloseCfg = findCounter('auto_scored_close');
+const autoFarCfg = findCounter('auto_scored_far');
+const teleopCloseCfg = findCounter('teleop_scored_close');
+const teleopFarCfg = findCounter('teleop_scored_far');
 
 export default function MatchScout() {
   const { user, profile, isApproved } = useAuth();
@@ -328,22 +336,22 @@ export default function MatchScout() {
             <IntegerStepper
               value={autoScoredClose}
               onChange={setAutoScoredClose}
-              label="Close"
+              label={autoCloseCfg.label}
             />
             <IntegerStepper
               value={autoScoredFar}
               onChange={setAutoScoredFar}
-              label="Far"
+              label={autoFarCfg.label}
             />
           </div>
           <div className="mt-4">
             <ToggleButton
               value={onLaunchLine}
               onChange={setOnLaunchLine}
-              label="Launch Line"
+              label={launchLineCfg.label}
               onLabel="ON"
               offLabel="OFF"
-              invertColors
+              invertColors={launchLineCfg.destructive}
             />
           </div>
         </PitSection>
@@ -354,17 +362,17 @@ export default function MatchScout() {
             <IntegerStepper
               value={teleopScoredClose}
               onChange={setTeleopScoredClose}
-              label="Close"
+              label={teleopCloseCfg.label}
             />
             <IntegerStepper
               value={teleopScoredFar}
               onChange={setTeleopScoredFar}
-              label="Far"
+              label={teleopFarCfg.label}
             />
           </div>
-          
+
           <OptionSelector
-            label="Defense Rating"
+            label={findEnum('defense_rating').label}
             options={defenseOptions}
             value={defenseRating}
             onChange={setDefenseRating}
@@ -376,15 +384,15 @@ export default function MatchScout() {
         <PitSection title="Endgame" icon={Flag}>
           <div className="space-y-4">
             <OptionSelector
-              label="Return Status"
+              label={findEnum('endgame_return').label}
               options={endgameOptions}
               value={endgameReturn}
               onChange={setEndgameReturn}
               columns={4}
             />
-            
+
             <OptionSelector
-              label="Penalty / Robot Status"
+              label={findEnum('penalty_status').label}
               options={penaltyOptions}
               value={penaltyStatus}
               onChange={setPenaltyStatus}
