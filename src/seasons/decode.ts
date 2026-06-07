@@ -66,4 +66,31 @@ export const decode: SeasonConfig = {
       ],
     },
   ],
+  pit: {
+    driveOptions: [
+      { value: 'tank', label: 'Tank' },
+      { value: 'mecanum', label: 'Mecanum' },
+      { value: 'swerve', label: 'Swerve' },
+      { value: 'other', label: 'Other' },
+    ],
+    consistencyOptions: [
+      { value: 'low', label: 'Low' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'high', label: 'High' },
+    ],
+    autoLeaveOptions: [
+      { value: 'yes', label: 'Yes' },
+      { value: 'sometimes', label: 'Sometimes' },
+      { value: 'no', label: 'No' },
+    ],
+    preferredStartOptions: [
+      { value: 'close', label: 'Close' },
+      { value: 'far', label: 'Far' },
+    ],
+    capabilities: [
+      { key: 'scores_motifs', label: 'Scores Motifs' },
+      { key: 'scores_artifacts', label: 'Scores Artifacts' },
+      { key: 'has_autonomous', label: 'Has Autonomous' },
+    ],
+  },
 };
