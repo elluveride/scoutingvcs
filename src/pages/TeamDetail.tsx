@@ -213,8 +213,8 @@ export default function TeamDetail() {
                   <YAxis stroke="hsl(220 10% 55%)" fontSize={12} />
                   <Tooltip contentStyle={chartStyle} />
                   <Legend />
-                  <Line type="monotone" dataKey="autoTotal" name="Auto" stroke="hsl(210 100% 50%)" strokeWidth={2} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="teleopTotal" name="TeleOp" stroke="hsl(0 85% 55%)" strokeWidth={2} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="autoTotal" name="Auto" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="teleopTotal" name="TeleOp" stroke="hsl(var(--alliance-red))" strokeWidth={2} dot={{ r: 4 }} />
                   <Line type="monotone" dataKey="total" name="Total" stroke="hsl(260 60% 60%)" strokeWidth={2} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -231,7 +231,7 @@ export default function TeamDetail() {
                     <PolarGrid stroke="hsl(220 15% 20%)" />
                     <PolarAngleAxis dataKey="metric" stroke="hsl(220 10% 55%)" fontSize={11} />
                     <PolarRadiusAxis stroke="hsl(220 15% 20%)" fontSize={10} />
-                    <Radar name="Avg" dataKey="value" stroke="hsl(210 100% 50%)" fill="hsl(210 100% 50%)" fillOpacity={0.3} />
+                    <Radar name="Avg" dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
@@ -276,10 +276,10 @@ export default function TeamDetail() {
                   <YAxis stroke="hsl(220 10% 55%)" fontSize={12} />
                   <Tooltip contentStyle={chartStyle} />
                   <Legend />
-                  <Bar dataKey="autoClose" name="Auto Close" fill="hsl(210 100% 50%)" stackId="auto" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="autoFar" name="Auto Far" fill="hsl(210 100% 70%)" stackId="auto" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="teleopClose" name="TeleOp Close" fill="hsl(0 85% 55%)" stackId="teleop" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="teleopFar" name="TeleOp Far" fill="hsl(0 85% 75%)" stackId="teleop" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="autoClose" name="Auto Close" fill="hsl(var(--primary))" stackId="auto" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="autoFar" name="Auto Far" fill="hsl(var(--alliance-blue) / 0.6)" stackId="auto" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="teleopClose" name="TeleOp Close" fill="hsl(var(--alliance-red))" stackId="teleop" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="teleopFar" name="TeleOp Far" fill="hsl(var(--alliance-red) / 0.6)" stackId="teleop" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

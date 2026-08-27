@@ -30,7 +30,7 @@ interface TeamCompareStats {
   avgTotal: number;
 }
 
-const COLORS = ['hsl(210 100% 50%)', 'hsl(0 85% 55%)', 'hsl(260 60% 60%)'];
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--alliance-red))', 'hsl(260 60% 60%)'];
 
 export default function TeamCompare() {
   const { user } = useAuth();

@@ -112,7 +112,7 @@ export default function LandingFeatures() {
             ]}
             image={featureMatchScout}
             imageAlt="Match scouting form showing autonomous scoring, TeleOp counters, defense rating, endgame status, and notes fields"
-            glowColor="hsl(0 85% 55% / 0.08)"
+            glowColor="hsl(var(--alliance-red) / 0.08)"
           />
 
           <FeatureBlock
@@ -130,7 +130,7 @@ export default function LandingFeatures() {
             ]}
             image={featurePitScout}
             imageAlt="Pit scouting form with team info, drive type selector, capability toggles, and robot photo upload"
-            glowColor="hsl(210 100% 50% / 0.08)"
+            glowColor="hsl(var(--primary) / 0.08)"
             reverse
           />
 
@@ -149,7 +149,7 @@ export default function LandingFeatures() {
             ]}
             image={featureTeamDetail}
             imageAlt="Team detail page showing scoring trends, radar chart, endgame breakdown, match log, and scouting comments"
-            glowColor="hsl(0 85% 55% / 0.08)"
+            glowColor="hsl(var(--alliance-red) / 0.08)"
           />
 
           <FeatureBlock
@@ -167,7 +167,7 @@ export default function LandingFeatures() {
             ]}
             image={featureDashboard}
             imageAlt="Dashboard with dual ranking lists showing team cards with auto, teleop, and endgame stats"
-            glowColor="hsl(210 100% 50% / 0.08)"
+            glowColor="hsl(var(--primary) / 0.08)"
             reverse
           />
 
@@ -185,7 +185,7 @@ export default function LandingFeatures() {
             ]}
             image={featureLiveStats}
             imageAlt="Live Stats page showing official FTC rankings with RP, TBP scores and win/loss records"
-            glowColor="hsl(0 85% 55% / 0.08)"
+            glowColor="hsl(var(--alliance-red) / 0.08)"
           />
 
           <FeatureBlock
@@ -202,7 +202,7 @@ export default function LandingFeatures() {
             ]}
             image={featureQR}
             imageAlt="QR Transfer page showing a paginated QR code with Send Data and Receive Data tabs"
-            glowColor="hsl(210 100% 50% / 0.06)"
+            glowColor="hsl(var(--primary) / 0.06)"
           />
         </div>
       </section>
@@ -246,7 +246,7 @@ export default function LandingFeatures() {
         </p>
         <Link
           to="/auth"
-          className="inline-block px-10 py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_30px_hsl(210_100%_50%/0.4)] hover:shadow-[0_0_45px_hsl(210_100%_50%/0.6)] text-lg"
+          className="inline-block px-10 py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_30px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_45px_hsl(var(--primary)/0.6)] text-lg"
         >
           Start Scouting Now
         </Link>
