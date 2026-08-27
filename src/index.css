@@ -14,82 +14,89 @@
 
 @layer base {
   :root {
-    /* FTC Robotics Dark Theme - Tech Industrial Feel */
-    --background: 220 20% 7%;
-    --foreground: 210 20% 92%;
+    /* VCS Dark Theme — navy-based neutrals */
+    --background: 212 40% 6%;
+    --foreground: 210 20% 95%;
 
-    --card: 220 18% 11%;
-    --card-foreground: 210 20% 92%;
+    --card: 212 32% 10%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 220 18% 13%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 212 32% 12%;
+    --popover-foreground: 210 20% 95%;
 
-    /* Primary: defaults to Blue alliance */
-    --primary: 210 100% 50%;
+    /* Primary: VCS Blue PMS 293 C (#003DA5), lifted for dark surfaces */
+    --primary: 218 100% 38%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: opposite alliance */
-    --secondary: 0 85% 55%;
+    /* Secondary: contrast red (alliance) */
+    --secondary: 352 78% 45%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Tertiary: Neutral white accent */
-    --tertiary: 0 0% 90%;
-    --tertiary-foreground: 0 0% 10%;
+    /* Tertiary: White */
+    --tertiary: 0 0% 100%;
+    --tertiary-foreground: 0 0% 0%;
 
-    /* Muted: Tech surface tones */
-    --muted: 220 15% 15%;
-    --muted-foreground: 220 10% 55%;
+    /* Muted: PMS 431 C silver family */
+    --muted: 210 18% 15%;
+    --muted-foreground: 206 10% 62%;
 
-    /* Accent: Clean white highlight */
-    --accent: 0 0% 85%;
-    --accent-foreground: 0 0% 10%;
+    /* Accent: Silver PMS 431 C (#5B6770) */
+    --accent: 206 10% 40%;
+    --accent-foreground: 0 0% 100%;
 
-    /* Destructive: Warning red */
-    --destructive: 0 75% 50%;
+    /* Destructive */
+    --destructive: 352 78% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Warning: Caution orange */
+    /* Warning */
     --warning: 38 92% 50%;
     --warning-foreground: 38 100% 10%;
 
-    /* Success: System green */
-    --success: 142 70% 45%;
-    --success-foreground: 142 100% 10%;
+    /* Success */
+    --success: 158 64% 38%;
+    --success-foreground: 0 0% 100%;
 
-    /* FTC Alliance colors - Official palette */
-    --alliance-red: 0 85% 55%;
-    --alliance-blue: 210 100% 50%;
+    /* FTC Alliance colors — red chosen to contrast VCS blue */
+    --alliance-red: 352 78% 48%;
+    --alliance-blue: 218 100% 42%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 15%;
-    --ring: 210 100% 50%;
+    /* VCS brand references */
+    --vcs-blue: 218 100% 32%;
+    --vcs-navy: 210 100% 18%;
+    --vcs-silver: 206 10% 40%;
+
+    --border: 210 20% 18%;
+    --input: 210 18% 15%;
+    --ring: 218 100% 45%;
 
     /* Tech-inspired radius */
     --radius: 0.75rem;
 
-    /* Sidebar - Dark tech panel */
-    --sidebar-background: 220 20% 9%;
-    --sidebar-foreground: 210 15% 85%;
-    --sidebar-primary: 210 100% 50%;
+    /* Sidebar - Navy panel */
+    --sidebar-background: 210 45% 8%;
+    --sidebar-foreground: 210 15% 88%;
+    --sidebar-primary: 218 100% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 210 100% 50%;
+    --sidebar-accent: 210 22% 16%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 210 20% 16%;
+    --sidebar-ring: 218 100% 45%;
 
-    /* Surface elevation - Industrial layers */
-    --surface-dim: 220 20% 5%;
-    --surface-bright: 220 15% 22%;
-    --surface-container-lowest: 220 20% 4%;
-    --surface-container-low: 220 18% 9%;
-    --surface-container: 220 18% 11%;
-    --surface-container-high: 220 15% 15%;
-    --surface-container-highest: 220 15% 20%;
+    /* Surface elevation */
+    --surface-dim: 212 45% 4%;
+    --surface-bright: 210 18% 22%;
+    --surface-container-lowest: 212 45% 3%;
+    --surface-container-low: 212 35% 8%;
+    --surface-container: 212 32% 10%;
+    --surface-container-high: 210 22% 14%;
+    --surface-container-highest: 210 20% 19%;
 
-    /* Tech fonts */
-    --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
-    --font-display: "Google Sans", "Roboto", ui-sans-serif, system-ui, sans-serif;
+    /* VCS fonts */
+    --font-sans: "Source Sans 3", "Myriad Pro", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+    --font-serif: "Libre Caslon Text", "Adobe Caslon Pro", Georgia, serif;
     --font-mono: "Roboto Mono", ui-monospace, monospace;
+
 
     /* Snappy motion curves */
     --ease-standard: cubic-bezier(0.2, 0, 0, 1);
