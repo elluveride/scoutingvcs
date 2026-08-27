@@ -86,6 +86,12 @@ export default {
           red: 'hsl(var(--alliance-red))',
           blue: 'hsl(var(--alliance-blue))'
         },
+        vcs: {
+          blue: 'hsl(var(--vcs-blue))',
+          navy: 'hsl(var(--vcs-navy))',
+          silver: 'hsl(var(--vcs-silver))'
+        },
+
         surface: {
           dim: 'hsl(var(--surface-dim))',
           container: 'hsl(var(--surface-container))',
