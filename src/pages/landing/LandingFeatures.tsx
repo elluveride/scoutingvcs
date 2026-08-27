@@ -246,7 +246,7 @@ export default function LandingFeatures() {
         </p>
         <Link
           to="/auth"
-          className="inline-block px-10 py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_30px_hsl(210_100%_50%/0.4)] hover:shadow-[0_0_45px_hsl(210_100%_50%/0.6)] text-lg"
+          className="inline-block px-10 py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_30px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_45px_hsl(var(--primary)/0.6)] text-lg"
         >
           Start Scouting Now
         </Link>

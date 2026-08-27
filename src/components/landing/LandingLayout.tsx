@@ -48,7 +48,7 @@ function LandingNav() {
           ))}
           <Link
             to="/auth"
-            className="ml-4 px-5 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_15px_hsl(210_100%_50%/0.3)] hover:shadow-[0_0_25px_hsl(210_100%_50%/0.5)]"
+            className="ml-4 px-5 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_15px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_25px_hsl(var(--primary)/0.5)]"
           >
             Sign In
           </Link>
@@ -93,7 +93,7 @@ function LandingNav() {
               <Link
                 to="/auth"
                 onClick={() => setMobileOpen(false)}
-                className="mt-2 px-4 py-3 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-center min-h-[44px] flex items-center justify-center shadow-[0_0_15px_hsl(210_100%_50%/0.3)]"
+                className="mt-2 px-4 py-3 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-center min-h-[44px] flex items-center justify-center shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
               >
                 Sign In
               </Link>

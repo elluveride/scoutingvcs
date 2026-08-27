@@ -32,7 +32,7 @@ export default function LandingAbout() {
       {/* Header */}
       <section className="pt-20 pb-8 px-6 text-center">
         <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-          <img src={cipherIcon} alt="Apex Scout" className="w-16 h-16 mx-auto mb-6 rounded-2xl shadow-[0_0_30px_hsl(210_100%_50%/0.3)]" />
+          <img src={cipherIcon} alt="Apex Scout" className="w-16 h-16 mx-auto mb-6 rounded-2xl shadow-[0_0_30px_hsl(var(--primary)/0.3)]" />
         </motion.div>
         <motion.h1 custom={1} variants={fadeUp} initial="hidden" animate="visible"
           className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4"
@@ -157,7 +157,7 @@ export default function LandingAbout() {
         </p>
         <Link
           to="/auth"
-          className="inline-block px-10 py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_30px_hsl(210_100%_50%/0.4)] hover:shadow-[0_0_45px_hsl(210_100%_50%/0.6)] text-lg"
+          className="inline-block px-10 py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_30px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_45px_hsl(var(--primary)/0.6)] text-lg"
         >
           Get Started
         </Link>

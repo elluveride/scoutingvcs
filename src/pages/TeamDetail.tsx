@@ -277,9 +277,9 @@ export default function TeamDetail() {
                   <Tooltip contentStyle={chartStyle} />
                   <Legend />
                   <Bar dataKey="autoClose" name="Auto Close" fill="hsl(var(--primary))" stackId="auto" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="autoFar" name="Auto Far" fill="hsl(210 100% 70%)" stackId="auto" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="autoFar" name="Auto Far" fill="hsl(var(--alliance-blue) / 0.6)" stackId="auto" radius={[6, 6, 0, 0]} />
                   <Bar dataKey="teleopClose" name="TeleOp Close" fill="hsl(var(--alliance-red))" stackId="teleop" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="teleopFar" name="TeleOp Far" fill="hsl(0 85% 75%)" stackId="teleop" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="teleopFar" name="TeleOp Far" fill="hsl(var(--alliance-red) / 0.6)" stackId="teleop" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

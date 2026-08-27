@@ -44,7 +44,7 @@ export default function LandingHome() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
           <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-            <img src={cipherIcon} alt="Apex Scout" className="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-[0_0_40px_hsl(210_100%_50%/0.4)]" />
+            <img src={cipherIcon} alt="Apex Scout" className="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-[0_0_40px_hsl(var(--primary)/0.4)]" />
           </motion.div>
 
           <motion.h1
@@ -87,7 +87,7 @@ export default function LandingHome() {
           >
             <Link
               to="/auth"
-              className="px-8 py-3.5 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_25px_hsl(210_100%_50%/0.4)] hover:shadow-[0_0_35px_hsl(210_100%_50%/0.6)] text-base"
+              className="px-8 py-3.5 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_25px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_35px_hsl(var(--primary)/0.6)] text-base"
             >
               Get Started
             </Link>
@@ -196,7 +196,7 @@ export default function LandingHome() {
             transition={{ duration: 0.6 }}
             className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
           >
-            <div className="order-2 lg:order-1 rounded-2xl overflow-hidden border border-border/30 shadow-[0_0_40px_hsl(210_100%_50%/0.1)]">
+            <div className="order-2 lg:order-1 rounded-2xl overflow-hidden border border-border/30 shadow-[0_0_40px_hsl(var(--primary)/0.1)]">
               <img src={featureDashboard} alt="Dual ranking lists with configurable weights showing team scores and stats" className="w-full" />
             </div>
             <div className="order-1 lg:order-2">
@@ -229,7 +229,7 @@ export default function LandingHome() {
                 Learn more <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="rounded-2xl overflow-hidden border border-border/30 shadow-[0_0_40px_hsl(210_100%_50%/0.08)]">
+            <div className="rounded-2xl overflow-hidden border border-border/30 shadow-[0_0_40px_hsl(var(--primary)/0.08)]">
               <img src={featureLiveStats} alt="Live Stats showing official FTC rankings with RP and TBP scores" className="w-full" />
             </div>
           </motion.div>
@@ -270,7 +270,7 @@ export default function LandingHome() {
           </p>
           <Link
             to="/auth"
-            className="inline-block px-10 py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_30px_hsl(210_100%_50%/0.4)] hover:shadow-[0_0_45px_hsl(210_100%_50%/0.6)] text-lg"
+            className="inline-block px-10 py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-[0_0_30px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_45px_hsl(var(--primary)/0.6)] text-lg"
           >
             Start Scouting Now
           </Link>

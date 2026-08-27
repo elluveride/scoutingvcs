@@ -155,7 +155,7 @@ export default function MatchPlanner() {
     { metric: 'Consistency', ...Object.fromEntries(allPreds.map(p => [p.teamNumber, p.consistency / 10])) },
   ];
 
-  const radarColors = ['hsl(var(--primary))', 'hsl(210 100% 70%)', 'hsl(var(--alliance-red))', 'hsl(0 85% 75%)'];
+  const radarColors = ['hsl(var(--primary))', 'hsl(var(--alliance-blue) / 0.6)', 'hsl(var(--alliance-red))', 'hsl(var(--alliance-red) / 0.6)'];
 
   return (
     <AppLayout>

@@ -80,7 +80,7 @@ function AllianceSelector() {
           className={cn(
             "h-10 rounded-lg text-xs font-semibold transition-all",
             alliance === 'blue'
-              ? "bg-alliance-blue text-white shadow-[0_0_12px_hsl(210_100%_50%/0.4)]"
+              ? "bg-alliance-blue text-white shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
               : "bg-muted text-muted-foreground hover:bg-muted/80"
           )}
         >
