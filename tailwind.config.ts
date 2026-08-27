@@ -15,17 +15,23 @@ export default {
     extend: {
       fontFamily: {
         sans: [
-          'Roboto',
+          '"Source Sans 3"',
+          '"Myriad Pro"',
           'ui-sans-serif',
           'system-ui',
           'sans-serif'
         ],
         display: [
-          '"Google Sans"',
-          'Roboto',
-          'ui-sans-serif',
-          'system-ui',
-          'sans-serif'
+          '"Cinzel"',
+          '"Trajan Pro"',
+          'Georgia',
+          'serif'
+        ],
+        serif: [
+          '"Libre Caslon Text"',
+          '"Adobe Caslon Pro"',
+          'Georgia',
+          'serif'
         ],
         mono: [
           '"Roboto Mono"',
@@ -33,6 +39,7 @@ export default {
           'monospace'
         ]
       },
+
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
