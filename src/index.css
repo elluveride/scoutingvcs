@@ -107,79 +107,85 @@
 
   /* Alliance Red Override - swaps primary to red */
   .alliance-red {
-    --primary: 0 85% 55%;
+    --primary: 352 78% 45%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 100% 50%;
+    --secondary: 218 100% 38%;
     --secondary-foreground: 0 0% 100%;
-    --ring: 0 85% 55%;
-    --sidebar-primary: 0 85% 55%;
+    --ring: 352 78% 50%;
+    --sidebar-primary: 352 78% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-ring: 0 85% 55%;
+    --sidebar-ring: 352 78% 50%;
   }
 
   /* Light Mode Theme */
   .light, [data-theme="light"] {
-    --background: 0 0% 98%;
-    --foreground: 220 20% 12%;
+    --background: 0 0% 100%;
+    --foreground: 210 100% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 12%;
+    --card-foreground: 210 100% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 12%;
+    --popover-foreground: 210 100% 12%;
 
-    --primary: 210 100% 45%;
+    /* VCS Blue PMS 293 C exact */
+    --primary: 218 100% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 80% 50%;
+    --secondary: 352 78% 42%;
     --secondary-foreground: 0 0% 100%;
 
-    --tertiary: 0 0% 20%;
+    --tertiary: 0 0% 0%;
     --tertiary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 92%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 206 16% 94%;
+    --muted-foreground: 206 10% 40%;
 
-    --accent: 0 0% 25%;
+    --accent: 206 10% 40%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 75% 50%;
+    --destructive: 352 78% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 38 92% 45%;
     --warning-foreground: 38 100% 10%;
 
-    --success: 142 70% 38%;
-    --success-foreground: 142 100% 10%;
+    --success: 158 64% 30%;
+    --success-foreground: 0 0% 100%;
 
-    --alliance-red: 0 80% 50%;
-    --alliance-blue: 210 100% 45%;
+    --alliance-red: 352 78% 42%;
+    --alliance-blue: 218 100% 32%;
 
-    --border: 220 15% 85%;
-    --input: 220 15% 90%;
-    --ring: 210 100% 45%;
+    --vcs-blue: 218 100% 32%;
+    --vcs-navy: 210 100% 18%;
+    --vcs-silver: 206 10% 40%;
+
+    --border: 206 14% 85%;
+    --input: 206 14% 90%;
+    --ring: 218 100% 32%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 20% 15%;
-    --sidebar-primary: 210 100% 45%;
+    --sidebar-foreground: 210 100% 14%;
+    --sidebar-primary: 218 100% 32%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 95%;
-    --sidebar-accent-foreground: 220 20% 12%;
-    --sidebar-border: 220 15% 88%;
-    --sidebar-ring: 210 100% 45%;
+    --sidebar-accent: 206 16% 95%;
+    --sidebar-accent-foreground: 210 100% 12%;
+    --sidebar-border: 206 14% 88%;
+    --sidebar-ring: 218 100% 32%;
 
-    --surface-dim: 220 15% 95%;
+    --surface-dim: 206 16% 95%;
     --surface-bright: 0 0% 100%;
     --surface-container-lowest: 0 0% 100%;
-    --surface-container-low: 220 15% 97%;
-    --surface-container: 220 15% 95%;
-    --surface-container-high: 220 15% 92%;
-    --surface-container-highest: 220 15% 88%;
+    --surface-container-low: 206 16% 97%;
+    --surface-container: 206 16% 95%;
+    --surface-container-high: 206 16% 92%;
+    --surface-container-highest: 206 14% 88%;
   }
 
   .dark {
-    --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
-    --font-display: "Google Sans", "Roboto", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Source Sans 3", "Myriad Pro", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+
     --font-mono: "Roboto Mono", ui-monospace, monospace;
     --radius: 0.75rem;
   }
