@@ -185,6 +185,7 @@
   .dark {
     --font-sans: "Source Sans 3", "Myriad Pro", ui-sans-serif, system-ui, sans-serif;
     --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+    --font-serif: "Libre Caslon Text", "Adobe Caslon Pro", Georgia, serif;
 
     --font-mono: "Roboto Mono", ui-monospace, monospace;
     --radius: 0.75rem;
