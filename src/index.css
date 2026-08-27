@@ -2,12 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Material Design 3 / Pixel OS Dark Theme
-   Following Google's Material You design system
+/* Valley Christian Schools brand system
+   Primary: PMS 293 C (#003DA5) · Navy PMS 648 C (#002E5D)
+   Silver PMS 431 C (#5B6770) · White · Black
+   Fonts: Source Sans 3 (Myriad Pro substitute), Libre Caslon Text
+   (Adobe Caslon Pro substitute), Cinzel (Trajan Pro substitute)
 */
 
-/* Google Sans for display, Roboto for body text */
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Libre+Caslon+Text:wght@400;700&family=Cinzel:wght@500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
 
 @layer base {
   :root {
