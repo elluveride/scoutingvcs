@@ -151,7 +151,7 @@ export default function LandingHome() {
                 className="group relative rounded-2xl border border-border/40 bg-card/50 p-6 hover:border-primary/30 hover:bg-card transition-all duration-300"
               >
                 <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                  style={{ boxShadow: '0 0 30px hsl(210 100% 50% / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.03)' }}
+                  style={{ boxShadow: '0 0 30px hsl(var(--primary) / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.03)' }}
                 />
                 <item.icon className="w-10 h-10 text-primary mb-4" strokeWidth={1.5} />
                 <h3 className="font-display font-bold text-foreground mb-2">{item.title}</h3>

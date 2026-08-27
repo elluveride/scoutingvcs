@@ -155,7 +155,7 @@ export default function MatchPlanner() {
     { metric: 'Consistency', ...Object.fromEntries(allPreds.map(p => [p.teamNumber, p.consistency / 10])) },
   ];
 
-  const radarColors = ['hsl(210 100% 50%)', 'hsl(210 100% 70%)', 'hsl(0 85% 55%)', 'hsl(0 85% 75%)'];
+  const radarColors = ['hsl(var(--primary))', 'hsl(210 100% 70%)', 'hsl(var(--alliance-red))', 'hsl(0 85% 75%)'];
 
   return (
     <AppLayout>
@@ -382,8 +382,8 @@ export default function MatchPlanner() {
                       <YAxis stroke="hsl(220 10% 55%)" fontSize={12} />
                       <Tooltip contentStyle={{ background: 'hsl(220 18% 11%)', border: '1px solid hsl(220 15% 20%)', borderRadius: '0.75rem', fontSize: 12 }} />
                       <Legend />
-                      <Bar dataKey="auto" name="Auto" fill="hsl(210 100% 50%)" stackId="score" />
-                      <Bar dataKey="teleop" name="TeleOp" fill="hsl(0 85% 55%)" stackId="score" />
+                      <Bar dataKey="auto" name="Auto" fill="hsl(var(--primary))" stackId="score" />
+                      <Bar dataKey="teleop" name="TeleOp" fill="hsl(var(--alliance-red))" stackId="score" />
                       <Bar dataKey="endgame" name="Endgame" fill="hsl(142 70% 45%)" radius={[6, 6, 0, 0]} stackId="score" />
                     </BarChart>
                   </ResponsiveContainer>
