@@ -64,7 +64,7 @@ export default function EventSelect() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -173,7 +173,7 @@ export default function EventSelect() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+    <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <img

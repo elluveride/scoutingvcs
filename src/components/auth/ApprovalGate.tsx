@@ -31,7 +31,7 @@ export function ApprovalGate({ children, requireApproval = true }: ApprovalGateP
 
   if (profile?.status === 'rejected') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
         <div className="data-card max-w-md text-center animate-m3-fade-in">
           <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-8 h-8 text-destructive" />
@@ -50,7 +50,7 @@ export function ApprovalGate({ children, requireApproval = true }: ApprovalGateP
 
   if (!isApproved) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
         <div className="data-card max-w-md text-center animate-m3-fade-in">
           <div className="w-16 h-16 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-4">
             <Clock className="w-8 h-8 text-warning" />

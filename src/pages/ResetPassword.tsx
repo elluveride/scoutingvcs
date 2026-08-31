@@ -75,14 +75,14 @@ export default function ResetPassword() {
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+    <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-8 justify-center">
           <img src={cipherLogo} alt="Apex Scout" className="w-12 h-12 rounded-xl" />

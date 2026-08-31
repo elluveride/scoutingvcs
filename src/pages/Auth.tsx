@@ -135,10 +135,10 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-transparent flex">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex flex-1 bg-card items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-alliance-blue/5 via-transparent to-alliance-red/5 pointer-events-none" />
+      <div className="hidden lg:flex flex-1 bg-card/80 items-center justify-center p-12 relative overflow-hidden border-r border-border/60">
+        <div className="absolute inset-0 bg-gradient-to-br from-vcs-navy/35 via-primary/10 to-vcs-silver/10 pointer-events-none" />
         <div className="max-w-md text-center relative">
           <img src={cipherLogo} alt="Apex Scout" className="w-20 h-20 rounded-2xl mx-auto mb-8" />
           <h1 className="text-4xl font-bold mb-3 text-glow">Apex Scout</h1>

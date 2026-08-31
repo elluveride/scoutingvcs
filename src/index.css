@@ -9,9 +9,6 @@
    (Adobe Caslon Pro substitute), Cinzel (Trajan Pro substitute)
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Libre+Caslon+Text:wght@400;700&family=Cinzel:wght@500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
-
-
 @layer base {
   :root {
     /* VCS Dark Theme — navy-based neutrals */
@@ -211,12 +208,31 @@
     background-repeat: no-repeat;
   }
 
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.22;
+    background-image:
+      linear-gradient(hsl(var(--vcs-silver) / 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--vcs-silver) / 0.07) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to bottom, black, transparent 72%);
+  }
+
   .light body,
   [data-theme="light"] body {
     background-image:
       radial-gradient(1100px 640px at 10% -12%, hsl(var(--vcs-blue) / 0.08), transparent 60%),
       radial-gradient(900px 560px at 100% 0%, hsl(var(--vcs-silver) / 0.12), transparent 62%),
       linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(var(--surface-container-low)) 100%);
+  }
+
+  .light body::before,
+  [data-theme="light"] body::before {
+    opacity: 0.45;
   }
 
 
