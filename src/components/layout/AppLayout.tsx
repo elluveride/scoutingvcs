@@ -232,7 +232,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-transparent flex flex-col">
         {/* Mobile Header */}
         <header className="sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-sidebar border-b border-sidebar-border">
           <div className="flex items-center gap-3">
@@ -270,7 +270,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-transparent flex">
       {/* Desktop Sidebar */}
       <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
         <SidebarContent />

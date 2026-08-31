@@ -50,7 +50,7 @@ export function FullPageLoader({ text = 'Loading...' }: { text?: string }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-background flex items-center justify-center"
+      className="min-h-screen bg-transparent flex items-center justify-center"
     >
       <LoadingSpinner size="lg" text={text} />
     </motion.div>
