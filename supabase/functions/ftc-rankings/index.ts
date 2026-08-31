@@ -111,6 +111,7 @@ serve(async (req) => {
     const prefixMatch = rawCode.match(/^(\d{4})(.+)$/);
     const strippedCode = prefixMatch ? prefixMatch[2] : rawCode;
     const prefixSeason = prefixMatch ? Number(prefixMatch[1]) : null;
+    let resolvedCode = rawCode;
 
     const candidates: { season: number | string; code: string }[] = [];
     const push = (s: number | string, c: string) => {
@@ -156,7 +157,7 @@ serve(async (req) => {
 
     let matchScores: MatchScore[] = [];
     if (includeScores) {
-      const scoresUrl = `${FTC_API_BASE}/${ftcSeason}/scores/${eventCode}/qual`;
+      const scoresUrl = `${FTC_API_BASE}/${ftcSeason}/scores/${resolvedCode}/qual`;
       const scoresResponse = await fetch(scoresUrl, {
         headers: { "Authorization": `Basic ${authString}`, "Accept": "application/json" },
       });
