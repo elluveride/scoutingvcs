@@ -94,7 +94,7 @@ serve(async (req) => {
       const indexResponse = await fetch(FTC_API_BASE, {
         headers: { "Authorization": `Basic ${authString}`, "Accept": "application/json" },
       });
-      
+
       if (indexResponse.ok) {
         const indexData = await indexResponse.json();
         ftcSeason = indexData.currentSeason;
@@ -105,26 +105,51 @@ serve(async (req) => {
       }
     }
 
-    const rankingsUrl = `${FTC_API_BASE}/${ftcSeason}/rankings/${eventCode}`;
-    const rankingsResponse = await fetch(rankingsUrl, {
-      headers: { "Authorization": `Basic ${authString}`, "Accept": "application/json" },
-    });
+    // Event codes are sometimes stored with a season prefix (e.g. "2025USAZCMP").
+    // The FTC API expects the bare code plus a season path segment, so try both.
+    const rawCode = String(eventCode).trim();
+    const prefixMatch = rawCode.match(/^(\d{4})(.+)$/);
+    const strippedCode = prefixMatch ? prefixMatch[2] : rawCode;
+    const prefixSeason = prefixMatch ? Number(prefixMatch[1]) : null;
+    let resolvedCode = rawCode;
 
-    const contentType = rankingsResponse.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      return new Response(
-        JSON.stringify({ 
-          error: `FTC API returned invalid response (status ${rankingsResponse.status})`,
-          hint: "Check if the event code is correct and rankings are published"
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const candidates: { season: number | string; code: string }[] = [];
+    const push = (s: number | string, c: string) => {
+      if (!candidates.some((x) => x.season === s && x.code === c)) candidates.push({ season: s, code: c });
+    };
+    if (prefixSeason) {
+      push(prefixSeason, strippedCode);
+      push(ftcSeason, strippedCode);
+      push(prefixSeason - 1, strippedCode);
+    }
+    push(ftcSeason, rawCode);
+    push(Number(ftcSeason) - 1, rawCode);
+
+    let rankingsResponse: Response | null = null;
+    let lastStatus = 404;
+    for (const c of candidates) {
+      const resp = await fetch(`${FTC_API_BASE}/${c.season}/rankings/${c.code}`, {
+        headers: { "Authorization": `Basic ${authString}`, "Accept": "application/json" },
+      });
+      const ct = resp.headers.get("content-type") || "";
+      if (resp.ok && ct.includes("application/json")) {
+        rankingsResponse = resp;
+        ftcSeason = c.season;
+        resolvedCode = c.code;
+        break;
+      }
+      lastStatus = resp.status;
     }
 
-    if (!rankingsResponse.ok) {
+    if (!rankingsResponse) {
       return new Response(
-        JSON.stringify({ error: `FTC API error: ${rankingsResponse.status}` }),
-        { status: rankingsResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: `FTC API error: ${lastStatus}`,
+          hint: `No rankings found for event "${rawCode}". Check the event code and that qualification rankings are published.`,
+          rankings: [],
+          matchScores: [],
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -132,7 +157,7 @@ serve(async (req) => {
 
     let matchScores: MatchScore[] = [];
     if (includeScores) {
-      const scoresUrl = `${FTC_API_BASE}/${ftcSeason}/scores/${eventCode}/qual`;
+      const scoresUrl = `${FTC_API_BASE}/${ftcSeason}/scores/${resolvedCode}/qual`;
       const scoresResponse = await fetch(scoresUrl, {
         headers: { "Authorization": `Basic ${authString}`, "Accept": "application/json" },
       });
