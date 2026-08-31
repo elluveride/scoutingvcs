@@ -20,8 +20,7 @@ function LandingNav() {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: [0.2, 0, 0, 1] }}
-      className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 backdrop-blur-xl"
-      style={{ background: 'hsla(220, 20%, 7%, 0.85)' }}
+      className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/85 backdrop-blur-xl"
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
@@ -72,8 +71,7 @@ function LandingNav() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
-            className="md:hidden overflow-hidden border-t border-border/20"
-            style={{ background: 'hsla(220, 20%, 7%, 0.95)' }}
+            className="md:hidden overflow-hidden border-t border-border/30 bg-background/95"
           >
             <div className="px-6 py-4 flex flex-col gap-1">
               {navLinks.map((link) => (
@@ -166,7 +164,7 @@ function LandingFooter() {
 
 export function LandingLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       <LandingNav />
       <main className="pt-16">{children}</main>
       <LandingFooter />

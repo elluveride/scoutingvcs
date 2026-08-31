@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
 import { SEOHead } from '@/components/landing/SEOHead';
 import { ClipboardList, BarChart3, Users, QrCode, Wifi, Shield, ArrowRight } from 'lucide-react';
-import heroBg from '@/assets/landing/hero-bg.jpg';
+import heroBg from '@/assets/landing/hero-bg-vcs.jpg';
 import featureMatchScout from '@/assets/landing/feature-match-scout-real.png';
 import featureDashboard from '@/assets/landing/feature-dashboard-real.png';
 import featureLiveStats from '@/assets/landing/feature-live-stats-real.png';
@@ -38,8 +38,8 @@ export default function LandingHome() {
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBg} alt="" className="w-full h-full object-cover opacity-60" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
+          <img src={heroBg} alt="" className="w-full h-full object-cover opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-vcs-navy/30 via-background/55 to-background" />
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
@@ -256,7 +256,7 @@ export default function LandingHome() {
 
       {/* CTA */}
       <section className="py-24 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-alliance-red/5 via-transparent to-alliance-blue/5" />
+        <div className="absolute inset-0 bg-gradient-to-r from-vcs-navy/20 via-primary/5 to-vcs-silver/10" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

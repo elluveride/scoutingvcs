@@ -94,16 +94,16 @@ export default function LandingAbout() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="rounded-2xl border border-alliance-red/20 bg-card/50 p-6 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-alliance-red to-alliance-red/30" />
+              <div className="rounded-2xl border border-primary/20 bg-card/50 p-6 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-primary/30" />
                 <h3 className="font-display font-bold text-foreground mb-2 ml-3">FTC Team 12841</h3>
                 <p className="text-sm text-muted-foreground ml-3 leading-relaxed">
                   Driving innovation in FTC scouting technology. Team 12841 brings the vision and competitive experience that shaped Apex Scout's core design philosophy.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-alliance-blue/20 bg-card/50 p-6 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-alliance-blue to-alliance-blue/30" />
+              <div className="rounded-2xl border border-vcs-silver/30 bg-card/50 p-6 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-vcs-silver to-vcs-silver/30" />
                 <h3 className="font-display font-bold text-foreground mb-2 ml-3">FTC Team 2844</h3>
                 <p className="text-sm text-muted-foreground ml-3 leading-relaxed">
                   Engineering excellence meets data-driven strategy. Team 2844 contributes the technical expertise and analytical mindset behind every feature.
