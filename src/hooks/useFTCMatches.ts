@@ -8,10 +8,20 @@ interface MatchPosition {
   surrogate: boolean;
 }
 
-interface MatchData {
+export interface MatchData {
   matchNumber: number;
+  description?: string;
   positions: MatchPosition[];
+  /** Epoch ms from the official FTC schedule, when available */
+  scheduledStartTime?: number | null;
+  actualStartTime?: number | null;
+  postResultTime?: number | null;
+  scoreRedFinal?: number | null;
+  scoreBlueFinal?: number | null;
+  /** True once FIRST has posted the official result for this match */
+  played?: boolean;
 }
+
 
 interface UseFTCMatchesResult {
   matches: MatchData[];
