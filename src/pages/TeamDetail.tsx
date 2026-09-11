@@ -214,7 +214,7 @@ export default function TeamDetail() {
                   <Tooltip contentStyle={chartStyle} />
                   <Legend />
                   <Line type="monotone" dataKey="autoTotal" name="Auto" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="teleopTotal" name="TeleOp" stroke="hsl(var(--alliance-red))" strokeWidth={2} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="teleopTotal" name="TeleOp" stroke="hsl(var(--vcs-silver))" strokeWidth={2} dot={{ r: 4 }} />
                   <Line type="monotone" dataKey="total" name="Total" stroke="hsl(260 60% 60%)" strokeWidth={2} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -278,8 +278,8 @@ export default function TeamDetail() {
                   <Legend />
                   <Bar dataKey="autoClose" name="Auto Close" fill="hsl(var(--primary))" stackId="auto" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="autoFar" name="Auto Far" fill="hsl(var(--alliance-blue) / 0.6)" stackId="auto" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="teleopClose" name="TeleOp Close" fill="hsl(var(--alliance-red))" stackId="teleop" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="teleopFar" name="TeleOp Far" fill="hsl(var(--alliance-red) / 0.6)" stackId="teleop" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="teleopClose" name="TeleOp Close" fill="hsl(var(--vcs-silver))" stackId="teleop" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="teleopFar" name="TeleOp Far" fill="hsl(var(--vcs-silver) / 0.6)" stackId="teleop" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
