@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "sdk_version": "2.0.4",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://aigdnfpfcixaeyxaefmt.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "decode-scout-hub",
+      "version": "0.1.0",
+      "title": "DECODE Scout Hub"
+    },
+    "tools": [
+      {
+        "name": "list_events",
+        "title": "List scouting events",
+        "description": "List the FTC events visible to the signed-in scout, newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_event_teams",
+        "title": "List scouted teams at an event",
+        "description": "List every team that has scouting data at an event, with how many matches were scouted and their average scored game pieces.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "event_code": {
+              "type": "string",
+              "description": "Event code, e.g. USAZCMP or 2025USAZCMP."
+            }
+          },
+          "required": [
+            "event_code"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_team_scouting",
+        "title": "Get team scouting data",
+        "description": "Return every match scouting entry and the pit scouting record for one FTC team at one event, plus simple per-match averages.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "event_code": {
+              "type": "string",
+              "description": "Event code, e.g. USAZCMP or 2025USAZCMP."
+            },
+            "team_number": {
+              "type": "integer",
+              "description": "FTC team number, e.g. 12841."
+            }
+          },
+          "required": [
+            "event_code",
+            "team_number"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
