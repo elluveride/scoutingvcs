@@ -16,12 +16,19 @@ interface MatchTeam {
 
 interface FTCMatch {
   matchNumber: number;
+  description?: string;
+  startTime?: string | null;
+  actualStartTime?: string | null;
+  postResultTime?: string | null;
+  scoreRedFinal?: number | null;
+  scoreBlueFinal?: number | null;
   teams: MatchTeam[];
 }
 
 interface FTCScheduleResponse {
   schedule: FTCMatch[];
 }
+
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
