@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Calendar, Plus, Loader2, AlertCircle, CheckCircle2, RefreshCw, Star, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import cipherLogo from '@/assets/cipher-icon.png';
+import cipherLogo from '@/assets/apex-scout-badge.png';
 
 interface CachedEvent {
   code: string;

@@ -511,12 +511,12 @@ export default function Dashboard() {
     const reliabilityTier =
       reliability >= 70 ? { label: 'Stable', color: 'text-accent', bg: 'bg-accent/15 border-accent/30' } :
       reliability >= 40 ? { label: 'Mixed', color: 'text-warning', bg: 'bg-warning/15 border-warning/30' } :
-                          { label: 'Volatile', color: 'text-secondary', bg: 'bg-secondary/15 border-secondary/30' };
+                          { label: 'Volatile', color: 'text-destructive', bg: 'bg-destructive/15 border-destructive/30' };
 
     // Failure rate: penalty rate is already 0–100. Treat >25% as warn, >50% as fail.
     const failureRate = team.penaltyRate;
     const failureTier =
-      failureRate >= 50 ? 'text-secondary' :
+      failureRate >= 50 ? 'text-destructive' :
       failureRate >= 25 ? 'text-warning' :
                           'text-muted-foreground';
 
@@ -716,7 +716,7 @@ export default function Dashboard() {
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <span className="px-1.5 py-0.5 rounded border border-accent/30 bg-accent/15 text-accent font-mono">Stable ≥70%</span>
               <span className="px-1.5 py-0.5 rounded border border-warning/30 bg-warning/15 text-warning font-mono">Mixed 40–69%</span>
-              <span className="px-1.5 py-0.5 rounded border border-secondary/30 bg-secondary/15 text-secondary font-mono">Volatile &lt;40%</span>
+              <span className="px-1.5 py-0.5 rounded border border-destructive/30 bg-destructive/15 text-destructive font-mono">Volatile &lt;40%</span>
             </div>
           </div>
           <div>
@@ -731,7 +731,7 @@ export default function Dashboard() {
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <span className="px-1.5 py-0.5 rounded border border-border bg-muted/40 font-mono text-muted-foreground">&lt;25% safe</span>
               <span className="px-1.5 py-0.5 rounded border border-border bg-muted/40 font-mono text-warning">25–49% watch</span>
-              <span className="px-1.5 py-0.5 rounded border border-border bg-muted/40 font-mono text-secondary">≥50% risky</span>
+              <span className="px-1.5 py-0.5 rounded border border-border bg-muted/40 font-mono text-destructive">≥50% risky</span>
             </div>
           </div>
         </div>

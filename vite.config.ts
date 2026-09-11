@@ -18,16 +18,17 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "robots.txt"],
+      includeAssets: ["favicon.png", "robots.txt"],
       manifest: {
-        name: "2844 × 12841 Scouting App",
-        short_name: "2844×12841",
-        description: "FTC Scouting App by 2844 × 12841",
-        theme_color: "#0f1419",
-        background_color: "#0f1419",
+        name: "Apex Scout — FTC Scouting",
+        short_name: "Apex Scout",
+        description: "FTC Scouting App by Teams 2844 × 12841",
+        theme_color: "#002E5D",
+        background_color: "#002E5D",
         display: "standalone",
         orientation: "portrait",
         start_url: "/",
+
         icons: [
           {
             src: "/pwa-192x192.png",

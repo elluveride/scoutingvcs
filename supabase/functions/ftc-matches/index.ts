@@ -16,12 +16,19 @@ interface MatchTeam {
 
 interface FTCMatch {
   matchNumber: number;
+  description?: string;
+  startTime?: string | null;
+  actualStartTime?: string | null;
+  postResultTime?: string | null;
+  scoreRedFinal?: number | null;
+  scoreBlueFinal?: number | null;
   teams: MatchTeam[];
 }
 
 interface FTCScheduleResponse {
   schedule: FTCMatch[];
 }
+
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -91,34 +98,61 @@ serve(async (req) => {
     }
     
     const tournamentLevel = matchType === 'P' ? 'playoff' : 'qual';
-    const scheduleUrl = `${FTC_API_BASE}/${ftcSeason}/schedule/${eventCode}/${tournamentLevel}/hybrid`;
-    
-    const response = await fetch(scheduleUrl, {
-      headers: { "Authorization": `Basic ${authString}`, "Accept": "application/json" },
-    });
 
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      return new Response(
-        JSON.stringify({ 
-          error: `FTC API returned invalid response (status ${response.status})`,
-          hint: "Check if the event code is correct and the schedule is published"
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Event codes are sometimes stored with a season prefix (e.g. "2025USAZCMP").
+    // The FTC API expects the bare code plus a season path segment, so try both.
+    const rawCode = String(eventCode).trim();
+    const prefixMatch = rawCode.match(/^(\d{4})(.+)$/);
+    const strippedCode = prefixMatch ? prefixMatch[2] : rawCode;
+    const prefixSeason = prefixMatch ? Number(prefixMatch[1]) : null;
+
+    const candidates: { season: number | string; code: string }[] = [];
+    const push = (s: number | string, c: string) => {
+      if (!candidates.some((x) => x.season === s && x.code === c)) candidates.push({ season: s, code: c });
+    };
+    if (prefixSeason) {
+      push(prefixSeason, strippedCode);
+      push(ftcSeason, strippedCode);
+      push(prefixSeason - 1, strippedCode);
+    }
+    push(ftcSeason, rawCode);
+    push(Number(ftcSeason) - 1, rawCode);
+
+    let response: Response | null = null;
+    let lastStatus = 404;
+    for (const c of candidates) {
+      const resp = await fetch(`${FTC_API_BASE}/${c.season}/schedule/${c.code}/${tournamentLevel}/hybrid`, {
+        headers: { "Authorization": `Basic ${authString}`, "Accept": "application/json" },
+      });
+      const ct = resp.headers.get("content-type") || "";
+      if (resp.ok && ct.includes("application/json")) {
+        response = resp;
+        ftcSeason = c.season;
+        break;
+      }
+      lastStatus = resp.status;
     }
 
-    if (!response.ok) {
-      const errorData = await response.json();
+    if (!response) {
       return new Response(
-        JSON.stringify({ error: `FTC API error: ${response.status}` }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: `FTC API error: ${lastStatus}`,
+          hint: `No ${tournamentLevel} schedule found for event "${rawCode}". Check the event code and that the schedule is published.`,
+          matches: [],
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const data: FTCScheduleResponse = await response.json();
-    
-    const matches = data.schedule.map((match) => {
+
+    const toMs = (value?: string | null) => {
+      if (!value) return null;
+      const t = Date.parse(value);
+      return Number.isNaN(t) ? null : t;
+    };
+
+    const matches = (data.schedule || []).map((match) => {
       const positions = match.teams.map((team) => {
         const alliance = team.station.startsWith("Red") ? "R" : "B";
         const position = team.station.replace(/Red|Blue/, "");
@@ -129,13 +163,28 @@ serve(async (req) => {
         };
       });
 
-      return { matchNumber: match.matchNumber, positions };
+      const postResultTime = toMs(match.postResultTime);
+      const actualStartTime = toMs(match.actualStartTime);
+
+      return {
+        matchNumber: match.matchNumber,
+        description: match.description ?? `Match ${match.matchNumber}`,
+        positions,
+        scheduledStartTime: toMs(match.startTime),
+        actualStartTime,
+        postResultTime,
+        scoreRedFinal: match.scoreRedFinal ?? null,
+        scoreBlueFinal: match.scoreBlueFinal ?? null,
+        // A match is "played" once FIRST posts its result.
+        played: postResultTime !== null,
+      };
     });
 
     return new Response(
-      JSON.stringify({ matches }),
+      JSON.stringify({ matches, season: ftcSeason }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (error) {
     return new Response(
       JSON.stringify({ error: "An internal error occurred" }),

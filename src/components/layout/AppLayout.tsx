@@ -33,7 +33,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import cipherLogo from '@/assets/cipher-icon.png';
+import cipherLogo from '@/assets/apex-scout-badge.png';
 
 interface AppLayoutProps {
   children: React.ReactNode;

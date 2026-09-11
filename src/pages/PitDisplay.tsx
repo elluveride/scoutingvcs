@@ -195,38 +195,55 @@ export default function PitDisplay() {
   if (!user) return <Navigate to="/auth" replace />;
 
   /*──────────────── derived ────────────────*/
-  // If Nexus has no usable data, synthesize from FTC API schedule + scores
-  // Convention when Nexus is unavailable:
-  // last scored match + 1 = On Field, +2 = On Deck, +3 = Queuing
+  // If Nexus has no usable data, fall back to the official FTC schedule.
+  // Real signal only: FIRST posts `postResultTime` (and final scores) as each
+  // match is scored, so the first match without a posted result is on field,
+  // the next is on deck, and the one after that is queuing. Scheduled/actual
+  // start times come straight from the FTC hybrid schedule.
   const fallback = useMemo<NexusStatus | null>(() => {
     if (data?.status?.matches?.length) return null;
     if (!ftcMatches.length) return null;
     const sorted = [...ftcMatches].sort((a, b) => a.matchNumber - b.matchNumber);
-    const lastScored = matchScores.length
-      ? Math.max(...matchScores.map((s) => s.matchNumber))
-      : 0;
-    const find = (num: number) => sorted.find((m) => m.matchNumber === num);
+
     const toNexus = (mm: typeof sorted[number], status: string): NexusMatch => {
       const red = mm.positions.filter((p) => p.position.startsWith('R')).map((p) => String(p.teamNumber));
       const blue = mm.positions.filter((p) => p.position.startsWith('B')).map((p) => String(p.teamNumber));
-      return { label: `Q-${mm.matchNumber}`, status, redTeams: red, blueTeams: blue, times: {} };
+      return {
+        label: mm.description || `Q-${mm.matchNumber}`,
+        status,
+        redTeams: red,
+        blueTeams: blue,
+        times: {
+          estimatedStartTime: mm.scheduledStartTime ?? undefined,
+          actualStartTime: mm.actualStartTime ?? undefined,
+        },
+      };
     };
+
+    // Unplayed = no official result posted yet. Fall back to the FTC score
+    // feed only if the schedule feed carries no result timestamps at all.
+    const hasResultTimestamps = sorted.some((m) => m.postResultTime != null);
+    const lastScored = matchScores.length
+      ? Math.max(...matchScores.map((s) => s.matchNumber))
+      : 0;
+    const unplayed = hasResultTimestamps
+      ? sorted.filter((m) => !m.played)
+      : sorted.filter((m) => m.matchNumber > lastScored);
+
+    if (unplayed.length === 0) return null;
+
     const synth: NexusMatch[] = [];
-    const onF = find(lastScored + 1);
-    const onD = find(lastScored + 2);
-    const onQ = find(lastScored + 3);
-    if (onF) synth.push(toNexus(onF, 'On field'));
-    if (onD) synth.push(toNexus(onD, 'On deck'));
-    if (onQ) synth.push(toNexus(onQ, 'Now queuing'));
-    sorted.filter((m) => m.matchNumber > lastScored + 3).slice(0, 9)
-      .forEach((m) => synth.push(toNexus(m, 'Scheduled')));
-    if (synth.length === 0) return null;
+    const labels = ['On field', 'On deck', 'Now queuing'];
+    unplayed.slice(0, 3).forEach((m, i) => synth.push(toNexus(m, labels[i])));
+    unplayed.slice(3, 12).forEach((m) => synth.push(toNexus(m, 'Scheduled')));
+
     return { eventKey: eventKey || '', dataAsOfTime: Date.now(), matches: synth };
   }, [data, ftcMatches, matchScores, eventKey]);
 
   const usingFallback = !!fallback && !data?.status?.matches?.length;
   const status = usingFallback ? fallback : data?.status;
   const matches = status?.matches || [];
+
 
   // Sanity: on-field number must be one less than on-deck
   const extractNum = (label?: string) => {
