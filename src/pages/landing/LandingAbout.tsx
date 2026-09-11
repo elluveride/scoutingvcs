@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
 import { SEOHead } from '@/components/landing/SEOHead';
 import { Bot, Rocket, Heart, Code2, Trophy, Users } from 'lucide-react';
-import cipherIcon from '@/assets/cipher-icon.png';
+import cipherIcon from '@/assets/apex-scout-badge.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },

@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ReactNode, useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import cipherIcon from '@/assets/cipher-icon.png';
+import cipherIcon from '@/assets/apex-scout-badge.png';
 
 const navLinks = [
   { to: '/', label: 'Home' },

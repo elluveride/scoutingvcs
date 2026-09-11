@@ -7,7 +7,7 @@ import heroBg from '@/assets/landing/hero-bg-vcs.jpg';
 import featureMatchScout from '@/assets/landing/feature-match-scout-real.png';
 import featureDashboard from '@/assets/landing/feature-dashboard-real.png';
 import featureLiveStats from '@/assets/landing/feature-live-stats-real.png';
-import cipherIcon from '@/assets/cipher-icon.png';
+import cipherIcon from '@/assets/apex-scout-badge.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
