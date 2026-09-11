@@ -63,6 +63,11 @@
     --vcs-navy: 210 100% 18%;
     --vcs-silver: 206 10% 40%;
 
+    /* Ambient page wash. Brand navy by default; the scouting pages repoint
+       these to the selected alliance (see `.alliance-swap` below). */
+    --ambient-near: var(--vcs-blue);
+    --ambient-far: var(--vcs-navy);
+
     --border: 210 20% 18%;
     --input: 210 18% 15%;
     --ring: 218 100% 45%;
@@ -133,6 +138,14 @@
     --alliance-red: 352 78% 48%;
   }
 
+  /* While a scouting page (`.alliance-swap`) is on screen, the whole page wash
+     follows the selected alliance, so a scout sitting on Red sees a red room
+     rather than brand navy. Other screens keep the VCS navy wash. */
+  .alliance-red:has(.alliance-swap) {
+    --ambient-near: 352 78% 45%;
+    --ambient-far: 352 62% 22%;
+  }
+
   /* Light Mode Theme */
   .light, [data-theme="light"] {
     --background: 0 0% 100%;
@@ -177,6 +190,9 @@
     --vcs-navy: 210 100% 18%;
     --vcs-silver: 206 10% 40%;
 
+    --ambient-near: var(--vcs-blue);
+    --ambient-far: var(--vcs-silver);
+
     --border: 206 14% 85%;
     --input: 206 14% 90%;
     --ring: 218 100% 32%;
@@ -211,6 +227,12 @@
     --alliance-red: 352 78% 42%;
   }
 
+  .light.alliance-red:has(.alliance-swap),
+  [data-theme="light"].alliance-red:has(.alliance-swap) {
+    --ambient-near: 352 78% 42%;
+    --ambient-far: 352 45% 62%;
+  }
+
   .dark {
     --font-sans: "Source Sans 3", "Myriad Pro", ui-sans-serif, system-ui, sans-serif;
     --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
@@ -233,8 +255,8 @@
     -moz-osx-font-smoothing: grayscale;
     /* Ambient VCS navy field so every surface sits on brand color */
     background-image:
-      radial-gradient(1200px 700px at 12% -10%, hsl(var(--vcs-blue) / 0.20), transparent 60%),
-      radial-gradient(1000px 620px at 100% 0%, hsl(var(--vcs-navy) / 0.45), transparent 62%),
+      radial-gradient(1200px 700px at 12% -10%, hsl(var(--ambient-near) / 0.20), transparent 60%),
+      radial-gradient(1000px 620px at 100% 0%, hsl(var(--ambient-far) / 0.45), transparent 62%),
       linear-gradient(180deg, hsl(var(--surface-container-low)) 0%, hsl(var(--background)) 45%);
     background-attachment: fixed;
     background-repeat: no-repeat;
@@ -257,8 +279,8 @@
   .light body,
   [data-theme="light"] body {
     background-image:
-      radial-gradient(1100px 640px at 10% -12%, hsl(var(--vcs-blue) / 0.08), transparent 60%),
-      radial-gradient(900px 560px at 100% 0%, hsl(var(--vcs-silver) / 0.12), transparent 62%),
+      radial-gradient(1100px 640px at 10% -12%, hsl(var(--ambient-near) / 0.08), transparent 60%),
+      radial-gradient(900px 560px at 100% 0%, hsl(var(--ambient-far) / 0.12), transparent 62%),
       linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(var(--surface-container-low)) 100%);
   }
 
