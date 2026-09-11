@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .select('*')
       .eq('id', userId)
       .single();
-    
+
     if (data && !error) {
       setProfile({
         id: data.id,
@@ -55,19 +55,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    let active = true;
+    // `loading` stays true until the profile has been fetched as well as the
+    // session. Resolving it earlier leaves a window where a user exists but the
+    // profile has not arrived, which reads as "no profile" and bounces every
+    // protected page through /complete-profile to /event-select — so a refresh
+    // at an event used to drop the scout back to event selection.
+    const settle = () => {
+      if (active) setLoading(false);
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
+          // Deferred: Supabase warns against awaiting inside this callback.
           setTimeout(() => {
-            fetchProfile(session.user.id);
+            fetchProfile(session.user.id).finally(settle);
           }, 0);
         } else {
           setProfile(null);
+          settle();
         }
-        setLoading(false);
       }
     );
 
@@ -75,12 +86,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id).finally(settle);
+      } else {
+        settle();
       }
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, name: string, teamNumber: number) => {

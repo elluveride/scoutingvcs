@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
 import { Loader2, Save, User, KeyRound, Sun, Moon, Send, CheckCircle2, Clock } from 'lucide-react';
 import { PitSection } from '@/components/match-scout/PitSection';
+import { ConnectedAgents } from '@/components/profile/ConnectedAgents';
 
 
 export default function ProfileSettings() {
@@ -44,7 +45,7 @@ export default function ProfileSettings() {
 
   const loadPendingRequest = async () => {
     if (!user) return;
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('team_change_requests')
       .select('requested_team_number, reason, created_at')
       .eq('user_id', user.id)
@@ -93,7 +94,7 @@ export default function ProfileSettings() {
       return;
     }
     setSubmittingRequest(true);
-    const { error } = await (supabase as any).from('team_change_requests').insert({
+    const { error } = await supabase.from('team_change_requests').insert({
       user_id: user.id,
       current_team_number: profile?.teamNumber || 0,
       requested_team_number: parsed,
@@ -222,6 +223,9 @@ export default function ProfileSettings() {
             </form>
           )}
         </PitSection>
+
+        {/* MCP / AI agent connections */}
+        <ConnectedAgents />
 
         {/* Password Change Form */}
         <form onSubmit={handlePasswordChange} className="space-y-4 pb-8">

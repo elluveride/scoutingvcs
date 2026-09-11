@@ -53,6 +53,17 @@ export default function Auth() {
   }
 
   if (user) {
+    // An MCP client sent the user here to sign in first; return them to consent.
+    let consentReturn: string | null = null;
+    try {
+      consentReturn = sessionStorage.getItem('mcp_consent_return');
+      if (consentReturn) sessionStorage.removeItem('mcp_consent_return');
+    } catch {
+      consentReturn = null;
+    }
+    if (consentReturn && consentReturn.startsWith('/mcp/consent')) {
+      return <Navigate to={consentReturn} replace />;
+    }
     return <Navigate to="/event-select" replace />;
   }
 

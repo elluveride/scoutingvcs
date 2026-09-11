@@ -22,6 +22,7 @@ import {
   Share2,
   GitCompareArrows,
   MonitorPlay,
+  type LucideIcon,
 } from 'lucide-react';
 import { OfflineIndicator } from '@/components/layout/OfflineIndicator';
 import { BugReportButton } from '@/components/layout/BugReportButton';
@@ -39,7 +40,7 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-const navSections: { label: string; items: { to: string; icon: any; label: string }[] }[] = [
+const navSections: { label: string; items: { to: string; icon: LucideIcon; label: string }[] }[] = [
   {
     label: 'Scouting',
     items: [
@@ -91,7 +92,7 @@ function AllianceSelector() {
           className={cn(
             "h-10 rounded-lg text-xs font-semibold transition-all",
             alliance === 'red'
-              ? "bg-alliance-red text-white shadow-[0_0_12px_hsl(0_85%_55%/0.4)]"
+              ? "bg-alliance-red text-white shadow-[0_0_12px_hsl(var(--alliance-red)/0.4)]"
               : "bg-muted text-muted-foreground hover:bg-muted/80"
           )}
         >

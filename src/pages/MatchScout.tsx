@@ -134,7 +134,7 @@ export default function MatchScout() {
       setEndgameReturn(data.endgame_return as EndgameReturnStatus);
       setPenaltyStatus(data.penalty_status as PenaltyStatus);
       setFouls(data.auto_fouls_minor + data.auto_fouls_major);
-      setNotes((data as any).notes || '');
+      setNotes(data.notes || '');
       setEditingEntry({ id: data.id, scouterId: data.scouter_id });
     } else {
       toast({
@@ -256,7 +256,7 @@ export default function MatchScout() {
     if (error) {
       toast({
         title: 'Error',
-        description: (error as any)?.message || 'Failed to save match data.',
+        description: (error instanceof Error ? error.message : (error as { message?: string })?.message) || 'Failed to save match data.',
         variant: 'destructive',
       });
     } else {
@@ -280,6 +280,9 @@ export default function MatchScout() {
 
   return (
     <AppLayout>
+      {/* `alliance-swap` flips every red/blue element on this page to follow the
+          selected alliance theme (see index.css). */}
+      <div className="alliance-swap">
       {/* Header */}
       <div className="mb-4">
         <div className="flex items-center gap-3">
@@ -468,6 +471,7 @@ export default function MatchScout() {
           </Button>
         </div>
       </form>
+      </div>
     </AppLayout>
   );
 }
