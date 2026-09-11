@@ -115,6 +115,24 @@
     --sidebar-ring: 352 78% 50%;
   }
 
+  /* Alliance-aware scouting pages.
+     Inside an `.alliance-swap` scope, every element that is blue under the Blue
+     theme turns red under the Red theme, and every red element turns blue, so a
+     scout's whole page follows the alliance they are sitting with. Wrap a page
+     (or a section) in `.alliance-swap` to opt in. Wrap a child in
+     `.alliance-true` to pin the real field colors — used by the R1/B1 position
+     picker, where recoloring would make a scout tap the wrong alliance.
+     Values mirror the VCS brand tokens above; keep them in sync. */
+  .alliance-red .alliance-swap {
+    --alliance-blue: 352 78% 48%;
+    --alliance-red: 218 100% 42%;
+  }
+
+  .alliance-red .alliance-swap .alliance-true {
+    --alliance-blue: 218 100% 42%;
+    --alliance-red: 352 78% 48%;
+  }
+
   /* Light Mode Theme */
   .light, [data-theme="light"] {
     --background: 0 0% 100%;
@@ -179,6 +197,18 @@
     --surface-container: 206 16% 95%;
     --surface-container-high: 206 16% 92%;
     --surface-container-highest: 206 14% 88%;
+  }
+
+  .light.alliance-red .alliance-swap,
+  [data-theme="light"].alliance-red .alliance-swap {
+    --alliance-blue: 352 78% 42%;
+    --alliance-red: 218 100% 32%;
+  }
+
+  .light.alliance-red .alliance-swap .alliance-true,
+  [data-theme="light"].alliance-red .alliance-swap .alliance-true {
+    --alliance-blue: 218 100% 32%;
+    --alliance-red: 352 78% 42%;
   }
 
   .dark {

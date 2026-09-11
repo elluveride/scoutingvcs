@@ -126,7 +126,10 @@ export function MatchInfoSection({
             {loading && <Loader2 className="inline w-3 h-3 animate-spin ml-2" />}
           </span>
           {currentMatch ? (
-            <div className="grid grid-cols-2 gap-2">
+            // `alliance-true`: these buttons represent the real field alliance
+            // (Red 1 / Blue 2), so they keep their true colors even when the
+            // page theme swaps red and blue.
+            <div className="grid grid-cols-2 gap-2 alliance-true">
               {[...currentMatch.positions]
                 .sort((a, b) => {
                   // Sort: Red 1, Red 2, Blue 1, Blue 2

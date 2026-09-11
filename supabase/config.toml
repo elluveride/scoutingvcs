@@ -8,3 +8,8 @@ verify_jwt = false
 
 [functions.ftc-events-sync]
 verify_jwt = false
+
+# OAuth bridge for MCP clients. It validates its own PKCE codes and client
+# credentials, so Supabase must not reject unauthenticated calls first.
+[functions.mcp-oauth]
+verify_jwt = false

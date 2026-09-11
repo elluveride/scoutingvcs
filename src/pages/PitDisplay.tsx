@@ -22,6 +22,9 @@ import { cn } from '@/lib/utils';
 import { POINTS, predictTeam, type TeamPrediction, type MatchEntryLite } from '@/lib/prediction';
 import { computeOPR } from '@/lib/opr';
 import { MissingDataBanner, type TeamMissingInputs } from '@/components/shared/MissingDataBanner';
+import type { Tables } from '@/integrations/supabase/types';
+import { useAgentInsights } from '@/hooks/useAgentInsights';
+import { AgentInsightsPanel } from '@/components/pit-display/AgentInsightsPanel';
 
 /*──────────────── types ────────────────*/
 interface NexusMatchTimes {
@@ -124,6 +127,8 @@ export default function PitDisplay() {
   const { toast } = useToast();
   const { rankings, matchScores, refetch: refetchRankings } = useFTCRankings(true);
   const { matches: ftcMatches, refetch: refetchMatches } = useFTCMatches();
+  // Insights posted by MCP agents via the `record_insight` tool. Realtime, with a poll fallback.
+  const agent = useAgentInsights(currentEvent?.code);
 
   const myTeam = profile?.teamNumber ? String(profile.teamNumber) : '';
 
@@ -131,7 +136,7 @@ export default function PitDisplay() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<NexusResponse | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
-  const [scoutingEntries, setScoutingEntries] = useState<any[]>([]);
+  const [scoutingEntries, setScoutingEntries] = useState<Tables<'match_entries'>[]>([]);
   const [pitEntries, setPitEntries] = useState<PitRow[]>([]);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [manualBlueTeam1, setManualBlueTeam1] = useState('');
@@ -192,8 +197,6 @@ export default function PitDisplay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventKey]);
 
-  if (!user) return <Navigate to="/auth" replace />;
-
   /*──────────────── derived ────────────────*/
   // If Nexus has no usable data, fall back to the official FTC schedule.
   // Real signal only: FIRST posts `postResultTime` (and final scores) as each
@@ -253,7 +256,7 @@ export default function PitDisplay() {
   };
   let onField = findByStatus(matches, 'On field') || findByStatus(matches, 'In progress');
   let queuing = findByStatus(matches, 'Now queuing');
-  let onDeck = findByStatus(matches, 'On deck');
+  const onDeck = findByStatus(matches, 'On deck');
   const fNum = extractNum(onField?.label);
   const dNum = extractNum(onDeck?.label);
   const qNum = extractNum(queuing?.label);
@@ -270,7 +273,7 @@ export default function PitDisplay() {
 
   const teamPredictions = useMemo(() => {
     const teamMap = new Map<number, MatchEntryLite[]>();
-    scoutingEntries.forEach((e: any) => {
+    scoutingEntries.forEach((e) => {
       const arr = teamMap.get(e.team_number) || [];
       arr.push(e);
       teamMap.set(e.team_number, arr);
@@ -327,6 +330,9 @@ export default function PitDisplay() {
       times: {},
     };
   }, [manualBlueTeam1, manualBlueTeam2, manualRedTeam1, manualRedTeam2]);
+
+  // Auth guard sits after every hook so hook order stays stable across renders.
+  if (!user) return <Navigate to="/auth" replace />;
 
   return (
     <AppLayout>
@@ -389,7 +395,7 @@ export default function PitDisplay() {
                   <Switch id="pit-debug-toggle" checked={showDebugPanel} onCheckedChange={setShowDebugPanel} />
                 </div>
                 <Button
-                  onClick={() => { fetchNexus(eventKey); fetchScouting(); refetchRankings(); refetchMatches('Q'); }}
+                  onClick={() => { fetchNexus(eventKey); fetchScouting(); refetchRankings(); refetchMatches('Q'); agent.refresh(); }}
                   disabled={!eventKey || loading}
                   size="sm"
                   variant="outline"
@@ -478,6 +484,15 @@ export default function PitDisplay() {
               </div>
 
               <div className="space-y-3">
+                <AgentInsightsPanel
+                  insights={agent.insights}
+                  live={agent.live}
+                  loading={agent.loading}
+                  lastSync={agent.lastSync}
+                  onRefresh={agent.refresh}
+                  onDismiss={agent.dismiss}
+                />
+
                 {myPrediction && myPrediction.matchCount > 0 && (
                   <div className="data-card border-l-4 border-primary">
                     <SectionTitle icon={Activity} label={`Team ${myTeam} Snapshot`} tone="primary" />
@@ -589,6 +604,17 @@ export default function PitDisplay() {
 
           {/* INSIGHTS */}
           <TabsContent value="insights" className="space-y-3 mt-3">
+            <AgentInsightsPanel
+              title="Agent insights for upcoming teams"
+              insights={agent.insights}
+              live={agent.live}
+              loading={agent.loading}
+              lastSync={agent.lastSync}
+              onRefresh={agent.refresh}
+              onDismiss={agent.dismiss}
+              teamFilter={[onField, queuing, onDeck].flatMap((m) => (m ? [...m.redTeams, ...m.blueTeams] : []))}
+              max={8}
+            />
             {onField ? (
               <TeamCapabilitiesPanel
                 title={`On Field • ${onField.label}`}
