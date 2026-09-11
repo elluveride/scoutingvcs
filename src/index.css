@@ -63,6 +63,11 @@
     --vcs-navy: 210 100% 18%;
     --vcs-silver: 206 10% 40%;
 
+    /* The alliance the scout is currently sitting with. Literal values, not a
+       var() of the tokens above, so the `.alliance-swap` rules below cannot
+       form a resolution cycle. */
+    --alliance-current: 218 100% 42%;
+
     /* Ambient page wash. Brand navy by default; the scouting pages repoint
        these to the selected alliance (see `.alliance-swap` below). */
     --ambient-near: var(--vcs-blue);
@@ -118,22 +123,32 @@
     --sidebar-primary: 352 78% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-ring: 352 78% 50%;
+
+    --alliance-current: 352 78% 48%;
+
+    /* The sidebar carries the alliance picker, so it follows the alliance too.
+       Same lightness as the navy panel, rotated to the red hue, so it reads as
+       a tint rather than a second brand colour. */
+    --sidebar-background: 352 32% 8%;
+    --sidebar-accent: 352 20% 16%;
+    --sidebar-border: 352 18% 16%;
   }
 
   /* Alliance-aware scouting pages.
-     Inside an `.alliance-swap` scope, every element that is blue under the Blue
-     theme turns red under the Red theme, and every red element turns blue, so a
-     scout's whole page follows the alliance they are sitting with. Wrap a page
-     (or a section) in `.alliance-swap` to opt in. Wrap a child in
-     `.alliance-true` to pin the real field colors — used by the R1/B1 position
-     picker, where recoloring would make a scout tap the wrong alliance.
-     Values mirror the VCS brand tokens above; keep them in sync. */
-  .alliance-red .alliance-swap {
-    --alliance-blue: 352 78% 48%;
-    --alliance-red: 218 100% 42%;
+     Inside an `.alliance-swap` scope every decorative red/blue surface resolves
+     to the selected alliance, so the whole page matches the alliance the scout
+     is sitting with. Both tokens point at the same colour on purpose: mapping
+     blue to red and red to blue would leave half the page (Autonomous) matching
+     and the other half (TeleOp) opposing it.
+     Wrap a page or section in `.alliance-swap` to opt in. Wrap a child in
+     `.alliance-true` to pin the real field colours — used by the R1/B1 position
+     picker, where recolouring would make a scout tap the wrong alliance. */
+  .alliance-swap {
+    --alliance-blue: var(--alliance-current);
+    --alliance-red: var(--alliance-current);
   }
 
-  .alliance-red .alliance-swap .alliance-true {
+  .alliance-swap .alliance-true {
     --alliance-blue: 218 100% 42%;
     --alliance-red: 352 78% 48%;
   }
@@ -185,6 +200,7 @@
 
     --alliance-red: 352 78% 42%;
     --alliance-blue: 218 100% 32%;
+    --alliance-current: 218 100% 32%;
 
     --vcs-blue: 218 100% 32%;
     --vcs-navy: 210 100% 18%;
@@ -215,14 +231,17 @@
     --surface-container-highest: 206 14% 88%;
   }
 
-  .light.alliance-red .alliance-swap,
-  [data-theme="light"].alliance-red .alliance-swap {
-    --alliance-blue: 352 78% 42%;
-    --alliance-red: 218 100% 32%;
+  .light.alliance-red,
+  [data-theme="light"].alliance-red {
+    --alliance-current: 352 78% 42%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-accent: 352 30% 96%;
+    --sidebar-border: 352 24% 88%;
   }
 
-  .light.alliance-red .alliance-swap .alliance-true,
-  [data-theme="light"].alliance-red .alliance-swap .alliance-true {
+  .light .alliance-swap .alliance-true,
+  [data-theme="light"] .alliance-swap .alliance-true {
     --alliance-blue: 218 100% 32%;
     --alliance-red: 352 78% 42%;
   }

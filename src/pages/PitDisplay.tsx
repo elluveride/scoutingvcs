@@ -145,19 +145,28 @@ export default function PitDisplay() {
   const [manualRedTeam2, setManualRedTeam2] = useState('');
 
   /*──────────────── fetching ────────────────*/
-  const fetchNexus = async (key: string, silent = false) => {
+  /**
+   * `announce` controls whether a failure raises a toast. Most events are not
+   * on Nexus at all, and the page falls back to the official FTC schedule and
+   * says so in the header. Toasting on the automatic load turned that normal
+   * case into a red error on every visit, so only an explicit Refresh reports.
+   */
+  const fetchNexus = async (key: string, opts: { silent?: boolean; announce?: boolean } = {}) => {
     if (!key) return;
+    const { silent = false, announce = false } = opts;
     if (!silent) setLoading(true);
     const { data: resp, error } = await supabase.functions.invoke('nexus-pit-display', {
       body: { eventKey: key },
     });
     if (!silent) setLoading(false);
     if (error || resp?.error) {
-      if (!silent) toast({
-        title: 'Failed to load Nexus data',
-        description: resp?.error || error?.message || 'Nexus API request failed',
-        variant: 'destructive',
-      });
+      setData(null);
+      if (announce) {
+        toast({
+          title: 'Nexus has no data for this event',
+          description: 'Showing the official FTC schedule instead.',
+        });
+      }
       return;
     }
     setData(resp);
@@ -188,7 +197,7 @@ export default function PitDisplay() {
   useEffect(() => {
     if (!eventKey) return;
     const id = setInterval(() => {
-      fetchNexus(eventKey, true);
+      fetchNexus(eventKey, { silent: true });
       fetchScouting();
       refetchRankings();
       refetchMatches('Q');
@@ -395,7 +404,7 @@ export default function PitDisplay() {
                   <Switch id="pit-debug-toggle" checked={showDebugPanel} onCheckedChange={setShowDebugPanel} />
                 </div>
                 <Button
-                  onClick={() => { fetchNexus(eventKey); fetchScouting(); refetchRankings(); refetchMatches('Q'); agent.refresh(); }}
+                  onClick={() => { fetchNexus(eventKey, { announce: true }); fetchScouting(); refetchRankings(); refetchMatches('Q'); agent.refresh(); }}
                   disabled={!eventKey || loading}
                   size="sm"
                   variant="outline"
