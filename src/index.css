@@ -25,9 +25,10 @@
     --primary: 218 100% 38%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: contrast red (alliance) */
-    --secondary: 352 78% 45%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary: VCS silver-blue (brand accent, never alliance red) */
+    --secondary: 208 20% 58%;
+    --secondary-foreground: 212 40% 8%;
+
 
     /* Tertiary: White */
     --tertiary: 0 0% 100%;
@@ -129,8 +130,9 @@
     --primary: 218 100% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 352 78% 42%;
+    --secondary: 210 100% 18%;
     --secondary-foreground: 0 0% 100%;
+
 
     --tertiary: 0 0% 0%;
     --tertiary-foreground: 0 0% 100%;
