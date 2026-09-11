@@ -84,15 +84,14 @@ export function useOfflineSync() {
           localId, synced: _s, created_at: _c, photo_blob, remove_photo_path, ...row
         } = entry;
         try {
+          // Upload first: the row has to point at an object that exists.
           if (photo_blob && row.robot_photo_url) {
             const { error: upErr } = await supabase.storage
               .from(ROBOT_PHOTO_BUCKET)
               .upload(row.robot_photo_url, photo_blob, { upsert: true, contentType: 'image/jpeg' });
             if (upErr) throw upErr;
           }
-          if (remove_photo_path && remove_photo_path !== row.robot_photo_url) {
-            await supabase.storage.from(ROBOT_PHOTO_BUCKET).remove([remove_photo_path]);
-          }
+
           const { error } = await supabase.from('pit_entries').upsert(
             {
               ...row,
@@ -105,6 +104,13 @@ export function useOfflineSync() {
             { onConflict: 'event_code,team_number' },
           );
           if (error) throw error;
+
+          // Only once the row is saved is the old object genuinely unreferenced.
+          // Deleting it earlier meant a failed upsert left the stored row pointing
+          // at an image that no longer existed, with the entry still queued.
+          if (remove_photo_path && remove_photo_path !== row.robot_photo_url) {
+            await supabase.storage.from(ROBOT_PHOTO_BUCKET).remove([remove_photo_path]);
+          }
           await markPitSynced(localId);
           successCount++;
         } catch (e) {
