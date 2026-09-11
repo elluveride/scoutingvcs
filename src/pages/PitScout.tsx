@@ -404,14 +404,12 @@ export default function PitScout() {
         return;
       }
 
+      // Upload first: the row has to point at an object that exists.
       if (photo.pendingBlob) {
         const { error: upErr } = await supabase.storage
           .from(ROBOT_PHOTO_BUCKET)
           .upload(photoPath, photo.pendingBlob, { upsert: true, contentType: 'image/jpeg' });
         if (upErr) throw new Error(`Photo upload failed: ${upErr.message}`);
-      }
-      if (removePath) {
-        await supabase.storage.from(ROBOT_PHOTO_BUCKET).remove([removePath]);
       }
 
       const result = await supabase
@@ -420,6 +418,11 @@ export default function PitScout() {
         .select('id')
         .single();
       if (result.error) throw new Error(result.error.message);
+
+      // Delete the replaced object only after the row that referenced it is saved.
+      if (removePath) {
+        await supabase.storage.from(ROBOT_PHOTO_BUCKET).remove([removePath]);
+      }
 
       if (result.data?.id) setExistingId(result.data.id);
       await upsertCachedPitEntry(row as unknown as CachedPitRow);

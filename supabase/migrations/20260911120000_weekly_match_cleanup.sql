@@ -142,12 +142,28 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_cols  text;
-  v_count integer := 0;
+  v_cols    text;
+  v_count   integer := 0;
+  v_skipped integer := 0;
 BEGIN
   IF auth.uid() IS NULL OR NOT public.is_admin(auth.uid()) THEN
     RAISE EXCEPTION 'Only admins can restore archived matches';
   END IF;
+
+  -- A live row may have reappeared since the cleanup (a late QR import, say).
+  -- Those archived copies are left in the archive rather than restored, so a
+  -- restore can never discard the archived version of a match.
+  SELECT count(*) INTO v_skipped
+  FROM public.match_entries_archive a
+  WHERE a.event_code = _event_code
+    AND (_team_number IS NULL OR a.team_number = _team_number)
+    AND EXISTS (
+      SELECT 1 FROM public.match_entries m
+      WHERE m.event_code   = a.event_code
+        AND m.team_number  = a.team_number
+        AND m.match_number = a.match_number
+        AND m.scouter_id   = a.scouter_id
+    );
 
   SELECT string_agg(quote_ident(c.column_name), ', ' ORDER BY c.ordinal_position)
   INTO v_cols
@@ -161,22 +177,40 @@ BEGIN
         AND a.column_name = c.column_name
     );
 
+  -- Delete only the archived rows that have no live counterpart, so a conflict
+  -- can never consume the archive copy. No ON CONFLICT clause on purpose: if a
+  -- live row appears between the filter and the insert, the unique violation
+  -- aborts the whole function and the archive is left intact, which is the safe
+  -- failure for data an admin is trying to recover.
   EXECUTE format(
-    'WITH restored AS (
+    'WITH restorable AS (
+       SELECT a.id
+       FROM public.match_entries_archive a
+       WHERE a.event_code = $1
+         AND ($2 IS NULL OR a.team_number = $2)
+         AND NOT EXISTS (
+           SELECT 1 FROM public.match_entries m
+           WHERE m.event_code   = a.event_code
+             AND m.team_number  = a.team_number
+             AND m.match_number = a.match_number
+             AND m.scouter_id   = a.scouter_id
+         )
+     ),
+     restored AS (
        DELETE FROM public.match_entries_archive
-       WHERE event_code = $1 AND ($2 IS NULL OR team_number = $2)
+       WHERE id IN (SELECT id FROM restorable)
        RETURNING *
      )
      INSERT INTO public.match_entries (%s)
-     SELECT %s FROM restored
-     ON CONFLICT (event_code, team_number, match_number, scouter_id) DO NOTHING',
+     SELECT %s FROM restored',
     v_cols, v_cols
   ) USING _event_code, _team_number;
   GET DIAGNOSTICS v_count = ROW_COUNT;
 
   INSERT INTO public.maintenance_log (job, rows_affected, details)
   VALUES ('restore-archived-matches', v_count,
-          jsonb_build_object('event_code', _event_code, 'team_number', _team_number, 'triggered_by', auth.uid()));
+          jsonb_build_object('event_code', _event_code, 'team_number', _team_number,
+                             'skipped_still_live', v_skipped, 'triggered_by', auth.uid()));
 
   RETURN v_count;
 END;
