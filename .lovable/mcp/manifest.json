@@ -12,14 +12,14 @@
   "mcp": {
     "server": {
       "name": "decode-scout-hub",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "title": "DECODE Scout Hub"
     },
     "tools": [
       {
         "name": "list_events",
         "title": "List scouting events",
-        "description": "List the FTC events visible to the signed-in scout, newest first.",
+        "description": "List the FTC events visible to the signed-in scout, newest first, with dates and location where known.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -81,6 +81,206 @@
           "required": [
             "event_code",
             "team_number"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "rank_teams",
+        "title": "Rank scouted teams",
+        "description": "Rank every scouted team at an event by predicted total score, using the same prediction model the Pit Display uses. Good for building a pick list.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "event_code": {
+              "type": "string",
+              "description": "Event code, e.g. USAZCMP."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "How many teams to return. Default 50."
+            },
+            "min_matches": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 50,
+              "description": "Only include teams with at least this many scouted matches. Default 0."
+            }
+          },
+          "required": [
+            "event_code"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "predict_match",
+        "title": "Predict a match",
+        "description": "Predict the score of a match between two alliances using the team's own scouting data. Returns per-alliance totals, a confidence percentage, and a per-team breakdown. Teams with no scouting data contribute zero and lower the confidence.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "event_code": {
+              "type": "string",
+              "description": "Event code, e.g. USAZCMP."
+            },
+            "red_teams": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 99999
+              },
+              "minItems": 1,
+              "maxItems": 3,
+              "description": "Red alliance team numbers."
+            },
+            "blue_teams": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 99999
+              },
+              "minItems": 1,
+              "maxItems": 3,
+              "description": "Blue alliance team numbers."
+            }
+          },
+          "required": [
+            "event_code",
+            "red_teams",
+            "blue_teams"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_insights",
+        "title": "List insights on the Pit Display",
+        "description": "Read the insights already posted to the team's Pit Display for an event, newest first. Check this before recording a new insight so you do not repeat one that is already up.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "event_code": {
+              "type": "string",
+              "description": "Event code, e.g. USAZCMP."
+            },
+            "team_number": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99999,
+              "description": "Only insights about this team."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "How many to return. Default 50."
+            }
+          },
+          "required": [
+            "event_code"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "record_insight",
+        "title": "Post an insight to the Pit Display",
+        "description": "Publish a finding to the team's live Pit Display, where everyone on the team sees it within seconds. Use it for scouting conclusions worth acting on: a matchup warning, a pick-list observation, a robot that broke. Keep the title short and make the summary actionable. Do not use it for chat or acknowledgements.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "event_code": {
+              "type": "string",
+              "description": "Event code, e.g. USAZCMP."
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "description": "Short headline, e.g. 'Team 254 auto is unreliable'."
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000,
+              "description": "Plain text: what you found, why it matters, and what to do about it."
+            },
+            "team_number": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99999,
+              "description": "Team the insight is about, if it is about one team."
+            },
+            "match_label": {
+              "type": "string",
+              "maxLength": 32,
+              "description": "Match it refers to, e.g. Q-12."
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "insight",
+                "prediction",
+                "alert",
+                "note"
+              ],
+              "description": "How it is shown. 'alert' is highlighted. Default 'insight'."
+            },
+            "confidence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "How sure you are, 0-100. Shown next to the insight."
+            },
+            "payload": {
+              "type": "object",
+              "additionalProperties": {},
+              "description": "Optional structured numbers to display alongside the summary."
+            },
+            "ttl_minutes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10080,
+              "description": "Hide the insight automatically after this many minutes. Default: keep until dismissed."
+            }
+          },
+          "required": [
+            "event_code",
+            "title",
+            "summary"
           ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
