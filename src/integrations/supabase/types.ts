@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_results: {
+        Row: {
+          client_id: string | null
+          client_name: string | null
+          confidence: number | null
+          created_at: string
+          created_by: string
+          event_code: string
+          expires_at: string | null
+          id: string
+          kind: string
+          match_label: string | null
+          payload: Json
+          summary: string
+          team_number: number | null
+          title: string
+        }
+        Insert: {
+          client_id?: string | null
+          client_name?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by: string
+          event_code: string
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          match_label?: string | null
+          payload?: Json
+          summary: string
+          team_number?: number | null
+          title: string
+        }
+        Update: {
+          client_id?: string | null
+          client_name?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string
+          event_code?: string
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          match_label?: string | null
+          payload?: Json
+          summary?: string
+          team_number?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
       bug_reports: {
         Row: {
           created_at: string
@@ -146,6 +197,36 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_log: {
+        Row: {
+          details: Json
+          id: string
+          job: string
+          ran_at: string
+          rows_affected: number
+          window_end: string | null
+          window_start: string | null
+        }
+        Insert: {
+          details?: Json
+          id?: string
+          job: string
+          ran_at?: string
+          rows_affected?: number
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          details?: Json
+          id?: string
+          job?: string
+          ran_at?: string
+          rows_affected?: number
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       match_entries: {
         Row: {
           auto_fouls_major: number
@@ -217,6 +298,208 @@ export type Database = {
           teleop_scored_far?: number
         }
         Relationships: []
+      }
+      match_entries_archive: {
+        Row: {
+          archive_reason: string
+          archived_at: string
+          auto_fouls_major: number
+          auto_fouls_minor: number
+          auto_pattern_matches: number
+          auto_scored_close: number
+          auto_scored_far: number
+          created_at: string
+          defense_rating: number
+          endgame_return: Database["public"]["Enums"]["endgame_return_status"]
+          event_code: string
+          id: string
+          match_number: number
+          motif: string
+          notes: string
+          on_launch_line: boolean
+          penalty_status: Database["public"]["Enums"]["penalty_status"]
+          scouter_id: string
+          team_number: number
+          teleop_depot: number
+          teleop_pattern_matches: number
+          teleop_scored_close: number
+          teleop_scored_far: number
+        }
+        Insert: {
+          archive_reason?: string
+          archived_at?: string
+          auto_fouls_major?: number
+          auto_fouls_minor?: number
+          auto_pattern_matches?: number
+          auto_scored_close?: number
+          auto_scored_far?: number
+          created_at?: string
+          defense_rating?: number
+          endgame_return?: Database["public"]["Enums"]["endgame_return_status"]
+          event_code: string
+          id?: string
+          match_number: number
+          motif?: string
+          notes?: string
+          on_launch_line?: boolean
+          penalty_status?: Database["public"]["Enums"]["penalty_status"]
+          scouter_id: string
+          team_number: number
+          teleop_depot?: number
+          teleop_pattern_matches?: number
+          teleop_scored_close?: number
+          teleop_scored_far?: number
+        }
+        Update: {
+          archive_reason?: string
+          archived_at?: string
+          auto_fouls_major?: number
+          auto_fouls_minor?: number
+          auto_pattern_matches?: number
+          auto_scored_close?: number
+          auto_scored_far?: number
+          created_at?: string
+          defense_rating?: number
+          endgame_return?: Database["public"]["Enums"]["endgame_return_status"]
+          event_code?: string
+          id?: string
+          match_number?: number
+          motif?: string
+          notes?: string
+          on_launch_line?: boolean
+          penalty_status?: Database["public"]["Enums"]["penalty_status"]
+          scouter_id?: string
+          team_number?: number
+          teleop_depot?: number
+          teleop_pattern_matches?: number
+          teleop_scored_close?: number
+          teleop_scored_far?: number
+        }
+        Relationships: []
+      }
+      mcp_auth_codes: {
+        Row: {
+          client_id: string
+          code_challenge: string
+          code_challenge_method: string
+          code_hash: string
+          created_at: string
+          expires_at: string
+          redirect_uri: string
+          resource: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          code_challenge: string
+          code_challenge_method?: string
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          redirect_uri: string
+          resource?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          code_challenge?: string
+          code_challenge_method?: string
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          redirect_uri?: string
+          resource?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_auth_codes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "mcp_clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      mcp_clients: {
+        Row: {
+          client_id: string
+          client_name: string
+          client_secret_hash: string | null
+          client_uri: string | null
+          created_at: string
+          grant_types: Json
+          last_used_at: string | null
+          logo_uri: string | null
+          redirect_uris: Json
+          token_endpoint_auth_method: string
+        }
+        Insert: {
+          client_id: string
+          client_name: string
+          client_secret_hash?: string | null
+          client_uri?: string | null
+          created_at?: string
+          grant_types?: Json
+          last_used_at?: string | null
+          logo_uri?: string | null
+          redirect_uris?: Json
+          token_endpoint_auth_method?: string
+        }
+        Update: {
+          client_id?: string
+          client_name?: string
+          client_secret_hash?: string | null
+          client_uri?: string | null
+          created_at?: string
+          grant_types?: Json
+          last_used_at?: string | null
+          logo_uri?: string | null
+          redirect_uris?: Json
+          token_endpoint_auth_method?: string
+        }
+        Relationships: []
+      }
+      mcp_grants: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          last_used_at: string | null
+          refresh_token_hash: string | null
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          refresh_token_hash?: string | null
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          refresh_token_hash?: string | null
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_grants_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "mcp_clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
       }
       pit_entries: {
         Row: {
@@ -406,6 +689,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_agent_results: { Args: never; Returns: number }
+      cleanup_expired_mcp_codes: { Args: never; Returns: number }
+      cleanup_last_week_matches: {
+        Args: { _dry_run?: boolean }
+        Returns: number
+      }
       create_profile_for_signup: {
         Args: { _name: string; _team_number: number; _user_id: string }
         Returns: undefined
@@ -424,6 +713,44 @@ export type Database = {
         Returns: boolean
       }
       is_privileged_team: { Args: { _user_id: string }; Returns: boolean }
+      mcp_create_auth_code: {
+        Args: {
+          _client_id: string
+          _code_challenge: string
+          _code_challenge_method?: string
+          _redirect_uri: string
+          _resource?: string
+        }
+        Returns: string
+      }
+      mcp_get_client: {
+        Args: { _client_id: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          client_uri: string
+          logo_uri: string
+          redirect_uris: Json
+        }[]
+      }
+      mcp_list_my_connections: {
+        Args: never
+        Returns: {
+          client_id: string
+          client_name: string
+          created_at: string
+          id: string
+          last_used_at: string
+        }[]
+      }
+      mcp_revoke_connection: {
+        Args: { _client_id?: string; _grant_id?: string }
+        Returns: number
+      }
+      restore_archived_matches: {
+        Args: { _event_code: string; _team_number?: number }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "scout"
