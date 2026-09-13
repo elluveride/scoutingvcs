@@ -56,10 +56,11 @@ on `/pit-display` without a refresh.
       `iss` against Supabase, so both ends agree; note it if a strict client ever
       objects.
 
-## 2. Weekly match cleanup — confirm the policy before the first Wednesday
+## 2. Weekly match cleanup — SCHEDULED (2026-09-13)
 
-`supabase/migrations/20260911120000_weekly_match_cleanup.sql` schedules
-`weekly-match-cleanup` for **Wednesdays 09:00 UTC** (04:00 EST / 05:00 EDT). It
+`weekly-match-cleanup` is live in `cron.job` for **Wednesdays 09:00 UTC**
+(04:00 EST / 05:00 EDT), alongside `weekly-agent-results-purge` (09:30) and
+`weekly-mcp-code-purge` (09:45). The job
 moves every `match_entries` row created in the previous Mon–Sun UTC week into
 `match_entries_archive`, logs the run in `maintenance_log`, and hard-deletes
 nothing.
@@ -84,10 +85,8 @@ nothing.
 - [ ] Queued offline photos live in IndexedDB until sync. Each is capped at
       1600 px and roughly 300 KB, but a device with a tiny storage quota could
       still reject a large backlog.
-- [ ] `pit_entries.scores_depot` exists in the database but is not in the season
-      config's capability list, so it always saves as `false`. Add
-      `{ key: 'scores_depot', label: 'Scores Depot' }` to `src/seasons/decode.ts`
-      if the strategy team wants it collected.
+- [x] `scores_depot` added to `src/seasons/decode.ts` capabilities (2026-09-13),
+      so Pit Scout now collects and saves it.
 
 ## 4. Alliance theme — scope decision
 
