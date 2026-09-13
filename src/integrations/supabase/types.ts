@@ -231,6 +231,9 @@ export type Database = {
         Row: {
           auto_fouls_major: number
           auto_fouls_minor: number
+          auto_hive_tips: number
+          auto_leave: boolean
+          auto_park: boolean
           auto_pattern_matches: number
           auto_scored_close: number
           auto_scored_far: number
@@ -246,7 +249,13 @@ export type Database = {
           penalty_status: Database["public"]["Enums"]["penalty_status"]
           scouter_id: string
           team_number: number
+          teleop_bottom_nectar: number
+          teleop_cell_remaining: number
           teleop_depot: number
+          teleop_flower_scored: number
+          teleop_garden: number
+          teleop_hive_tips: number
+          teleop_park: boolean
           teleop_pattern_matches: number
           teleop_scored_close: number
           teleop_scored_far: number
@@ -254,6 +263,9 @@ export type Database = {
         Insert: {
           auto_fouls_major?: number
           auto_fouls_minor?: number
+          auto_hive_tips?: number
+          auto_leave?: boolean
+          auto_park?: boolean
           auto_pattern_matches?: number
           auto_scored_close?: number
           auto_scored_far?: number
@@ -269,7 +281,13 @@ export type Database = {
           penalty_status?: Database["public"]["Enums"]["penalty_status"]
           scouter_id: string
           team_number: number
+          teleop_bottom_nectar?: number
+          teleop_cell_remaining?: number
           teleop_depot?: number
+          teleop_flower_scored?: number
+          teleop_garden?: number
+          teleop_hive_tips?: number
+          teleop_park?: boolean
           teleop_pattern_matches?: number
           teleop_scored_close?: number
           teleop_scored_far?: number
@@ -277,6 +295,9 @@ export type Database = {
         Update: {
           auto_fouls_major?: number
           auto_fouls_minor?: number
+          auto_hive_tips?: number
+          auto_leave?: boolean
+          auto_park?: boolean
           auto_pattern_matches?: number
           auto_scored_close?: number
           auto_scored_far?: number
@@ -292,7 +313,13 @@ export type Database = {
           penalty_status?: Database["public"]["Enums"]["penalty_status"]
           scouter_id?: string
           team_number?: number
+          teleop_bottom_nectar?: number
+          teleop_cell_remaining?: number
           teleop_depot?: number
+          teleop_flower_scored?: number
+          teleop_garden?: number
+          teleop_hive_tips?: number
+          teleop_park?: boolean
           teleop_pattern_matches?: number
           teleop_scored_close?: number
           teleop_scored_far?: number
@@ -305,6 +332,9 @@ export type Database = {
           archived_at: string
           auto_fouls_major: number
           auto_fouls_minor: number
+          auto_hive_tips: number
+          auto_leave: boolean
+          auto_park: boolean
           auto_pattern_matches: number
           auto_scored_close: number
           auto_scored_far: number
@@ -320,7 +350,13 @@ export type Database = {
           penalty_status: Database["public"]["Enums"]["penalty_status"]
           scouter_id: string
           team_number: number
+          teleop_bottom_nectar: number
+          teleop_cell_remaining: number
           teleop_depot: number
+          teleop_flower_scored: number
+          teleop_garden: number
+          teleop_hive_tips: number
+          teleop_park: boolean
           teleop_pattern_matches: number
           teleop_scored_close: number
           teleop_scored_far: number
@@ -330,6 +366,9 @@ export type Database = {
           archived_at?: string
           auto_fouls_major?: number
           auto_fouls_minor?: number
+          auto_hive_tips?: number
+          auto_leave?: boolean
+          auto_park?: boolean
           auto_pattern_matches?: number
           auto_scored_close?: number
           auto_scored_far?: number
@@ -345,7 +384,13 @@ export type Database = {
           penalty_status?: Database["public"]["Enums"]["penalty_status"]
           scouter_id: string
           team_number: number
+          teleop_bottom_nectar?: number
+          teleop_cell_remaining?: number
           teleop_depot?: number
+          teleop_flower_scored?: number
+          teleop_garden?: number
+          teleop_hive_tips?: number
+          teleop_park?: boolean
           teleop_pattern_matches?: number
           teleop_scored_close?: number
           teleop_scored_far?: number
@@ -355,6 +400,9 @@ export type Database = {
           archived_at?: string
           auto_fouls_major?: number
           auto_fouls_minor?: number
+          auto_hive_tips?: number
+          auto_leave?: boolean
+          auto_park?: boolean
           auto_pattern_matches?: number
           auto_scored_close?: number
           auto_scored_far?: number
@@ -370,7 +418,13 @@ export type Database = {
           penalty_status?: Database["public"]["Enums"]["penalty_status"]
           scouter_id?: string
           team_number?: number
+          teleop_bottom_nectar?: number
+          teleop_cell_remaining?: number
           teleop_depot?: number
+          teleop_flower_scored?: number
+          teleop_garden?: number
+          teleop_hive_tips?: number
+          teleop_park?: boolean
           teleop_pattern_matches?: number
           teleop_scored_close?: number
           teleop_scored_far?: number
@@ -505,6 +559,7 @@ export type Database = {
         Row: {
           auto_consistency: Database["public"]["Enums"]["consistency_level"]
           auto_paths: Json
+          can_tip_hive: boolean
           drive_type: Database["public"]["Enums"]["drive_type"]
           endgame_consistency: Database["public"]["Enums"]["consistency_level"]
           event_code: string
@@ -517,13 +572,18 @@ export type Database = {
           robot_photo_url: string | null
           scores_artifacts: boolean
           scores_depot: boolean
+          scores_flower: boolean
+          scores_garden: boolean
           scores_motifs: boolean
+          scores_nectar: boolean
+          scores_pollen: boolean
           team_name: string
           team_number: number
         }
         Insert: {
           auto_consistency?: Database["public"]["Enums"]["consistency_level"]
           auto_paths?: Json
+          can_tip_hive?: boolean
           drive_type?: Database["public"]["Enums"]["drive_type"]
           endgame_consistency?: Database["public"]["Enums"]["consistency_level"]
           event_code: string
@@ -536,13 +596,18 @@ export type Database = {
           robot_photo_url?: string | null
           scores_artifacts?: boolean
           scores_depot?: boolean
+          scores_flower?: boolean
+          scores_garden?: boolean
           scores_motifs?: boolean
+          scores_nectar?: boolean
+          scores_pollen?: boolean
           team_name: string
           team_number: number
         }
         Update: {
           auto_consistency?: Database["public"]["Enums"]["consistency_level"]
           auto_paths?: Json
+          can_tip_hive?: boolean
           drive_type?: Database["public"]["Enums"]["drive_type"]
           endgame_consistency?: Database["public"]["Enums"]["consistency_level"]
           event_code?: string
@@ -555,7 +620,11 @@ export type Database = {
           robot_photo_url?: string | null
           scores_artifacts?: boolean
           scores_depot?: boolean
+          scores_flower?: boolean
+          scores_garden?: boolean
           scores_motifs?: boolean
+          scores_nectar?: boolean
+          scores_pollen?: boolean
           team_name?: string
           team_number?: number
         }
