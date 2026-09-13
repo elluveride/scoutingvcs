@@ -4,24 +4,21 @@ Last updated: 2026-09-11. The code for everything below is written, typechecked
 (`tsc` and `deno check`), unit-tested and building. What remains needs project
 credentials or a human decision, so it is recorded here rather than lost.
 
-## 1. Deploy the MCP agent integration (needs Supabase / Lovable access)
+## 1. MCP agent integration — DEPLOYED (2026-09-13)
 
-Nothing here could be deployed from this machine: there is no `supabase login`
-session or access token available, and the MCP server itself is served by Lovable
-hosting from `.lovable/mcp/manifest.json`.
+`mcp-oauth` is deployed and its discovery document answers:
 
-Run these once from a machine logged in to the `aigdnfpfcixaeyxaefmt` project:
-
-```bash
-npx supabase db push
-npx supabase functions deploy mcp-oauth
-npx supabase secrets set APP_URL=https://scoutingvcs.lovable.app
+```
+https://aigdnfpfcixaeyxaefmt.supabase.co/functions/v1/mcp-oauth/.well-known/oauth-authorization-server
 ```
 
-If the project deploys through Lovable Cloud instead of the CLI, pushing this
-branch lets Lovable pick up `supabase/migrations/*` and `supabase/functions/*` on
-its next sync. Set `APP_URL` in the Lovable Cloud secrets panel either way, and
-publish so the regenerated `/mcp` manifest goes live with the four new tools.
+`APP_URL` is unset but the function defaults to `https://scoutingvcs.lovable.app`,
+which is correct, so no secret is required. The consent route `/mcp/consent` is
+wired in `AnimatedRoutes.tsx`. Schema objects (agent_results, mcp_clients,
+mcp_auth_codes, mcp_grants and their functions) are live in the database.
+
+Remaining: publish so the regenerated `/mcp` manifest lists all seven tools, then
+run the live client test below.
 
 Post-deploy smoke test:
 
