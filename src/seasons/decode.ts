@@ -99,6 +99,7 @@ export const decode: SeasonConfig = {
     capabilities: [
       { key: 'scores_motifs', label: 'Scores Motifs' },
       { key: 'scores_artifacts', label: 'Scores Artifacts' },
+      { key: 'scores_depot', label: 'Scores Depot' },
       { key: 'has_autonomous', label: 'Has Autonomous' },
     ],
   },
