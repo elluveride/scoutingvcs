@@ -264,16 +264,16 @@ export default function MatchPlanner() {
 
                 {/* Point value reference */}
                 <div className="mt-4 pt-4 border-t border-border/40">
-                  <p className="text-xs text-muted-foreground font-mono mb-2">DECODE Point Values Used:</p>
+                  <p className="text-xs text-muted-foreground font-mono mb-2">BIOBUZZ Point Values Used:</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-xs font-mono text-muted-foreground">
                     <span>Leave: {POINTS.LEAVE}pts</span>
-                    <span>Classified: {POINTS.CLASSIFIED_AUTO}pts</span>
-                    <span>Overflow: {POINTS.OVERFLOW_AUTO}pt</span>
-                    <span>Pattern: {POINTS.PATTERN_MATCH}pts</span>
-                    <span>Depot: {POINTS.DEPOT}pt</span>
-                    <span>Partial Base: {POINTS.BASE_PARTIAL}pts</span>
-                    <span>Full Base: {POINTS.BASE_FULL}pts</span>
-                    <span>Both Full: +{POINTS.BASE_BOTH_FULL_BONUS}pts</span>
+                    <span>Auto Park: {POINTS.AUTO_PARK}pts</span>
+                    <span>Hive Tip: {POINTS.HIVE_TIP}pts</span>
+                    <span>Cell Element: {POINTS.CELL_REMAINING}pts</span>
+                    <span>Flower: {POINTS.FLOWER}pts</span>
+                    <span>Bottom Nectar: {POINTS.BOTTOM_NECTAR_BONUS}pts</span>
+                    <span>Garden: {POINTS.GARDEN}pt</span>
+                    <span>Endgame Park: {POINTS.TELEOP_PARK}pts</span>
                   </div>
                 </div>
               </PitSection>
