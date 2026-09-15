@@ -107,16 +107,8 @@ export default function MatchPlanner() {
   const blueRawTotal = bluePreds.reduce((s, p) => s + p.predictedTotal, 0);
   const redRawTotal = redPreds.reduce((s, p) => s + p.predictedTotal, 0);
 
-  // Estimate both-full bonus probability
-  const blueBothFullProb = bluePreds.length === 2
-    ? ((bluePreds[0].fullReturnRate + bluePreds[0].liftRate) / 100) * ((bluePreds[1].fullReturnRate + bluePreds[1].liftRate) / 100)
-    : 0;
-  const redBothFullProb = redPreds.length === 2
-    ? ((redPreds[0].fullReturnRate + redPreds[0].liftRate) / 100) * ((redPreds[1].fullReturnRate + redPreds[1].liftRate) / 100)
-    : 0;
-
-  const blueTotal = blueRawTotal + blueBothFullProb * POINTS.BASE_BOTH_FULL_BONUS;
-  const redTotal = redRawTotal + redBothFullProb * POINTS.BASE_BOTH_FULL_BONUS;
+  const blueTotal = blueRawTotal;
+  const redTotal = redRawTotal;
 
   // Fouls given to opponent
   const blueFoulsToOpponent = bluePreds.reduce((s, p) => s + p.foulsGivenToOpponent, 0);
@@ -161,7 +153,7 @@ export default function MatchPlanner() {
     <AppLayout>
       <PageHeader
         title="Match Planner"
-        description="Predict scores using DECODE point values"
+        description="Predict scores using BIOBUZZ point values"
       />
 
       {loading ? (
@@ -272,16 +264,16 @@ export default function MatchPlanner() {
 
                 {/* Point value reference */}
                 <div className="mt-4 pt-4 border-t border-border/40">
-                  <p className="text-xs text-muted-foreground font-mono mb-2">DECODE Point Values Used:</p>
+                  <p className="text-xs text-muted-foreground font-mono mb-2">BIOBUZZ Point Values Used:</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-xs font-mono text-muted-foreground">
                     <span>Leave: {POINTS.LEAVE}pts</span>
-                    <span>Classified: {POINTS.CLASSIFIED_AUTO}pts</span>
-                    <span>Overflow: {POINTS.OVERFLOW_AUTO}pt</span>
-                    <span>Pattern: {POINTS.PATTERN_MATCH}pts</span>
-                    <span>Depot: {POINTS.DEPOT}pt</span>
-                    <span>Partial Base: {POINTS.BASE_PARTIAL}pts</span>
-                    <span>Full Base: {POINTS.BASE_FULL}pts</span>
-                    <span>Both Full: +{POINTS.BASE_BOTH_FULL_BONUS}pts</span>
+                    <span>Auto Park: {POINTS.AUTO_PARK}pts</span>
+                    <span>Hive Tip: {POINTS.HIVE_TIP}pts</span>
+                    <span>Cell Element: {POINTS.CELL_REMAINING}pts</span>
+                    <span>Flower: {POINTS.FLOWER}pts</span>
+                    <span>Bottom Nectar: {POINTS.BOTTOM_NECTAR_BONUS}pts</span>
+                    <span>Garden: {POINTS.GARDEN}pt</span>
+                    <span>Endgame Park: {POINTS.TELEOP_PARK}pts</span>
                   </div>
                 </div>
               </PitSection>
@@ -308,12 +300,12 @@ export default function MatchPlanner() {
                         <span>{pred.autoLeavePoints}</span>
                       </div>
                       <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Classified × {POINTS.CLASSIFIED_AUTO}</span>
-                        <span>{pred.autoClassifiedPoints}</span>
+                        <span className="text-muted-foreground">Auto Park ({pred.autoParkRate}%)</span>
+                        <span>{pred.autoParkPoints}</span>
                       </div>
                       <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Overflow × {POINTS.OVERFLOW_AUTO}</span>
-                        <span>{pred.autoOverflowPoints}</span>
+                        <span className="text-muted-foreground">Hive Tips × {POINTS.HIVE_TIP}</span>
+                        <span>{pred.autoHivePoints}</span>
                       </div>
 
                       <div className="flex justify-between items-center pt-1 pb-1 border-b border-border/30">
@@ -321,12 +313,24 @@ export default function MatchPlanner() {
                         <span className="font-bold text-primary">{pred.predictedTeleop} pts</span>
                       </div>
                       <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Classified × {POINTS.CLASSIFIED_TELEOP}</span>
-                        <span>{pred.teleopClassifiedPoints}</span>
+                        <span className="text-muted-foreground">Hive Tips × {POINTS.HIVE_TIP}</span>
+                        <span>{pred.teleopHivePoints}</span>
                       </div>
                       <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Overflow × {POINTS.OVERFLOW_TELEOP}</span>
-                        <span>{pred.teleopOverflowPoints}</span>
+                        <span className="text-muted-foreground">Cell Elements × {POINTS.CELL_REMAINING}</span>
+                        <span>{pred.teleopCellPoints}</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Flower × {POINTS.FLOWER}</span>
+                        <span>{pred.teleopFlowerPoints}</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Bottom Nectar × {POINTS.BOTTOM_NECTAR_BONUS}</span>
+                        <span>{pred.teleopNectarPoints}</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Garden × {POINTS.GARDEN}</span>
+                        <span>{pred.teleopGardenPoints}</span>
                       </div>
 
                       <div className="flex justify-between items-center pt-1 pb-1 border-b border-border/30">
@@ -334,16 +338,8 @@ export default function MatchPlanner() {
                         <span className="font-bold text-primary">{pred.predictedEndgame} pts</span>
                       </div>
                       <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Full Return ({pred.fullReturnRate}%)</span>
-                        <span>{round1(pred.fullReturnRate / 100 * POINTS.BASE_FULL)}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Partial ({pred.partialReturnRate}%)</span>
-                        <span>{round1(pred.partialReturnRate / 100 * POINTS.BASE_PARTIAL)}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Lift ({pred.liftRate}%)</span>
-                        <span>{round1(pred.liftRate / 100 * POINTS.BASE_FULL)}</span>
+                        <span className="text-muted-foreground">Park ({pred.fullReturnRate}%)</span>
+                        <span>{round1(pred.fullReturnRate / 100 * POINTS.TELEOP_PARK)}</span>
                       </div>
 
                       <div className="flex justify-between items-center pt-2 border-t border-border/40">

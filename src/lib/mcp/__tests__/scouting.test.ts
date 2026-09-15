@@ -10,14 +10,18 @@ const row = (over: Partial<MatchRow> & { team_number: number; match_number: numb
   scouter_id: 'scout-1',
   notes: null,
   created_at: '2026-01-01T00:00:00.000Z',
-  auto_scored_close: 0,
-  auto_scored_far: 0,
-  teleop_scored_close: 0,
-  teleop_scored_far: 0,
+  auto_leave: false,
+  auto_park: false,
+  auto_hive_tips: 0,
+  teleop_hive_tips: 0,
+  teleop_cell_remaining: 0,
+  teleop_flower_scored: 0,
+  teleop_bottom_nectar: 0,
+  teleop_garden: 0,
+  teleop_park: false,
   defense_rating: 0,
-  endgame_return: 'not_returned',
-  on_launch_line: false,
   auto_fouls_minor: 0,
+  auto_fouls_major: 0,
   penalty_status: 'none',
   ...over,
 });
@@ -39,13 +43,13 @@ describe('assertEventCode', () => {
 describe('latestPerMatch', () => {
   it('keeps only the newest entry per team and match', () => {
     const rows = [
-      row({ team_number: 12841, match_number: 1, created_at: '2026-01-01T10:00:00.000Z', teleop_scored_close: 1 }),
-      row({ team_number: 12841, match_number: 1, created_at: '2026-01-01T12:00:00.000Z', teleop_scored_close: 9 }),
+      row({ team_number: 12841, match_number: 1, created_at: '2026-01-01T10:00:00.000Z', teleop_hive_tips: 1 }),
+      row({ team_number: 12841, match_number: 1, created_at: '2026-01-01T12:00:00.000Z', teleop_hive_tips: 9 }),
       row({ team_number: 12841, match_number: 2, created_at: '2026-01-01T11:00:00.000Z' }),
     ];
     const out = latestPerMatch(rows);
     expect(out).toHaveLength(2);
-    expect(out[0].teleop_scored_close).toBe(9);
+    expect(out[0].teleop_hive_tips).toBe(9);
   });
 
   it('sorts by team then match so output is stable', () => {
@@ -77,7 +81,7 @@ describe('groupByTeam', () => {
 describe('summarizeAlliance', () => {
   const scored = (team: number, n: number) =>
     Array.from({ length: n }, (_, i) =>
-      row({ team_number: team, match_number: i + 1, teleop_scored_close: 5, on_launch_line: true }),
+      row({ team_number: team, match_number: i + 1, teleop_hive_tips: 5, auto_leave: true }),
     );
 
   it('adds up both teams and reports how many have data', () => {
