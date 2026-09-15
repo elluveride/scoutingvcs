@@ -107,16 +107,8 @@ export default function MatchPlanner() {
   const blueRawTotal = bluePreds.reduce((s, p) => s + p.predictedTotal, 0);
   const redRawTotal = redPreds.reduce((s, p) => s + p.predictedTotal, 0);
 
-  // Estimate both-full bonus probability
-  const blueBothFullProb = bluePreds.length === 2
-    ? ((bluePreds[0].fullReturnRate + bluePreds[0].liftRate) / 100) * ((bluePreds[1].fullReturnRate + bluePreds[1].liftRate) / 100)
-    : 0;
-  const redBothFullProb = redPreds.length === 2
-    ? ((redPreds[0].fullReturnRate + redPreds[0].liftRate) / 100) * ((redPreds[1].fullReturnRate + redPreds[1].liftRate) / 100)
-    : 0;
-
-  const blueTotal = blueRawTotal + blueBothFullProb * POINTS.BASE_BOTH_FULL_BONUS;
-  const redTotal = redRawTotal + redBothFullProb * POINTS.BASE_BOTH_FULL_BONUS;
+  const blueTotal = blueRawTotal;
+  const redTotal = redRawTotal;
 
   // Fouls given to opponent
   const blueFoulsToOpponent = bluePreds.reduce((s, p) => s + p.foulsGivenToOpponent, 0);
