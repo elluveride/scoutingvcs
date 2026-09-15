@@ -136,16 +136,24 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const active = currentEventRef.current;
     if (!active) return { error: new Error('No event selected.') };
 
-    const { error } = await supabase
+    // `.select()` matters here. The `Admins can update events` RLS policy makes
+    // a non-admin's update match zero rows rather than raise — without reading
+    // back what changed, a scout would get a success toast for a switch the
+    // database refused.
+    const { data, error } = await supabase
       .from('events')
       .update({ season_id: seasonId })
-      .eq('code', active.code);
+      .eq('code', active.code)
+      .select('code, season_id');
 
-    if (!error) {
-      setCurrentEvent({ ...active, seasonId });
-      await loadEvents();
+    if (error) return { error: error as Error };
+    if (!data || data.length === 0) {
+      return { error: new Error('Only an admin can change the season for this event.') };
     }
-    return { error: error as Error | null };
+
+    setCurrentEvent({ ...active, seasonId });
+    await loadEvents();
+    return { error: null };
   }, [setCurrentEvent]);
 
   useEffect(() => {

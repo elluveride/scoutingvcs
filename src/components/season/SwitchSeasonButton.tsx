@@ -33,7 +33,13 @@ interface SwitchSeasonButtonProps {
 }
 
 /**
- * Switches the current event between registered seasons.
+ * Switches the current event between registered seasons. Admins only — the
+ * component renders nothing for anyone else.
+ *
+ * The real gate is the `Admins can update events` RLS policy; this is the
+ * courtesy of not showing a scout a control they cannot use. Both matter: RLS
+ * without the UI check means a confusing failure, and the UI check without RLS
+ * means no security at all.
  *
  * Switching is destructive in effect, not in data: nothing is deleted, but
  * every scout's form changes shape mid-event, and entries scouted under the old
@@ -57,6 +63,8 @@ export function SwitchSeasonButton({
   const others = SEASON_LIST.filter((s) => s.id !== season.id);
   const target = SEASON_LIST.find((s) => s.id === pending) ?? null;
 
+  // Admins only. Scouts see no control at all rather than a disabled one.
+  if (!isAdmin) return null;
   if (!currentEvent) return null;
   // Nothing to switch to — the app only registers one season.
   if (others.length === 0) return null;
@@ -101,8 +109,7 @@ export function SwitchSeasonButton({
         variant={variant === 'chip' ? 'outline' : 'default'}
         size={variant === 'chip' ? 'sm' : 'default'}
         onClick={handleClick}
-        disabled={!isAdmin}
-        title={isAdmin ? 'Switch the season this event is scouted under' : 'Admins only'}
+        title="Switch the season this event is scouted under"
         className={cn('gap-2 font-mono', variant === 'full' && 'h-12', className)}
       >
         <CalendarRange className="w-4 h-4" />

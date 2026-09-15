@@ -142,17 +142,19 @@ export default function SeasonSetup() {
                 {currentEvent.name} · {currentEvent.code}
               </p>
             </div>
-            <div className="ml-auto">
-              <SwitchSeasonButton />
-            </div>
+            {isAdmin && (
+              <div className="ml-auto">
+                <SwitchSeasonButton />
+              </div>
+            )}
           </div>
 
           {!isAdmin && (
             <div className="mt-4 flex items-start gap-2 rounded-md border border-border bg-muted/30 px-3 py-2.5">
               <Lock className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
               <p className="text-xs font-mono text-muted-foreground">
-                Only an admin can change the season. Everyone scouting this event uses whichever
-                game is active here.
+                Read-only — only an admin can change the season. Everyone scouting this event
+                uses whichever game is active here.
               </p>
             </div>
           )}
