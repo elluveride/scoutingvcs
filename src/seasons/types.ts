@@ -26,6 +26,14 @@ export interface ScoringPoints {
   MAJOR_FOUL: number;
 }
 
+/**
+ * What a field means to the score.
+ *  - `score`  (default) — `pointsEach` × value lands in the field's phase total
+ *  - `foul_minor` / `foul_major` — points handed to the *opposing* alliance
+ *  - `rating`  — subjective 0–n scale, never scored (e.g. defense)
+ */
+export type FieldRole = 'score' | 'foul_minor' | 'foul_major' | 'rating';
+
 export interface CounterField {
   /** Stable DB column name */
   key: string;
@@ -38,6 +46,10 @@ export interface CounterField {
   max?: number;
   /** Optional short helper text */
   hint?: string;
+  /** Points awarded per unit. Omit for fields that carry no points of their own. */
+  pointsEach?: number;
+  /** Defaults to 'score'. */
+  role?: FieldRole;
 }
 
 export interface ToggleField {
@@ -47,6 +59,10 @@ export interface ToggleField {
   /** When true, turning the toggle ON is considered destructive (e.g. Launch Line penalty) */
   destructive?: boolean;
   hint?: string;
+  /** Points awarded when the toggle is ON. */
+  pointsEach?: number;
+  /** Defaults to 'score'. */
+  role?: FieldRole;
 }
 
 export interface EnumOption {
@@ -82,6 +98,8 @@ export interface SeasonConfig {
   id: string;
   name: string;
   seasonYear: number;
+  /** One-line description of the game, shown on the season setup screen. */
+  summary?: string;
   points: ScoringPoints;
   counters: CounterField[];
   toggles: ToggleField[];

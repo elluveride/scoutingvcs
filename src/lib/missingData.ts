@@ -1,4 +1,6 @@
 import type { MissingReason, TeamMissingInputs } from '@/components/shared/MissingDataBanner';
+import type { SeasonConfig } from '@/seasons/types';
+import { scoreEntry } from '@/lib/seasonScoring';
 
 export interface MissingInputsArgs {
   teamNumbers: number[];
@@ -41,34 +43,26 @@ export function evaluateMissingInputs(args: MissingInputsArgs): TeamMissingInput
   return out;
 }
 
-interface ConflictRow {
+export interface ConflictRow {
   id: string;
   event_code: string;
   team_number: number;
   match_number: number;
   scouter_id: string;
-  auto_scored_close: number;
-  auto_scored_far: number;
-  teleop_scored_close: number;
-  teleop_scored_far: number;
-  on_launch_line: boolean;
-  endgame_return: string;
-  auto_fouls_minor: number;
+  /** Season scoring columns — read through the season config, not by name. */
+  [column: string]: unknown;
 }
-
-const rowScore = (e: ConflictRow): number => {
-  const auto = (e.on_launch_line ? 3 : 0) + (e.auto_scored_close + e.auto_scored_far) * 3;
-  const tele = (e.teleop_scored_close + e.teleop_scored_far) * 3;
-  const eg = e.endgame_return === 'full' || e.endgame_return === 'lift' ? 10
-    : e.endgame_return === 'partial' ? 5 : 0;
-  return auto + tele + eg;
-};
 
 /**
  * Detect duplicate match/team rows scouted by different scouters whose totals
  * diverge by >= the threshold. Returns a Set of entry IDs flagged as conflicting.
+ *
+ * Totals are priced with the active season's point values, so the threshold
+ * means the same thing whatever the game — two scouts one hive tip apart is a
+ * 20-point disagreement, and should read as one.
  */
 export function detectMatchConflicts(
+  season: SeasonConfig,
   rows: ConflictRow[],
   threshold = 4,
 ): Set<string> {
@@ -85,7 +79,7 @@ export function detectMatchConflicts(
     if (arr.length < 2) continue;
     const scouters = new Set(arr.map(r => r.scouter_id));
     if (scouters.size < 2) continue;
-    const scores = arr.map(rowScore);
+    const scores = arr.map((r) => scoreEntry(season, r).total);
     const spread = Math.max(...scores) - Math.min(...scores);
     if (spread >= threshold) arr.forEach(r => conflicts.add(r.id));
   }

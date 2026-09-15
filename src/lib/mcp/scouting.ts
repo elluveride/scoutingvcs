@@ -10,6 +10,7 @@
 import type { JsonValueInput } from '@lovable.dev/mcp-js';
 import type { MatchEntryLite } from '@/lib/prediction';
 import { predictTeam, type TeamPrediction } from '@/lib/prediction';
+import { seasonById } from '@/seasons';
 
 export type MatchRow = MatchEntryLite & {
   id: string;
@@ -78,8 +79,8 @@ export function compactPrediction(p: TeamPrediction) {
   };
 }
 
-export function predictFor(team: number, rows: MatchRow[] | undefined) {
-  return predictTeam(team, rows ?? []);
+export function predictFor(team: number, rows: MatchRow[] | undefined, seasonId?: string) {
+  return predictTeam(seasonById(seasonId), team, rows ?? []);
 }
 
 /**

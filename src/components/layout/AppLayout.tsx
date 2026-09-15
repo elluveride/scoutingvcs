@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
 import { useAlliance } from '@/contexts/AllianceContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSeason } from '@/hooks/useSeason';
 import {
   ClipboardList,
   Wrench,
@@ -22,6 +23,7 @@ import {
   Share2,
   GitCompareArrows,
   MonitorPlay,
+  CalendarRange,
   type LucideIcon,
 } from 'lucide-react';
 import { OfflineIndicator } from '@/components/layout/OfflineIndicator';
@@ -65,6 +67,7 @@ const navSections: { label: string; items: { to: string; icon: LucideIcon; label
       { to: '/spreadsheet', icon: Table, label: 'Spreadsheet' },
       { to: '/qr-transfer', icon: QrCode, label: 'QR Transfer' },
       { to: '/sharing', icon: Share2, label: 'Data Sharing' },
+      { to: '/season-setup', icon: CalendarRange, label: 'Season Setup' },
     ],
   },
 ];
@@ -106,6 +109,7 @@ function AllianceSelector() {
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { profile, signOut, isAdmin } = useAuth();
   const { currentEvent } = useEvent();
+  const season = useSeason();
 
   const handleSignOut = () => {
     onNavigate?.();
@@ -138,6 +142,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <p className="text-xs text-muted-foreground font-mono">
             {currentEvent.code}
           </p>
+          <NavLink
+            to="/season-setup"
+            onClick={onNavigate}
+            className="mt-2 flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground hover:text-primary transition-colors"
+            title="Season setup"
+          >
+            <CalendarRange className="w-3 h-3" />
+            <span className="truncate">{season.name}</span>
+          </NavLink>
         </div>
       )}
 

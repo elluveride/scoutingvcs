@@ -1,126 +1,129 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
+import { useSeason } from '@/hooks/useSeason';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { PitSection } from '@/components/match-scout/PitSection';
-import { Loader2, QrCode, ScanLine, Download, Upload, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { EntryQRCard } from '@/components/scout/EntryQRCard';
+import {
+  Loader2, ScanLine, Download, Upload, CheckCircle2, AlertTriangle, ClipboardList, Wrench,
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { QRCodeSVG } from 'qrcode.react';
-import { QRPayloadSchema } from '@/lib/importValidation';
+import { decodePayload, entryKey, type EntryKind } from '@/lib/qrPayload';
+import { seasonById } from '@/seasons';
+import { cn } from '@/lib/utils';
 
-interface CompactEntry {
-  t: number; // team_number
-  m: number; // match_number
-  ac: number; // auto_scored_close
-  af: number; // auto_scored_far
-  tc: number; // teleop_scored_close
-  tf: number; // teleop_scored_far
-  ll: boolean; // on_launch_line
-  dr: number; // defense_rating
-  er: string; // endgame_return
-  ps: string; // penalty_status
-  f: number; // fouls
-  /** Set client-side: true if this entry already exists in cloud */
-  _dup?: boolean;
+type Row = Record<string, number | boolean | string>;
+
+interface ScannedRow {
+  kind: EntryKind;
+  row: Row;
+  /** This entry already exists in the cloud for this event. */
+  duplicate: boolean;
 }
 
-// Compress entry data for QR codes
-function compressEntries(entries: any[]): CompactEntry[] {
-  return entries.map(e => ({
-    t: e.team_number,
-    m: e.match_number,
-    ac: e.auto_scored_close,
-    af: e.auto_scored_far,
-    tc: e.teleop_scored_close,
-    tf: e.teleop_scored_far,
-    ll: e.on_launch_line,
-    dr: e.defense_rating,
-    er: e.endgame_return,
-    ps: e.penalty_status,
-    f: e.auto_fouls_minor,
-  }));
-}
-
-// Chunk data to fit in QR codes (max ~2KB per QR)
-function chunkData(entries: CompactEntry[], maxBytes: number = 1800): string[] {
-  const chunks: string[] = [];
-  let currentChunk: CompactEntry[] = [];
-
-  for (const entry of entries) {
-    currentChunk.push(entry);
-    const json = JSON.stringify({ d: currentChunk });
-    if (json.length > maxBytes) {
-      currentChunk.pop();
-      if (currentChunk.length > 0) {
-        chunks.push(JSON.stringify({ d: currentChunk }));
-      }
-      currentChunk = [entry];
-    }
-  }
-
-  if (currentChunk.length > 0) {
-    chunks.push(JSON.stringify({ d: currentChunk }));
-  }
-
-  return chunks;
-}
+const KIND_META: Record<EntryKind, { label: string; table: 'match_entries' | 'pit_entries'; icon: typeof ClipboardList }> = {
+  match: { label: 'Match', table: 'match_entries', icon: ClipboardList },
+  pit: { label: 'Pit', table: 'pit_entries', icon: Wrench },
+};
 
 export default function QRTransfer() {
   const { user } = useAuth();
   const { currentEvent } = useEvent();
+  const season = useSeason();
   const { toast } = useToast();
 
   const [mode, setMode] = useState<'send' | 'receive'>('send');
-  const [entries, setEntries] = useState<any[]>([]);
+  const [sendKind, setSendKind] = useState<EntryKind>('match');
+  const [matchEntries, setMatchEntries] = useState<Row[]>([]);
+  const [pitEntries, setPitEntries] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [qrChunks, setQrChunks] = useState<string[]>([]);
-  const [currentChunk, setCurrentChunk] = useState(0);
   const [scanning, setScanning] = useState(false);
-  const [scannedEntries, setScannedEntries] = useState<CompactEntry[]>([]);
+  const [scanned, setScanned] = useState<ScannedRow[]>([]);
   const [importing, setImporting] = useState(false);
-  /** Set of "team-match" keys that already exist in cloud */
-  const [cloudKeys, setCloudKeys] = useState<Set<string>>(new Set());
-  const scannerRef = useRef<any>(null);
+  /** "team-match" / "team" keys that already exist in the cloud, per kind. */
+  const cloudKeysRef = useRef<Record<EntryKind, Set<string>>>({ match: new Set(), pit: new Set() });
+  const scannerRef = useRef<{ clear: () => Promise<void> } | null>(null);
   const videoRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!currentEvent) return;
-    loadEntries();
-    loadCloudKeys();
-  }, [currentEvent]);
+  const eventCode = currentEvent?.code ?? '';
 
-  const loadEntries = async () => {
+  const loadEntries = useCallback(async () => {
+    if (!eventCode) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('match_entries')
-      .select('*')
-      .eq('event_code', currentEvent!.code)
-      .order('match_number');
-    setEntries(data || []);
-
-    if (data && data.length > 0) {
-      const compressed = compressEntries(data);
-      setQrChunks(chunkData(compressed));
-    }
+    const [matchRes, pitRes] = await Promise.all([
+      supabase.from('match_entries').select('*').eq('event_code', eventCode).order('match_number'),
+      supabase.from('pit_entries').select('*').eq('event_code', eventCode).order('team_number'),
+    ]);
+    const matches = (matchRes.data ?? []) as unknown as Row[];
+    const pits = (pitRes.data ?? []) as unknown as Row[];
+    setMatchEntries(matches);
+    setPitEntries(pits);
+    cloudKeysRef.current = {
+      match: new Set(matches.map((r) => entryKey('match', r))),
+      pit: new Set(pits.map((r) => entryKey('pit', r))),
+    };
     setLoading(false);
-  };
+  }, [eventCode]);
 
-  /** Load existing cloud entry keys to detect duplicates when scanning */
-  const loadCloudKeys = async () => {
-    if (!currentEvent) return;
-    const { data } = await supabase
-      .from('match_entries')
-      .select('team_number, match_number')
-      .eq('event_code', currentEvent.code);
-    if (data) {
-      setCloudKeys(new Set(data.map(e => `${e.team_number}-${e.match_number}`)));
+  useEffect(() => { loadEntries(); }, [loadEntries]);
+
+  const sendRows = sendKind === 'match' ? matchEntries : pitEntries;
+
+  /** Fold one scanned code into the pending list, rejecting mismatched seasons. */
+  const ingest = useCallback((text: string) => {
+    const decoded = decodePayload(text, season);
+    if (!decoded) return;
+
+    if (decoded.seasonId !== season.id) {
+      const from = seasonById(decoded.seasonId);
+      toast({
+        title: 'Wrong season',
+        description: `That code was scouted under ${from.name}, but this event runs ${season.name}. Switch the season on Season Setup, or scan it into the right event.`,
+        variant: 'destructive',
+      });
+      return;
     }
-  };
+
+    if (decoded.eventCode && eventCode && decoded.eventCode !== eventCode) {
+      toast({
+        title: 'Different event',
+        description: `That code is from ${decoded.eventCode}; you are importing into ${eventCode}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setScanned((prev) => {
+      const seen = new Set(prev.map((s) => `${s.kind}:${entryKey(s.kind, s.row)}`));
+      const fresh = decoded.rows
+        .filter((row) => !seen.has(`${decoded.kind}:${entryKey(decoded.kind, row)}`))
+        .map((row) => ({
+          kind: decoded.kind,
+          row,
+          duplicate: cloudKeysRef.current[decoded.kind].has(entryKey(decoded.kind, row)),
+        }));
+
+      if (fresh.length > 0) {
+        const dupes = fresh.filter((f) => f.duplicate).length;
+        toast({
+          title: 'Scanned!',
+          description: `${fresh.length - dupes} new${dupes > 0 ? `, ${dupes} already in cloud` : ''} ${KIND_META[decoded.kind].label.toLowerCase()} ${fresh.length === 1 ? 'entry' : 'entries'}.`,
+        });
+      }
+      return [...prev, ...fresh];
+    });
+  }, [season, eventCode, toast]);
+
+  // The scanner captures its callback once at render(), so route scans through a
+  // ref that always points at the current `ingest`.
+  const ingestRef = useRef(ingest);
+  useEffect(() => { ingestRef.current = ingest; }, [ingest]);
 
   const startScanner = useCallback(async () => {
     if (!videoRef.current) return;
@@ -131,39 +134,9 @@ export default function QRTransfer() {
       const scanner = new Html5QrcodeScanner(
         'qr-reader',
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        false
+        false,
       );
-
-      scanner.render(
-        (decodedText: string) => {
-          try {
-            const parsed = JSON.parse(decodedText);
-            const result = QRPayloadSchema.safeParse(parsed);
-            if (result.success) {
-              const validEntries = result.data.d as CompactEntry[];
-              setScannedEntries(prev => {
-                const existing = new Set(prev.map(e => `${e.t}-${e.m}`));
-                const newEntries = validEntries
-                  .filter((e) => !existing.has(`${e.t}-${e.m}`))
-                  .map(e => ({ ...e, _dup: cloudKeys.has(`${e.t}-${e.m}`) }));
-                if (newEntries.length > 0) {
-                  const dupCount = newEntries.filter(e => e._dup).length;
-                  const freshCount = newEntries.length - dupCount;
-                  toast({
-                    title: 'Scanned!',
-                    description: `${freshCount} new${dupCount > 0 ? `, ${dupCount} duplicate` : ''} entries found.`,
-                  });
-                }
-                return [...prev, ...newEntries];
-              });
-            }
-          } catch {
-            console.warn('QR scan: invalid data format');
-          }
-        },
-        () => {} // error callback
-      );
-
+      scanner.render((text: string) => ingestRef.current(text), () => { /* per-frame decode misses are normal */ });
       scannerRef.current = scanner;
     } catch (e) {
       console.error('Scanner init error:', e);
@@ -180,41 +153,52 @@ export default function QRTransfer() {
     setScanning(false);
   }, []);
 
-  useEffect(() => {
-    return () => { stopScanner(); };
-  }, [stopScanner]);
+  useEffect(() => () => { stopScanner(); }, [stopScanner]);
 
-  const importScannedData = async () => {
-    if (!currentEvent || !user || scannedEntries.length === 0) return;
+  const freshRows = useMemo(() => scanned.filter((s) => !s.duplicate), [scanned]);
+  const dupCount = scanned.length - freshRows.length;
+
+  const importScanned = async () => {
+    if (!currentEvent || !user || freshRows.length === 0) return;
     setImporting(true);
 
-    // Only import non-duplicate entries
-    const toImport = scannedEntries.filter(e => !e._dup);
-    let successCount = 0;
-    for (const entry of toImport) {
-      const { error } = await supabase.from('match_entries').upsert([{
-        event_code: currentEvent.code,
-        team_number: entry.t,
-        match_number: entry.m,
-        auto_scored_close: entry.ac,
-        auto_scored_far: entry.af,
-        teleop_scored_close: entry.tc,
-        teleop_scored_far: entry.tf,
-        on_launch_line: entry.ll,
-        defense_rating: entry.dr,
-        endgame_return: entry.er as any,
-        penalty_status: entry.ps as any,
-        auto_fouls_minor: entry.f,
-        auto_fouls_major: 0,
-        scouter_id: user.id,
-      }], { onConflict: 'event_code,team_number,match_number,scouter_id' });
+    let imported = 0;
+    const failures: string[] = [];
 
-      if (!error) successCount++;
+    for (const { kind, row } of freshRows) {
+      const payload = kind === 'match'
+        ? { ...row, event_code: currentEvent.code, scouter_id: user.id }
+        : { ...row, event_code: currentEvent.code, last_edited_by: user.id, last_edited_at: new Date().toISOString() };
+
+      const conflict = kind === 'match'
+        ? 'event_code,team_number,match_number,scouter_id'
+        : 'event_code,team_number';
+
+      const { error } = await supabase
+        .from(KIND_META[kind].table)
+        .upsert(payload as never, { onConflict: conflict });
+
+      if (error) failures.push(`${KIND_META[kind].label} ${entryKey(kind, row)}: ${error.message}`);
+      else imported++;
     }
 
     setImporting(false);
-    toast({ title: 'Import Complete', description: `${successCount}/${toImport.length} entries imported.${scannedEntries.length - toImport.length > 0 ? ` ${scannedEntries.length - toImport.length} duplicates skipped.` : ''}` });
-    setScannedEntries([]);
+
+    if (failures.length > 0) {
+      console.error('QR import failures:', failures);
+      toast({
+        title: `Imported ${imported}/${freshRows.length}`,
+        description: failures[0],
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Import Complete',
+        description: `${imported} ${imported === 1 ? 'entry' : 'entries'} imported.${dupCount > 0 ? ` ${dupCount} duplicates skipped.` : ''}`,
+      });
+    }
+
+    setScanned([]);
     loadEntries();
   };
 
@@ -223,9 +207,11 @@ export default function QRTransfer() {
 
   return (
     <AppLayout>
-      <PageHeader title="QR Transfer" description="Send and receive scouting data via QR codes" />
+      <PageHeader
+        title="QR Transfer"
+        description={`Send and receive ${season.name} scouting data via QR codes`}
+      />
 
-      {/* Mode Toggle */}
       <div className="flex gap-2 mb-6">
         <Button
           variant={mode === 'send' ? 'default' : 'outline'}
@@ -247,60 +233,41 @@ export default function QRTransfer() {
 
       {mode === 'send' ? (
         <div className="space-y-6 max-w-md mx-auto">
+          <div className="flex gap-2">
+            {(['match', 'pit'] as const).map((kind) => {
+              const { label, icon: Icon } = KIND_META[kind];
+              const count = kind === 'match' ? matchEntries.length : pitEntries.length;
+              return (
+                <Button
+                  key={kind}
+                  variant={sendKind === kind ? 'secondary' : 'outline'}
+                  onClick={() => setSendKind(kind)}
+                  className="flex-1 h-11 gap-2 font-mono"
+                >
+                  <Icon className="w-4 h-4" />
+                  {label} ({count})
+                </Button>
+              );
+            })}
+          </div>
+
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          ) : entries.length === 0 ? (
+          ) : sendRows.length === 0 ? (
             <div className="data-card text-center py-12 text-muted-foreground">
-              No scouting data to share.
+              No {KIND_META[sendKind].label.toLowerCase()} data to share.
             </div>
           ) : (
-            <PitSection title="QR Code" icon={QrCode}>
-              <div className="flex flex-col items-center gap-4">
-                <p className="text-sm text-muted-foreground font-mono text-center">
-                  Showing {entries.length} entries ({qrChunks.length} QR code{qrChunks.length > 1 ? 's' : ''})
-                </p>
-
-                <div className="bg-white p-4 rounded-xl">
-                  <QRCodeSVG
-                    value={qrChunks[currentChunk] || '{}'}
-                    size={256}
-                    level="M"
-                    includeMargin={false}
-                  />
-                </div>
-
-                {qrChunks.length > 1 && (
-                  <div className="flex items-center gap-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentChunk(c => Math.max(0, c - 1))}
-                      disabled={currentChunk === 0}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-sm font-mono">
-                      {currentChunk + 1} / {qrChunks.length}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentChunk(c => Math.min(qrChunks.length - 1, c + 1))}
-                      disabled={currentChunk === qrChunks.length - 1}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                )}
-
-                <p className="text-xs text-muted-foreground text-center">
-                  The receiving device scans each QR code to import data.
-                  {qrChunks.length > 1 && ' Cycle through all codes.'}
-                </p>
-              </div>
-            </PitSection>
+            <EntryQRCard
+              season={season}
+              kind={sendKind}
+              eventCode={currentEvent.code}
+              rows={sendRows}
+              title={`${KIND_META[sendKind].label} Entries`}
+              caption={`${sendRows.length} ${sendRows.length === 1 ? 'entry' : 'entries'} from ${currentEvent.code}`}
+            />
           )}
         </div>
       ) : (
@@ -320,43 +287,52 @@ export default function QRTransfer() {
 
               <div id="qr-reader" ref={videoRef} className="w-full rounded-xl overflow-hidden" />
 
-              {scannedEntries.length > 0 && (() => {
-                const dupCount = scannedEntries.filter(e => e._dup).length;
-                const freshCount = scannedEntries.length - dupCount;
-                return (
-                  <div className="w-full space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-accent">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span className="font-mono">{freshCount} new entries</span>
-                    </div>
-                    {dupCount > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-warning">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span className="font-mono">{dupCount} already in cloud</span>
-                        <Badge variant="outline" className="text-warning border-warning/30 text-[10px]">DUP</Badge>
-                      </div>
-                    )}
-                    {/* Scanned entry list */}
-                    <div className="max-h-40 overflow-y-auto rounded-lg border border-border/40 divide-y divide-border/20">
-                      {scannedEntries.map((e, i) => (
-                        <div key={i} className="flex items-center justify-between px-3 py-1.5 text-xs font-mono">
-                          <span>Team {e.t} · Match {e.m}</span>
-                          {e._dup && <Badge variant="outline" className="text-warning border-warning/30 text-[10px]">DUP</Badge>}
-                        </div>
-                      ))}
-                    </div>
-                    <Button
-                      onClick={importScannedData}
-                      disabled={importing || freshCount === 0}
-                      className="w-full h-14 gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
-                    >
-                      {importing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-                      Import {freshCount} New {freshCount === 1 ? 'Entry' : 'Entries'}
-                      {dupCount > 0 && ` (skip ${dupCount} dup)`}
-                    </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Accepts match and pit codes tagged{' '}
+                <span className="font-mono text-foreground">{season.id}</span>. Codes from another
+                season are rejected with a reason rather than imported.
+              </p>
+
+              {scanned.length > 0 && (
+                <div className="w-full space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-accent">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="font-mono">{freshRows.length} new entries</span>
                   </div>
-                );
-              })()}
+                  {dupCount > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-warning">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span className="font-mono">{dupCount} already in cloud</span>
+                      <Badge variant="outline" className="text-warning border-warning/30 text-[10px]">DUP</Badge>
+                    </div>
+                  )}
+
+                  <div className="max-h-40 overflow-y-auto rounded-lg border border-border/40 divide-y divide-border/20">
+                    {scanned.map((s, i) => (
+                      <div key={`${s.kind}-${entryKey(s.kind, s.row)}-${i}`} className="flex items-center justify-between px-3 py-1.5 text-xs font-mono">
+                        <span className={cn(s.duplicate && 'text-muted-foreground')}>
+                          {s.kind === 'match'
+                            ? `Team ${s.row.team_number} · Match ${s.row.match_number}`
+                            : `Team ${s.row.team_number} · Pit`}
+                        </span>
+                        {s.duplicate && (
+                          <Badge variant="outline" className="text-warning border-warning/30 text-[10px]">DUP</Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button
+                    onClick={importScanned}
+                    disabled={importing || freshRows.length === 0}
+                    className="w-full h-14 gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
+                  >
+                    {importing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                    Import {freshRows.length} New {freshRows.length === 1 ? 'Entry' : 'Entries'}
+                    {dupCount > 0 && ` (skip ${dupCount} dup)`}
+                  </Button>
+                </div>
+              )}
             </div>
           </PitSection>
         </div>

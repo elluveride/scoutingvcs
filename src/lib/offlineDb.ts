@@ -1,39 +1,41 @@
 import { openDB, IDBPDatabase } from 'idb';
 
-export interface OfflineMatchEntry {
-  localId: string;
+/**
+ * A match entry waiting to sync.
+ *
+ * Only the columns every season shares are named. The rest of the row is
+ * whatever the active season's fields are called — they are DB column names
+ * already, so the queue can carry them straight through to the upsert without
+ * knowing the game.
+ */
+export interface OfflineMatchEntryBase {
   event_code: string;
   team_number: number;
   match_number: number;
   scouter_id: string;
-  auto_scored_close: number;
-  auto_scored_far: number;
-  auto_fouls_minor: number;
-  auto_fouls_major: number;
-  on_launch_line: boolean;
-  teleop_scored_close: number;
-  teleop_scored_far: number;
-  defense_rating: number;
-  endgame_return: string;
-  penalty_status: string;
   notes: string;
+}
+
+/** What a caller hands to `queueMatchEntry`: the shared columns plus the season's own. */
+export type OfflineMatchEntryInput = OfflineMatchEntryBase & { [column: string]: unknown };
+
+export type OfflineMatchEntry = OfflineMatchEntryInput & {
+  localId: string;
   created_at: string;
   /** 0 = not synced, 1 = synced (IDB indexes don't support booleans) */
   synced: 0 | 1;
-}
+};
 
-/** Pit entry queued while offline. Mirrors the `pit_entries` row plus an optional pending photo. */
-export interface OfflinePitEntry {
-  /** `pit:{event}:{team}` — re-saving the same team offline replaces the queued copy. */
-  localId: string;
+/**
+ * Pit entry queued while offline. Mirrors the `pit_entries` row plus an optional
+ * pending photo. Season-specific capability columns ride along untyped, exactly
+ * as they do for match entries.
+ */
+export interface OfflinePitEntryBase {
   event_code: string;
   team_number: number;
   team_name: string;
   drive_type: string;
-  scores_motifs: boolean;
-  scores_artifacts: boolean;
-  scores_depot: boolean;
-  has_autonomous: boolean;
   auto_consistency: string;
   reliable_auto_leave: string;
   preferred_start: string;
@@ -47,9 +49,16 @@ export interface OfflinePitEntry {
   photo_blob?: Blob | null;
   /** When true, the previous photo at `remove_photo_path` is deleted during sync. */
   remove_photo_path?: string | null;
+}
+
+export type OfflinePitEntryInput = OfflinePitEntryBase & { [column: string]: unknown };
+
+export type OfflinePitEntry = OfflinePitEntryInput & {
+  /** `pit:{event}:{team}` — re-saving the same team offline replaces the queued copy. */
+  localId: string;
   created_at: string;
   synced: 0 | 1;
-}
+};
 
 export interface CachedPitRow {
   event_code: string;
@@ -154,7 +163,7 @@ function getDb() {
 /*──────────────── match queue ────────────────*/
 
 // Queue a match entry for later sync
-export async function queueMatchEntry(entry: Omit<OfflineMatchEntry, 'localId' | 'synced' | 'created_at'>) {
+export async function queueMatchEntry(entry: OfflineMatchEntryInput) {
   const db = await getDb();
   const localId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const full: OfflineMatchEntry = {
@@ -197,7 +206,7 @@ export function pitQueueId(eventCode: string, teamNumber: number) {
 }
 
 /** Queue (or replace) a pit entry for later sync. */
-export async function queuePitEntry(entry: Omit<OfflinePitEntry, 'localId' | 'synced' | 'created_at'>) {
+export async function queuePitEntry(entry: OfflinePitEntryInput) {
   const db = await getDb();
   const full: OfflinePitEntry = {
     ...entry,
