@@ -43,13 +43,13 @@ describe('assertEventCode', () => {
 describe('latestPerMatch', () => {
   it('keeps only the newest entry per team and match', () => {
     const rows = [
-      row({ team_number: 12841, match_number: 1, created_at: '2026-01-01T10:00:00.000Z', teleop_scored_close: 1 }),
-      row({ team_number: 12841, match_number: 1, created_at: '2026-01-01T12:00:00.000Z', teleop_scored_close: 9 }),
+      row({ team_number: 12841, match_number: 1, created_at: '2026-01-01T10:00:00.000Z', teleop_hive_tips: 1 }),
+      row({ team_number: 12841, match_number: 1, created_at: '2026-01-01T12:00:00.000Z', teleop_hive_tips: 9 }),
       row({ team_number: 12841, match_number: 2, created_at: '2026-01-01T11:00:00.000Z' }),
     ];
     const out = latestPerMatch(rows);
     expect(out).toHaveLength(2);
-    expect(out[0].teleop_scored_close).toBe(9);
+    expect(out[0].teleop_hive_tips).toBe(9);
   });
 
   it('sorts by team then match so output is stable', () => {
@@ -81,7 +81,7 @@ describe('groupByTeam', () => {
 describe('summarizeAlliance', () => {
   const scored = (team: number, n: number) =>
     Array.from({ length: n }, (_, i) =>
-      row({ team_number: team, match_number: i + 1, teleop_scored_close: 5, on_launch_line: true }),
+      row({ team_number: team, match_number: i + 1, teleop_hive_tips: 5, auto_leave: true }),
     );
 
   it('adds up both teams and reports how many have data', () => {
