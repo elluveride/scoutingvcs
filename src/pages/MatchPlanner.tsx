@@ -153,7 +153,7 @@ export default function MatchPlanner() {
     <AppLayout>
       <PageHeader
         title="Match Planner"
-        description="Predict scores using DECODE point values"
+        description="Predict scores using BIOBUZZ point values"
       />
 
       {loading ? (
