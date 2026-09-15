@@ -1,5 +1,5 @@
 import type { SeasonConfig } from './types';
-import { POINTS } from '@/lib/prediction';
+import { DECODE_POINTS as POINTS } from '@/lib/prediction';
 
 /**
  * DECODE — official FTC game for the 2025-26 season.
