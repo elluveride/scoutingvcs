@@ -300,12 +300,12 @@ export default function MatchPlanner() {
                         <span>{pred.autoLeavePoints}</span>
                       </div>
                       <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Classified × {POINTS.CLASSIFIED_AUTO}</span>
-                        <span>{pred.autoClassifiedPoints}</span>
+                        <span className="text-muted-foreground">Auto Park ({pred.autoParkRate}%)</span>
+                        <span>{pred.autoParkPoints}</span>
                       </div>
                       <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Overflow × {POINTS.OVERFLOW_AUTO}</span>
-                        <span>{pred.autoOverflowPoints}</span>
+                        <span className="text-muted-foreground">Hive Tips × {POINTS.HIVE_TIP}</span>
+                        <span>{pred.autoHivePoints}</span>
                       </div>
 
                       <div className="flex justify-between items-center pt-1 pb-1 border-b border-border/30">
@@ -313,12 +313,24 @@ export default function MatchPlanner() {
                         <span className="font-bold text-primary">{pred.predictedTeleop} pts</span>
                       </div>
                       <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Classified × {POINTS.CLASSIFIED_TELEOP}</span>
-                        <span>{pred.teleopClassifiedPoints}</span>
+                        <span className="text-muted-foreground">Hive Tips × {POINTS.HIVE_TIP}</span>
+                        <span>{pred.teleopHivePoints}</span>
                       </div>
                       <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Overflow × {POINTS.OVERFLOW_TELEOP}</span>
-                        <span>{pred.teleopOverflowPoints}</span>
+                        <span className="text-muted-foreground">Cell Elements × {POINTS.CELL_REMAINING}</span>
+                        <span>{pred.teleopCellPoints}</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Flower × {POINTS.FLOWER}</span>
+                        <span>{pred.teleopFlowerPoints}</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Bottom Nectar × {POINTS.BOTTOM_NECTAR_BONUS}</span>
+                        <span>{pred.teleopNectarPoints}</span>
+                      </div>
+                      <div className="flex justify-between pl-3">
+                        <span className="text-muted-foreground">Garden × {POINTS.GARDEN}</span>
+                        <span>{pred.teleopGardenPoints}</span>
                       </div>
 
                       <div className="flex justify-between items-center pt-1 pb-1 border-b border-border/30">
@@ -326,16 +338,8 @@ export default function MatchPlanner() {
                         <span className="font-bold text-primary">{pred.predictedEndgame} pts</span>
                       </div>
                       <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Full Return ({pred.fullReturnRate}%)</span>
-                        <span>{round1(pred.fullReturnRate / 100 * POINTS.BASE_FULL)}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Partial ({pred.partialReturnRate}%)</span>
-                        <span>{round1(pred.partialReturnRate / 100 * POINTS.BASE_PARTIAL)}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Lift ({pred.liftRate}%)</span>
-                        <span>{round1(pred.liftRate / 100 * POINTS.BASE_FULL)}</span>
+                        <span className="text-muted-foreground">Park ({pred.fullReturnRate}%)</span>
+                        <span>{round1(pred.fullReturnRate / 100 * POINTS.TELEOP_PARK)}</span>
                       </div>
 
                       <div className="flex justify-between items-center pt-2 border-t border-border/40">
