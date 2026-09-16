@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
@@ -13,21 +13,21 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   Radar, ResponsiveContainer, Legend,
 } from 'recharts';
+import { useSeason } from '@/hooks/useSeason';
+import { aggregateTeam, type TeamSeasonStats } from '@/lib/seasonScoring';
+import { tableColumns } from '@/seasons/fields';
 
-interface TeamCompareStats {
-  teamNumber: number;
-  matchesPlayed: number;
-  avgAutoClose: number;
-  avgAutoFar: number;
-  avgAutoTotal: number;
-  avgTeleopClose: number;
-  avgTeleopFar: number;
-  avgTeleopTotal: number;
-  avgDefense: number;
-  liftPercent: number;
-  fullReturnPercent: number;
-  avgFouls: number;
-  avgTotal: number;
+/** One comparison row. The metric list itself comes from the active season. */
+interface CompareRow {
+  label: string;
+  /** Read a team's value for this metric. */
+  value: (s: TeamSeasonStats) => number;
+  /** Render as a percentage rather than a bare number. */
+  percent?: boolean;
+  /** Lower is better (fouls), so the "best" highlight flips. */
+  lowerIsBetter?: boolean;
+  /** Include on the radar overlay, normalised against the best team shown. */
+  radar?: boolean;
 }
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--alliance-red))', 'hsl(260 60% 60%)'];
@@ -36,9 +36,11 @@ export default function TeamCompare() {
   const { user } = useAuth();
   const { currentEvent } = useEvent();
   const { getTeamName } = useFTCRankings();
+  const season = useSeason();
+  const columns = useMemo(() => tableColumns(season), [season]);
   const [teamInput, setTeamInput] = useState('');
   const [selectedTeams, setSelectedTeams] = useState<number[]>([]);
-  const [teamStats, setTeamStats] = useState<TeamCompareStats[]>([]);
+  const [teamStats, setTeamStats] = useState<TeamSeasonStats[]>([]);
   const [loading, setLoading] = useState(false);
 
   const addTeam = () => {
@@ -73,47 +75,82 @@ export default function TeamCompare() {
       .in('team_number', selectedTeams);
 
     if (data) {
-      const stats: TeamCompareStats[] = selectedTeams.map(teamNumber => {
-        const entries = data.filter(e => e.team_number === teamNumber);
-        const n = entries.length || 1;
-        const sum = (fn: (e: any) => number) => entries.reduce((s, e) => s + fn(e), 0) / n;
-        const round = (v: number) => Math.round(v * 10) / 10;
-
-        return {
-          teamNumber,
-          matchesPlayed: entries.length,
-          avgAutoClose: round(sum(e => e.auto_scored_close)),
-          avgAutoFar: round(sum(e => e.auto_scored_far)),
-          avgAutoTotal: round(sum(e => e.auto_scored_close + e.auto_scored_far)),
-          avgTeleopClose: round(sum(e => e.teleop_scored_close)),
-          avgTeleopFar: round(sum(e => e.teleop_scored_far)),
-          avgTeleopTotal: round(sum(e => e.teleop_scored_close + e.teleop_scored_far)),
-          avgDefense: round(sum(e => e.defense_rating)),
-          liftPercent: entries.length > 0 ? Math.round((entries.filter(e => e.endgame_return === 'lift').length / n) * 100) : 0,
-          fullReturnPercent: entries.length > 0 ? Math.round((entries.filter(e => e.endgame_return === 'full').length / n) * 100) : 0,
-          avgFouls: round(sum(e => e.auto_fouls_minor)),
-          avgTotal: round(sum(e => e.auto_scored_close + e.auto_scored_far + e.teleop_scored_close + e.teleop_scored_far)),
-        };
-      });
-      setTeamStats(stats);
+      // All averaging and pricing happens in seasonScoring, so this page can
+      // never disagree with the Dashboard about what a team is worth.
+      setTeamStats(
+        selectedTeams.map((teamNumber) =>
+          aggregateTeam(
+            season,
+            teamNumber,
+            data.filter((e) => e.team_number === teamNumber) as unknown as Record<string, unknown>[],
+          ),
+        ),
+      );
     }
     setLoading(false);
   };
 
-  const radarData = [
-    { metric: 'Auto Close', ...Object.fromEntries(teamStats.map(t => [t.teamNumber, t.avgAutoClose])) },
-    { metric: 'Auto Far', ...Object.fromEntries(teamStats.map(t => [t.teamNumber, t.avgAutoFar])) },
-    { metric: 'Teleop Close', ...Object.fromEntries(teamStats.map(t => [t.teamNumber, t.avgTeleopClose])) },
-    { metric: 'Teleop Far', ...Object.fromEntries(teamStats.map(t => [t.teamNumber, t.avgTeleopFar])) },
-    { metric: 'Defense', ...Object.fromEntries(teamStats.map(t => [t.teamNumber, t.avgDefense])) },
-    { metric: 'Endgame', ...Object.fromEntries(teamStats.map(t => [t.teamNumber, t.liftPercent / 33.3])) },
+  /**
+   * Comparison metrics for the active season: the phase totals every game has,
+   * then one row per scoring element and achievement the season declares.
+   */
+  const rows: CompareRow[] = [
+    { label: 'Matches', value: (s) => s.matchesPlayed },
+    { label: 'Avg Total', value: (s) => s.avgTotal, radar: true },
+    { label: 'Avg Auto', value: (s) => s.avgAuto, radar: true },
+    { label: 'Avg TeleOp', value: (s) => s.avgTeleop, radar: true },
+    { label: 'Avg Endgame', value: (s) => s.avgEndgame, radar: true },
+    // Column labels are phase-disambiguated: this table has no phase bands, and
+    // two rows both reading "Park" would be unreadable.
+    ...columns
+      .filter((c) => c.type === 'int')
+      .map((c): CompareRow => ({ label: `Avg ${c.uniqueShort}`, value: (s) => s.avg[c.key] ?? 0 })),
+    ...columns
+      .filter((c) => c.type === 'bool')
+      .map((c): CompareRow => ({
+        label: `${c.uniqueShort} %`,
+        value: (s) => s.rate[c.key] ?? 0,
+        percent: true,
+      })),
+    ...season.enums
+      .filter((e) => e.phase === 'endgame' && !e.key.includes('penalty'))
+      .flatMap((e) =>
+        e.options
+          .filter((o) => (season.points.ENDGAME[o.value] ?? 0) > 0)
+          .map((o): CompareRow => ({
+            label: `${o.label} %`,
+            value: (s) => s.rate[`${e.key}:${o.value}`] ?? 0,
+            percent: true,
+          })),
+      ),
+    { label: 'Defense', value: (s) => s.avgDefense, radar: true },
+    { label: 'Consistency %', value: (s) => s.consistency, percent: true, radar: true },
+    { label: 'Failure %', value: (s) => s.penaltyRate, percent: true, lowerIsBetter: true },
+    { label: 'Fouls → opponent', value: (s) => s.avgFoulsGiven, lowerIsBetter: true },
   ];
+
+  /**
+   * Radar overlay. Each axis is scaled to the best team shown (0–100), because
+   * raw points would let one 20-point element swamp every other axis.
+   */
+  const radarData = rows
+    .filter((r) => r.radar)
+    .map((r) => {
+      const values = teamStats.map((t) => r.value(t));
+      const peak = Math.max(1, ...values);
+      return {
+        metric: r.label.replace(/^Avg /, ''),
+        ...Object.fromEntries(
+          teamStats.map((t, i) => [t.teamNumber, Math.round((values[i] / peak) * 100)]),
+        ),
+      };
+    });
 
   return (
     <AppLayout>
       <PageHeader
         title="Compare Teams"
-        description="Side-by-side team comparison for alliance selection"
+        description={`Side-by-side comparison, scored with ${season.name} point values`}
       />
 
       {/* Team Selector */}
@@ -179,34 +216,21 @@ export default function TeamCompare() {
                 </tr>
               </thead>
               <tbody className="font-mono">
-                {[
-                  { label: 'Matches', key: 'matchesPlayed' },
-                  { label: 'Avg Auto', key: 'avgAutoTotal' },
-                  { label: 'Avg TeleOp', key: 'avgTeleopTotal' },
-                  { label: 'Avg Total', key: 'avgTotal' },
-                  { label: 'Auto Close', key: 'avgAutoClose' },
-                  { label: 'Auto Far', key: 'avgAutoFar' },
-                  { label: 'TeleOp Close', key: 'avgTeleopClose' },
-                  { label: 'TeleOp Far', key: 'avgTeleopFar' },
-                  { label: 'Defense', key: 'avgDefense' },
-                  { label: 'Lift %', key: 'liftPercent' },
-                  { label: 'Full Return %', key: 'fullReturnPercent' },
-                  { label: 'Avg Fouls', key: 'avgFouls' },
-                ].map(row => {
-                  const values = teamStats.map(t => (t as any)[row.key] as number);
-                  const best = Math.max(...values);
+                {rows.map((row) => {
+                  const values = teamStats.map((t) => row.value(t));
+                  const best = row.lowerIsBetter ? Math.min(...values) : Math.max(...values);
+                  const uniqueBest = values.filter((v) => v === best).length === 1;
                   return (
-                    <tr key={row.key} className="border-b border-border/50">
+                    <tr key={row.label} className="border-b border-border/50">
                       <td className="py-2 px-3 text-muted-foreground">{row.label}</td>
-                      {teamStats.map((t, i) => {
-                        const val = (t as any)[row.key] as number;
-                        const isBest = val === best && values.filter(v => v === best).length === 1;
-                        return (
-                          <td key={t.teamNumber} className={`text-center py-2 px-3 ${isBest ? 'font-bold text-foreground' : ''}`}>
-                            {row.key.includes('Percent') ? `${val}%` : val}
-                          </td>
-                        );
-                      })}
+                      {teamStats.map((t, i) => (
+                        <td
+                          key={t.teamNumber}
+                          className={`text-center py-2 px-3 ${values[i] === best && uniqueBest ? 'font-bold text-foreground' : ''}`}
+                        >
+                          {row.percent ? `${values[i]}%` : values[i]}
+                        </td>
+                      ))}
                     </tr>
                   );
                 })}

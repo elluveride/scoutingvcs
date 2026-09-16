@@ -19,7 +19,7 @@ import {
   Flame, ShieldCheck, Sparkles, Zap, ParkingSquare, Crosshair, Info, AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { POINTS, predictTeam, type TeamPrediction, type MatchEntryLite } from '@/lib/prediction';
+import { predictTeam, type TeamPrediction, type MatchEntryLite } from '@/lib/prediction';
 import { useSeason } from '@/hooks/useSeason';
 import { computeOPR } from '@/lib/opr';
 import { MissingDataBanner, type TeamMissingInputs } from '@/components/shared/MissingDataBanner';
@@ -59,12 +59,12 @@ interface NexusResponse {
 interface PitRow {
   team_number: number;
   team_name: string;
-  scores_motifs: boolean;
-  scores_artifacts: boolean;
   has_autonomous: boolean;
   reliable_auto_leave: string;
   endgame_consistency: string;
   drive_type: string;
+  /** Season capability columns (can_tip_hive, scores_pollen, …). */
+  [column: string]: unknown;
 }
 
 interface TeamConfidenceDebug {
@@ -126,6 +126,11 @@ export default function PitDisplay() {
   const { user, profile } = useAuth();
   const { currentEvent } = useEvent();
   const season = useSeason();
+  /** What this season calls "made it home at the buzzer". */
+  const endgameLabel =
+    season.toggles.find((t) => t.phase === 'endgame')?.short ??
+    season.enums.find((e) => e.phase === 'endgame' && !e.key.includes('penalty'))?.label ??
+    'Endgame';
   const { toast } = useToast();
   const { rankings, matchScores, refetch: refetchRankings } = useFTCRankings(true);
   const { matches: ftcMatches, refetch: refetchMatches } = useFTCMatches();
@@ -515,7 +520,7 @@ export default function PitDisplay() {
                       <MiniStat label="Endgame" value={myPrediction.predictedEndgame.toFixed(1)} />
                       <MiniStat label="Consistency" value={`${myPrediction.consistency}%`} />
                       <MiniStat label="Leave %" value={`${myPrediction.leaveRate}%`} />
-                      <MiniStat label="Full Park %" value={`${myPrediction.fullReturnRate}%`} />
+                      <MiniStat label={`${endgameLabel} %`} value={`${myPrediction.fullReturnRate}%`} />
                     </div>
                   </div>
                 )}
@@ -1260,8 +1265,7 @@ function TeamBreakdownRow({ teamNumber, isMe, prediction, opr, pit, color, allia
     )}>
       <span className={cn('font-mono px-1.5 py-0.5 rounded text-center', isMe && chipMe)}>{teamNumber}</span>
       <div className="flex flex-wrap gap-1 items-center">
-        {pit?.scores_motifs && <CapChip icon={Sparkles} label="Motif" />}
-        {pit?.scores_artifacts && <CapChip icon={Crosshair} label="Artifact" />}
+        <CapabilityChips pit={pit} />
         {pit?.reliable_auto_leave === 'yes' && <CapChip icon={Zap} label="Leave" tone="success" />}
         {pit?.reliable_auto_leave === 'sometimes' && <CapChip icon={Zap} label="Leave?" tone="warning" />}
         {pit?.endgame_consistency === 'high' && <CapChip icon={ParkingSquare} label="Park" tone="success" />}
@@ -1302,6 +1306,28 @@ function TeamBreakdownRow({ teamNumber, isMe, prediction, opr, pit, color, allia
         </Tooltip>
       </div>
     </div>
+  );
+}
+
+/**
+ * Capability chips for one team, built from the active season's pit config.
+ *
+ * Previously hard-coded to DECODE's motif/artifact toggles, which meant a
+ * BIOBUZZ robot that tips hives showed no chips at all.
+ */
+function CapabilityChips({ pit }: { pit?: PitRow }) {
+  const season = useSeason();
+  if (!pit) return null;
+  return (
+    <>
+      {season.pit.capabilities
+        .filter((c) => !!pit[c.key])
+        .map((c) => (
+          // "Scores Nectar" / "Can Tip Hive" read better as "Nectar" / "Tip Hive"
+          // on a chip that already means "this robot can".
+          <CapChip key={c.key} icon={Sparkles} label={c.label.replace(/^(Scores|Can|Has)\s+/i, '')} />
+        ))}
+    </>
   );
 }
 
@@ -1374,8 +1400,7 @@ function TeamInsightCard({ teamNumber, isMe, color, prediction, opr, pit }: {
       {pit?.team_name && <p className="text-[11px] text-muted-foreground truncate">{pit.team_name}</p>}
 
       <div className="flex flex-wrap gap-1 mt-1.5">
-        {pit?.scores_motifs && <CapChip icon={Sparkles} label="Motifs" />}
-        {pit?.scores_artifacts && <CapChip icon={Crosshair} label="Artifacts" />}
+        <CapabilityChips pit={pit} />
         {pit?.reliable_auto_leave === 'yes' && <CapChip icon={Zap} label="Leave" tone="success" />}
         {pit?.reliable_auto_leave === 'sometimes' && <CapChip icon={Zap} label="Leave?" tone="warning" />}
         {pit?.endgame_consistency === 'high' && <CapChip icon={ParkingSquare} label="Park" tone="success" />}

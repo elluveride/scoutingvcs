@@ -3,7 +3,7 @@ import { z } from "zod";
 import { supabaseForUser, notAuthenticated } from "../supabase";
 import {
   assertEventCode, compactPrediction, groupByTeam, latestPerMatch, predictFor,
-  toolError, toolResult, type MatchRow,
+  seasonForEvent, toolError, toolResult, type MatchRow,
 } from "../scouting";
 
 export default defineTool({
@@ -30,6 +30,8 @@ export default defineTool({
       return toolError(e instanceof Error ? e.message : "Invalid event code");
     }
 
+    const season = await seasonForEvent(supabase, eventCode);
+
     const [matchRes, pitRes] = await Promise.all([
       supabase.from("match_entries").select("*").eq("event_code", eventCode),
       supabase.from("pit_entries").select("team_number, team_name").eq("event_code", eventCode),
@@ -41,12 +43,15 @@ export default defineTool({
     const floor = min_matches ?? 0;
 
     const ranking = [...byTeam.entries()]
-      .map(([team, rows]) => ({ ...compactPrediction(predictFor(team, rows)), team_name: names.get(team) ?? null }))
+      .map(([team, rows]) => ({
+        ...compactPrediction(predictFor(team, rows, season.id)),
+        team_name: names.get(team) ?? null,
+      }))
       .filter((t) => t.matches_scouted >= floor)
       .sort((a, b) => b.predicted_total - a.predicted_total)
       .slice(0, limit ?? 50)
       .map((t, i) => ({ rank: i + 1, ...t }));
 
-    return toolResult({ event_code: eventCode, teams_ranked: ranking.length, ranking });
+    return toolResult({ event_code: eventCode, season: season.id, teams_ranked: ranking.length, ranking });
   },
 });

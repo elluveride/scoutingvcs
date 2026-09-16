@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,32 +16,61 @@ import {
 } from 'recharts';
 import { StatCard } from '@/components/team-detail/TeamStatCards';
 import { MatchLogTable } from '@/components/team-detail/MatchLogTable';
+import { useSeason } from '@/hooks/useSeason';
+import { scoreEntry, aggregateTeam } from '@/lib/seasonScoring';
+import { tableColumns } from '@/seasons/fields';
 import { AutoPathsViewer } from '@/components/team-detail/AutoPathsViewer';
 import type { DrawnPath } from '@/components/pit-scout/DrawableFieldMap';
 
+/**
+ * One scouted match. Only the shared columns are named — the scoring columns
+ * belong to the active season and are read through its config.
+ */
 interface MatchEntry {
   match_number: number;
-  auto_scored_close: number;
-  auto_scored_far: number;
   auto_fouls_minor: number;
-  on_launch_line: boolean;
-  teleop_scored_close: number;
-  teleop_scored_far: number;
+  auto_fouls_major: number;
   defense_rating: number;
-  endgame_return: string;
   penalty_status: string;
   notes: string;
-  created_at: string;
+  [column: string]: unknown;
 }
+
+/** Stacked-series palette; cycles when a season has more elements than colours. */
+const ELEMENT_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--vcs-silver))',
+  'hsl(var(--alliance-blue) / 0.7)',
+  'hsl(260 60% 60%)',
+  'hsl(142 70% 45%)',
+  'hsl(var(--alliance-red) / 0.7)',
+];
 
 export default function TeamDetail() {
   const { user, profile } = useAuth();
   const { currentEvent } = useEvent();
   const { getTeamName } = useFTCRankings();
+  const season = useSeason();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const teamNumber = searchParams.get('team');
   const teamName = teamNumber ? getTeamName(parseInt(teamNumber)) : null;
+
+  /** Per-element scoring columns for this season, used by the charts below. */
+  const elementColumns = useMemo(
+    () => tableColumns(season).filter((c) => c.type === 'int'),
+    [season],
+  );
+  /**
+   * Toggle columns by key, for their phase-disambiguated labels.
+   * A record rather than a Map: lucide-react's `Map` icon shadows the global.
+   */
+  const toggleLabels = useMemo(
+    () => Object.fromEntries(
+      tableColumns(season).filter((c) => c.type === 'bool').map((c) => [c.key, c.uniqueShort]),
+    ) as Record<string, string>,
+    [season],
+  );
 
   const [entries, setEntries] = useState<MatchEntry[]>([]);
   const [autoPaths, setAutoPaths] = useState<DrawnPath[]>([]);
@@ -120,17 +149,18 @@ export default function TeamDetail() {
   if (!currentEvent) return <Navigate to="/event-select" replace />;
   if (!teamNumber) return <Navigate to="/dashboard" replace />;
 
-  const chartData = entries.map(e => ({
-    match: `M${e.match_number}`,
-    autoClose: e.auto_scored_close,
-    autoFar: e.auto_scored_far,
-    autoTotal: e.auto_scored_close + e.auto_scored_far,
-    teleopClose: e.teleop_scored_close,
-    teleopFar: e.teleop_scored_far,
-    teleopTotal: e.teleop_scored_close + e.teleop_scored_far,
-    total: e.auto_scored_close + e.auto_scored_far + e.teleop_scored_close + e.teleop_scored_far,
-    fouls: e.auto_fouls_minor,
-    defense: e.defense_rating,
+  // Every chart below is built from the season config: a new game changes the
+  // series and the radar axes without a line of work here.
+  const scored = entries.map((e) => ({ entry: e, score: scoreEntry(season, e) }));
+
+  const chartData = scored.map(({ entry, score }) => ({
+    match: `M${entry.match_number}`,
+    auto: score.auto,
+    teleop: score.teleop,
+    endgame: score.endgame,
+    total: score.total,
+    // Per-element counts, keyed by column name, for the stacked breakdown.
+    ...Object.fromEntries(elementColumns.map((c) => [c.key, Number(entry[c.key] ?? 0)])),
   }));
 
   const avg = (fn: (e: MatchEntry) => number) =>
@@ -138,31 +168,40 @@ export default function TeamDetail() {
       ? Math.round((entries.reduce((s, e) => s + fn(e), 0) / entries.length) * 10) / 10
       : 0;
 
+  const stats = aggregateTeam(season, parseInt(teamNumber ?? '0', 10), entries as unknown as Record<string, unknown>[]);
+
+  /**
+   * Radar axes, normalised to each element's own observed ceiling so one
+   * 20-point element doesn't flatten the rest of the shape.
+   */
   const radarData = [
-    { metric: 'Auto Close', value: avg(e => e.auto_scored_close), max: 10 },
-    { metric: 'Auto Far', value: avg(e => e.auto_scored_far), max: 10 },
-    { metric: 'Teleop Close', value: avg(e => e.teleop_scored_close), max: 10 },
-    { metric: 'Teleop Far', value: avg(e => e.teleop_scored_far), max: 10 },
-    { metric: 'Defense', value: avg(e => e.defense_rating), max: 3 },
-    {
-      metric: 'Endgame',
-      value: avg(e => (e.endgame_return === 'lift' ? 3 : e.endgame_return === 'full' ? 2 : e.endgame_return === 'partial' ? 1 : 0)),
-      max: 3,
-    },
+    ...elementColumns.map((c) => {
+      const value = stats.avg[c.key] ?? 0;
+      const observedMax = Math.max(1, ...entries.map((e) => Number(e[c.key] ?? 0)));
+      return { metric: c.uniqueShort, value, max: observedMax };
+    }),
+    ...season.toggles
+      .filter((t) => (t.role ?? 'score') === 'score')
+      .map((t) => ({
+        metric: toggleLabels[t.key] ?? t.label,
+        value: (stats.rate[t.key] ?? 0) / 100,
+        max: 1,
+      })),
+    { metric: 'Defense', value: stats.avgDefense, max: 3 },
   ];
 
-  const endgameCounts = {
-    lift: entries.filter(e => e.endgame_return === 'lift').length,
-    full: entries.filter(e => e.endgame_return === 'full').length,
-    partial: entries.filter(e => e.endgame_return === 'partial').length,
-    none: entries.filter(e => e.endgame_return === 'not_returned').length,
-  };
-
-  const endgameBarData = [
-    { status: 'Lift', count: endgameCounts.lift },
-    { status: 'Full', count: endgameCounts.full },
-    { status: 'Partial', count: endgameCounts.partial },
-    { status: 'None', count: endgameCounts.none },
+  /** Achievement rates — replaces DECODE's fixed lift/full/partial bar chart. */
+  const achievementBarData = [
+    ...season.toggles
+      .filter((t) => (t.role ?? 'score') === 'score')
+      .map((t) => ({ status: toggleLabels[t.key] ?? t.label, count: stats.rate[t.key] ?? 0 })),
+    ...season.enums
+      .filter((e) => e.phase === 'endgame' && !e.key.includes('penalty'))
+      .flatMap((e) =>
+        e.options
+          .filter((o) => (season.points.ENDGAME[o.value] ?? 0) > 0)
+          .map((o) => ({ status: o.label, count: stats.rate[`${e.key}:${o.value}`] ?? 0 })),
+      ),
   ];
 
   const chartStyle = {
@@ -196,10 +235,10 @@ export default function TeamDetail() {
         <div className="space-y-6">
           {/* Summary Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatCard icon={Bot} label="Avg Auto" value={avg(e => e.auto_scored_close + e.auto_scored_far)} color="text-primary" />
-            <StatCard icon={Gamepad2} label="Avg TeleOp" value={avg(e => e.teleop_scored_close + e.teleop_scored_far)} color="text-secondary" />
-            <StatCard icon={Flag} label="Lift %" value={`${entries.length > 0 ? Math.round((endgameCounts.lift / entries.length) * 100) : 0}%`} color="text-accent" />
-            <StatCard icon={TrendingUp} label="Avg Total" value={avg(e => e.auto_scored_close + e.auto_scored_far + e.teleop_scored_close + e.teleop_scored_far)} color="text-foreground" />
+            <StatCard icon={Bot} label="Avg Auto" value={stats.avgAuto} color="text-primary" />
+            <StatCard icon={Gamepad2} label="Avg TeleOp" value={stats.avgTeleop} color="text-secondary" />
+            <StatCard icon={Flag} label="Avg Endgame" value={stats.avgEndgame} color="text-accent" />
+            <StatCard icon={TrendingUp} label="Avg Total" value={stats.avgTotal} color="text-foreground" />
           </div>
 
           {/* Scoring Trend */}
@@ -213,8 +252,8 @@ export default function TeamDetail() {
                   <YAxis stroke="hsl(220 10% 55%)" fontSize={12} />
                   <Tooltip contentStyle={chartStyle} />
                   <Legend />
-                  <Line type="monotone" dataKey="autoTotal" name="Auto" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="teleopTotal" name="TeleOp" stroke="hsl(var(--vcs-silver))" strokeWidth={2} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="auto" name="Auto" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="teleop" name="TeleOp" stroke="hsl(var(--vcs-silver))" strokeWidth={2} dot={{ r: 4 }} />
                   <Line type="monotone" dataKey="total" name="Total" stroke="hsl(260 60% 60%)" strokeWidth={2} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -239,15 +278,15 @@ export default function TeamDetail() {
 
             {/* Endgame Breakdown */}
             <div className="data-card">
-              <h3 className="font-display text-lg mb-4">Endgame Breakdown</h3>
+              <h3 className="font-display text-lg mb-4">Achievement Rates</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={endgameBarData}>
+                  <BarChart data={achievementBarData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 20%)" />
                     <XAxis dataKey="status" stroke="hsl(220 10% 55%)" fontSize={12} />
-                    <YAxis stroke="hsl(220 10% 55%)" fontSize={12} allowDecimals={false} />
-                    <Tooltip contentStyle={chartStyle} />
-                    <Bar dataKey="count" name="Count" fill="hsl(260 60% 60%)" radius={[6, 6, 0, 0]} />
+                    <YAxis stroke="hsl(220 10% 55%)" fontSize={12} allowDecimals={false} unit="%" domain={[0, 100]} />
+                    <Tooltip contentStyle={chartStyle} formatter={(v: number) => [`${v}%`, 'Rate']} />
+                    <Bar dataKey="count" name="Rate" fill="hsl(260 60% 60%)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -265,21 +304,28 @@ export default function TeamDetail() {
             </div>
           )}
 
-          {/* Per-Match Close/Far Breakdown */}
+          {/* Per-match element breakdown. One stacked series per scoring column
+              the season declares, so the chart follows the game. */}
           <div className="data-card">
-            <h3 className="font-display text-lg mb-4">Close vs Far Scoring</h3>
+            <h3 className="font-display text-lg mb-4">Scoring by Element</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 20%)" />
                   <XAxis dataKey="match" stroke="hsl(220 10% 55%)" fontSize={12} />
-                  <YAxis stroke="hsl(220 10% 55%)" fontSize={12} />
+                  <YAxis stroke="hsl(220 10% 55%)" fontSize={12} allowDecimals={false} />
                   <Tooltip contentStyle={chartStyle} />
                   <Legend />
-                  <Bar dataKey="autoClose" name="Auto Close" fill="hsl(var(--primary))" stackId="auto" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="autoFar" name="Auto Far" fill="hsl(var(--alliance-blue) / 0.6)" stackId="auto" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="teleopClose" name="TeleOp Close" fill="hsl(var(--vcs-silver))" stackId="teleop" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="teleopFar" name="TeleOp Far" fill="hsl(var(--vcs-silver) / 0.6)" stackId="teleop" radius={[6, 6, 0, 0]} />
+                  {elementColumns.map((col, i) => (
+                    <Bar
+                      key={col.key}
+                      dataKey={col.key}
+                      name={col.uniqueShort}
+                      stackId="elements"
+                      fill={ELEMENT_COLORS[i % ELEMENT_COLORS.length]}
+                      radius={i === elementColumns.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]}
+                    />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </div>

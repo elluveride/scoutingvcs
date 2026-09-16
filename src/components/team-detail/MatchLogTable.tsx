@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -6,19 +6,22 @@ import {
   Tooltip, TooltipContent, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { MessageSquare } from 'lucide-react';
+import { useSeason } from '@/hooks/useSeason';
+import { tableColumns } from '@/seasons/fields';
+import { scoreEntry } from '@/lib/seasonScoring';
 
+/**
+ * One logged match. Only the columns every season shares are named; the scoring
+ * columns come from the active game's config.
+ */
 interface MatchLogEntry {
   match_number: number;
-  auto_scored_close: number;
-  auto_scored_far: number;
-  teleop_scored_close: number;
-  teleop_scored_far: number;
   auto_fouls_minor: number;
-  on_launch_line: boolean;
+  auto_fouls_major?: number;
   defense_rating: number;
-  endgame_return: string;
   penalty_status: string;
   notes?: string;
+  [column: string]: unknown;
 }
 
 interface MatchLogTableProps {
@@ -26,6 +29,9 @@ interface MatchLogTableProps {
 }
 
 export function MatchLogTable({ entries }: MatchLogTableProps) {
+  const season = useSeason();
+  const columns = useMemo(() => tableColumns(season), [season]);
+
   if (entries.length === 0) return null;
 
   return (
@@ -36,14 +42,14 @@ export function MatchLogTable({ entries }: MatchLogTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead className="font-semibold">Match</TableHead>
-              <TableHead className="font-semibold text-center">Auto C</TableHead>
-              <TableHead className="font-semibold text-center">Auto F</TableHead>
-              <TableHead className="font-semibold text-center">Tel C</TableHead>
-              <TableHead className="font-semibold text-center">Tel F</TableHead>
-              <TableHead className="font-semibold text-center">Fouls</TableHead>
-              <TableHead className="font-semibold text-center">Line</TableHead>
+              {columns.map((col) => (
+                <TableHead key={col.key} className="font-semibold text-center" title={col.label}>
+                  {col.uniqueShort}
+                </TableHead>
+              ))}
+              <TableHead className="font-semibold text-center" title="Minor / major fouls">Fouls</TableHead>
               <TableHead className="font-semibold text-center">Def</TableHead>
-              <TableHead className="font-semibold text-center">End</TableHead>
+              <TableHead className="font-semibold text-center" title={`Total points (${season.name})`}>Pts</TableHead>
               <TableHead className="font-semibold text-center">Pen</TableHead>
               <TableHead className="font-semibold text-center">Notes</TableHead>
             </TableRow>
@@ -52,22 +58,37 @@ export function MatchLogTable({ entries }: MatchLogTableProps) {
             {entries.map((entry) => (
               <TableRow key={entry.match_number}>
                 <TableCell className="font-mono font-semibold">M{entry.match_number}</TableCell>
-                <TableCell className="text-center">{entry.auto_scored_close}</TableCell>
-                <TableCell className="text-center">{entry.auto_scored_far}</TableCell>
-                <TableCell className="text-center">{entry.teleop_scored_close}</TableCell>
-                <TableCell className="text-center">{entry.teleop_scored_far}</TableCell>
-                <TableCell className="text-center text-warning">{entry.auto_fouls_minor}</TableCell>
+
+                {columns.map((col) => {
+                  const value = entry[col.key];
+                  return (
+                    <TableCell key={col.key} className="text-center">
+                      {col.type === 'bool' ? (
+                        <span className={value ? 'text-primary font-semibold' : 'text-muted-foreground'}>
+                          {value ? 'YES' : '—'}
+                        </span>
+                      ) : col.type === 'enum' ? (
+                        <span className="capitalize text-xs">
+                          {String(value ?? '').replace(/_/g, ' ') || '—'}
+                        </span>
+                      ) : (
+                        Number(value ?? 0)
+                      )}
+                    </TableCell>
+                  );
+                })}
+
                 <TableCell className="text-center">
-                  <span className={entry.on_launch_line ? 'text-primary font-semibold' : 'text-muted-foreground'}>
-                    {entry.on_launch_line ? 'ON' : 'OFF'}
-                  </span>
+                  <span className="text-warning">{entry.auto_fouls_minor}</span>
+                  /
+                  <span className="text-destructive">{entry.auto_fouls_major ?? 0}</span>
                 </TableCell>
                 <TableCell className="text-center font-mono">{entry.defense_rating}</TableCell>
-                <TableCell className="text-center capitalize text-xs">
-                  {entry.endgame_return.replace('_', ' ')}
+                <TableCell className="text-center font-mono font-semibold">
+                  {scoreEntry(season, entry).total}
                 </TableCell>
                 <TableCell className="text-center capitalize text-xs">
-                  {entry.penalty_status === 'none' ? '—' : entry.penalty_status.replace('_', ' ')}
+                  {entry.penalty_status === 'none' ? '—' : entry.penalty_status.replace(/_/g, ' ')}
                 </TableCell>
                 <TableCell className="text-center">
                   {entry.notes ? (

@@ -125,3 +125,116 @@ export function defaultFor(field: FieldSpec): number | boolean | string {
 export function emptyRecord(fields: FieldSpec[]): Record<string, number | boolean | string> {
   return Object.fromEntries(fields.map((f) => [f.key, defaultFor(f)]));
 }
+
+/*──────────────────────────────────────────────────────────────
+  Table columns
+
+  The dense, read-only surfaces — Spreadsheet, match log, CSV export —
+  all want the same thing: the season's scoring columns, grouped by
+  phase, with headers short enough to fit. Deriving it once here keeps
+  those three agreeing about what a row contains.
+──────────────────────────────────────────────────────────────*/
+
+export interface TableColumn extends FieldSpec {
+  phase: 'auto' | 'teleop' | 'endgame';
+  /**
+   * Compact header, for a table whose own layout already says which phase the
+   * column belongs to (the Spreadsheet's phase bands).
+   */
+  short: string;
+  /**
+   * Compact header that stands alone. Identical to `short` unless another phase
+   * uses the same word — BIOBUZZ has "Hive" in auto and teleop, and "Park" in
+   * auto and endgame — in which case it gains a phase prefix. Charts, legends
+   * and flat tables want this one: two radar axes both reading "Park" is worse
+   * than a longer label.
+   */
+  uniqueShort: string;
+  /** Integer columns can be sorted on; booleans and text are not worth it. */
+  sortable: boolean;
+}
+
+const PHASE_PREFIX = { auto: 'A', teleop: 'T', endgame: 'E' } as const;
+
+/** Words that carry no information in a four-character table header. */
+const FILLER = /\b(elements?|bonus(es)?|remaining|scored|tips?|status|rating)\b/gi;
+
+/** Fallback when a season field declares no `short`. */
+export function shortLabel(label: string): string {
+  const stripped = label
+    .replace(/^(auto|teleop|endgame)\s+/i, '')
+    .replace(FILLER, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const source = stripped || label.replace(/^(auto|teleop|endgame)\s+/i, '').trim() || label;
+  return source.split(' ')[0];
+}
+
+/**
+ * Scoring columns for a season, in phase order. Fouls, defense, penalty and
+ * notes are excluded — every surface renders those in its own fixed block
+ * because they mean the same thing whatever the game.
+ */
+export function tableColumns(season: SeasonConfig): TableColumn[] {
+  const columns = rawTableColumns(season);
+
+  // Disambiguate only the labels that actually collide, so unique ones stay short.
+  const seen = new Map<string, number>();
+  for (const c of columns) seen.set(c.short, (seen.get(c.short) ?? 0) + 1);
+
+  return columns.map((c) => ({
+    ...c,
+    uniqueShort: (seen.get(c.short) ?? 0) > 1 ? `${PHASE_PREFIX[c.phase]}. ${c.short}` : c.short,
+  }));
+}
+
+function rawTableColumns(season: SeasonConfig): Omit<TableColumn, 'uniqueShort'>[] {
+  const enumKeys = new Set(season.enums.map((e) => e.key));
+  const phases: ('auto' | 'teleop' | 'endgame')[] = ['auto', 'teleop', 'endgame'];
+
+  return phases.flatMap((phase) => [
+    ...season.counters
+      .filter((c) => c.phase === phase && (c.role ?? 'score') === 'score' && !enumKeys.has(c.key))
+      .map((c): Omit<TableColumn, 'uniqueShort'> => ({
+        key: c.key,
+        label: c.label,
+        short: c.short ?? shortLabel(c.label),
+        phase,
+        type: 'int',
+        max: c.max ?? 999,
+        sortable: true,
+      })),
+    ...season.toggles
+      .filter((t) => t.phase === phase)
+      .map((t): Omit<TableColumn, 'uniqueShort'> => ({
+        key: t.key,
+        label: t.label,
+        short: t.short ?? shortLabel(t.label),
+        phase,
+        type: 'bool',
+        sortable: false,
+      })),
+    // Endgame enums (DECODE's return status) are a real scoring column.
+    ...season.enums
+      .filter((e) => e.phase === phase && !e.key.includes('penalty') && !e.key.includes('defense'))
+      .map((e): Omit<TableColumn, 'uniqueShort'> => ({
+        key: e.key,
+        label: e.label,
+        short: e.label.split(' ')[0],
+        phase,
+        type: 'enum',
+        options: e.options.map((o) => o.value),
+        sortable: false,
+      })),
+  ]);
+}
+
+/** Columns for one phase, for a table that groups its headers. */
+export function tableColumnsByPhase(season: SeasonConfig) {
+  const cols = tableColumns(season);
+  return {
+    auto: cols.filter((c) => c.phase === 'auto'),
+    teleop: cols.filter((c) => c.phase === 'teleop'),
+    endgame: cols.filter((c) => c.phase === 'endgame'),
+  };
+}

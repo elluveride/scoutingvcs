@@ -2,8 +2,8 @@ import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser, notAuthenticated } from "../supabase";
 import {
-  assertEventCode, groupByTeam, latestPerMatch, summarizeAlliance, toolError, toolResult,
-  type MatchRow,
+  assertEventCode, groupByTeam, latestPerMatch, seasonForEvent, summarizeAlliance,
+  toolError, toolResult, type MatchRow,
 } from "../scouting";
 
 export default defineTool({
@@ -30,6 +30,8 @@ export default defineTool({
       return toolError(e instanceof Error ? e.message : "Invalid event code");
     }
 
+    const season = await seasonForEvent(supabase, eventCode);
+
     const teams = [...new Set([...red_teams, ...blue_teams])];
     const { data, error } = await supabase
       .from("match_entries")
@@ -39,11 +41,12 @@ export default defineTool({
     if (error) return toolError(error.message);
 
     const byTeam = groupByTeam(latestPerMatch((data ?? []) as MatchRow[]));
-    const red = summarizeAlliance(red_teams, byTeam);
-    const blue = summarizeAlliance(blue_teams, byTeam);
+    const red = summarizeAlliance(red_teams, byTeam, season.id);
+    const blue = summarizeAlliance(blue_teams, byTeam, season.id);
 
     return toolResult({
       event_code: eventCode,
+      season: season.id,
       red,
       blue,
       favored:
