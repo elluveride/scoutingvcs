@@ -153,13 +153,37 @@ function SeasonCard({ season, active }: { season: SeasonConfig; active: boolean 
 
 export default function SeasonSetup() {
   const { user, isAdmin } = useAuth();
-  const { currentEvent } = useEvent();
+  const { currentEvent, setEventDisabledFields } = useEvent();
   const season = useSeason();
+  const { toast } = useToast();
+  const [savingField, setSavingField] = useState<string | null>(null);
 
   if (!user) return <Navigate to="/auth" replace />;
   if (!currentEvent) return <Navigate to="/event-select" replace />;
 
-  const scoutFields = matchFields(season);
+  // The full, unfiltered season — the table has to keep listing switched-off
+  // fields so they can be turned back on. `season` (from useSeason) is what
+  // the rest of the app now uses, with the disabled ones already removed.
+  const rawSeason = seasonById(currentEvent.seasonId);
+  const disabledFields = currentEvent.disabledFields ?? [];
+
+  const toggleField = async (key: string, enabled: boolean) => {
+    const next = enabled
+      ? disabledFields.filter((k) => k !== key)
+      : [...disabledFields, key];
+    setSavingField(key);
+    const { error } = await setEventDisabledFields(next);
+    setSavingField(null);
+    if (error) {
+      toast({
+        title: 'Could not update scoring field',
+        description: error.message || 'Only an admin can change the scouting fields.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const scoutFields = matchFields(rawSeason);
   const capabilities = season.pit.capabilities;
 
   return (
@@ -201,9 +225,17 @@ export default function SeasonSetup() {
         <PitSection title="Scoring" icon={ListChecks} collapsible>
           <p className="text-sm text-muted-foreground mb-3">
             These are the values the Dashboard ranking and the Match Planner prediction run on.
-            They come from the season config, so both screens always agree.
+            They come from the season config, so both screens always agree. Flip a field's switch
+            to drop it from this event — the scout form, spreadsheet, QR payloads, and ranking all
+            treat it as if it did not exist.
           </p>
-          <ScoringTable season={season} />
+          <ScoringTable
+            season={rawSeason}
+            disabled={disabledFields}
+            onToggle={toggleField}
+            canEdit={isAdmin}
+            savingKey={savingField}
+          />
 
           <div className="mt-3 flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2.5">
             <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
@@ -221,15 +253,21 @@ export default function SeasonSetup() {
         {/* What the scout sees */}
         <PitSection title="Match Scout Fields" icon={ListChecks} collapsible>
           <div className="flex flex-wrap gap-1.5">
-            {scoutFields.map((f) => (
-              <span
-                key={f.key}
-                className="px-2 py-1 rounded border border-border bg-muted/30 text-[11px] font-mono text-muted-foreground"
-                title={`${f.key} · ${f.type}`}
-              >
-                {f.label}
-              </span>
-            ))}
+            {scoutFields.map((f) => {
+              const isOff = disabledFields.includes(f.key);
+              return (
+                <span
+                  key={f.key}
+                  className={cn(
+                    'px-2 py-1 rounded border border-border bg-muted/30 text-[11px] font-mono text-muted-foreground',
+                    isOff && 'opacity-50 line-through',
+                  )}
+                  title={`${f.key} · ${f.type}${isOff ? ' · switched off' : ''}`}
+                >
+                  {f.label}
+                </span>
+              );
+            })}
           </div>
         </PitSection>
 
