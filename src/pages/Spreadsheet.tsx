@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
@@ -25,10 +25,20 @@ import { useToast } from '@/hooks/use-toast';
 import { DataExportButtons } from '@/components/data/DataExportButtons';
 import { DataQualityAlerts } from '@/components/data/DataQualityAlerts';
 import { SpreadsheetFilters } from '@/components/spreadsheet/SpreadsheetFilters';
-import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
+import type { PenaltyStatus } from '@/types/scouting';
+import { useSeason } from '@/hooks/useSeason';
+import { tableColumnsByPhase, type TableColumn } from '@/seasons/fields';
+import { scoreEntry } from '@/lib/seasonScoring';
+import { detectMatchConflicts, type ConflictRow } from '@/lib/missingData';
 
 const PRIVILEGED_TEAMS = [12841, 2844];
 
+/**
+ * One scouted row.
+ *
+ * Only the columns every season shares are named; the scoring columns depend on
+ * the active game and are read through `tableColumns(season)`.
+ */
 interface MatchRow {
   id: string;
   event_code: string;
@@ -36,21 +46,17 @@ interface MatchRow {
   team_number: number;
   scouter_id: string;
   scouter_name: string;
-  auto_scored_close: number;
-  auto_scored_far: number;
   auto_fouls_minor: number;
   auto_fouls_major: number;
-  on_launch_line: boolean;
-  teleop_scored_close: number;
-  teleop_scored_far: number;
   defense_rating: number;
-  endgame_return: EndgameReturnStatus;
   penalty_status: PenaltyStatus;
   notes: string;
   created_at: string;
+  [column: string]: unknown;
 }
 
-type SortKey = 'match_number' | 'team_number' | 'auto_scored_close' | 'auto_scored_far' | 'teleop_scored_close' | 'teleop_scored_far' | 'defense_rating';
+/** Any numeric column can be sorted on, so this is a column name. */
+type SortKey = string;
 type SortDir = 'asc' | 'desc';
 
 export default function Spreadsheet() {
@@ -59,6 +65,15 @@ export default function Spreadsheet() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { getTeamName } = useFTCRankings();
+  const season = useSeason();
+
+  // Score columns follow the active season; the meta / fouls / endgame-status
+  // blocks around them are the same whatever the game.
+  const columns = useMemo(() => tableColumnsByPhase(season), [season]);
+  const allColumns = useMemo(
+    () => [...columns.auto, ...columns.teleop, ...columns.endgame],
+    [columns],
+  );
   const [entries, setEntries] = useState<MatchRow[]>([]);
   const [allEntries, setAllEntries] = useState<MatchRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -197,6 +212,19 @@ export default function Spreadsheet() {
     [entries]
   );
 
+  /**
+   * Sorts on any numeric column the season declares, plus the synthetic
+   * `__total` column (points for the match, which no single column holds).
+   */
+  const compareBySortKey = useCallback((a: MatchRow, b: MatchRow) => {
+    const valueOf = (row: MatchRow) =>
+      sortKey === '__total' ? scoreEntry(season, row).total : Number(row[sortKey] ?? 0);
+    const aVal = valueOf(a);
+    const bVal = valueOf(b);
+    const cmp = Number.isFinite(aVal) && Number.isFinite(bVal) ? aVal - bVal : 0;
+    return sortDir === 'asc' ? cmp : -cmp;
+  }, [sortKey, sortDir, season]);
+
   // Filtered + sorted entries
   const filteredEntries = useMemo(() => {
     let result = entries;
@@ -214,15 +242,10 @@ export default function Spreadsheet() {
       result = result.filter(e => e.scouter_name === scouterFilter);
     }
 
-    result.sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
-      const cmp = typeof aVal === 'number' && typeof bVal === 'number' ? aVal - bVal : 0;
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
+    result.sort(compareBySortKey);
 
     return result;
-  }, [entries, teamFilter, matchMin, matchMax, scouterFilter, sortKey, sortDir]);
+  }, [entries, teamFilter, matchMin, matchMax, scouterFilter, compareBySortKey]);
 
   // Detect duplicate entries (same match + team + scouter) AND
   // cross-scouter conflicts (same match + team, different totals between scouters).
@@ -230,7 +253,6 @@ export default function Spreadsheet() {
     const dupes = new Set<string>();
     const conflicts = new Set<string>();
     const dupeKey = new Map<string, string[]>();        // match-team-scouter -> ids
-    const matchTeamMap = new Map<string, MatchRow[]>(); // match-team -> rows (any scouter)
 
     entries.forEach(e => {
       const dk = `${e.match_number}-${e.team_number}-${e.scouter_id}`;
@@ -238,28 +260,19 @@ export default function Spreadsheet() {
       existing.push(e.id);
       dupeKey.set(dk, existing);
 
-      const mk = `${e.match_number}-${e.team_number}`;
-      const list = matchTeamMap.get(mk) || [];
-      list.push(e);
-      matchTeamMap.set(mk, list);
     });
 
     dupeKey.forEach(ids => { if (ids.length > 1) ids.forEach(id => dupes.add(id)); });
 
-    // Conflict = ≥2 distinct scouters scouted same match/team and totals differ by ≥4 pts
-    matchTeamMap.forEach(rows => {
-      const distinctScouters = new Set(rows.map(r => r.scouter_id));
-      if (distinctScouters.size < 2) return;
-      const totals = rows.map(r =>
-        r.auto_scored_close + r.auto_scored_far + r.teleop_scored_close + r.teleop_scored_far,
-      );
-      const min = Math.min(...totals);
-      const max = Math.max(...totals);
-      if (max - min >= 4) rows.forEach(r => conflicts.add(r.id));
-    });
+    // Conflict = two scouters' totals for the same match/team differ by >= 4
+    // points, priced with the active season. Shared with the rest of the app so
+    // "conflict" means one thing — under BIOBUZZ a single hive tip is already 20.
+    for (const id of detectMatchConflicts(season, entries as unknown as ConflictRow[])) {
+      conflicts.add(id);
+    }
 
     return { duplicateIds: dupes, conflictIds: conflicts };
-  }, [entries]);
+  }, [entries, season]);
 
   // Apply filters to all entries too
   const filteredAllEntries = useMemo(() => {
@@ -267,14 +280,9 @@ export default function Spreadsheet() {
     if (teamFilter) result = result.filter(e => e.team_number.toString().includes(teamFilter));
     if (matchMin) result = result.filter(e => e.match_number >= parseInt(matchMin));
     if (matchMax) result = result.filter(e => e.match_number <= parseInt(matchMax));
-    result.sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
-      const cmp = typeof aVal === 'number' && typeof bVal === 'number' ? aVal - bVal : 0;
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
+    result.sort(compareBySortKey);
     return result;
-  }, [allEntries, teamFilter, matchMin, matchMax, sortKey, sortDir]);
+  }, [allEntries, teamFilter, matchMin, matchMax, compareBySortKey]);
 
   if (!user) return <Navigate to="/auth" replace />;
   if (!currentEvent) return <Navigate to="/event-select" replace />;
@@ -328,6 +336,40 @@ export default function Spreadsheet() {
     }
   };
 
+  /** A season-driven score column header, sortable when the column is numeric. */
+  const ScoreHead = ({ col }: { col: TableColumn }) => (
+    <TableHead
+      className={cn('font-semibold text-center', col.sortable && 'cursor-pointer select-none')}
+      onClick={col.sortable ? () => handleSort(col.key) : undefined}
+      title={col.label}
+    >
+      {col.short}
+      {col.sortable && <SortIcon column={col.key} />}
+    </TableHead>
+  );
+
+  /** The matching cell, rendered by the column's declared type. */
+  const ScoreCell = ({ col, entry }: { col: TableColumn; entry: MatchRow }) => {
+    const value = entry[col.key];
+    if (col.type === 'bool') {
+      return (
+        <TableCell className="text-center">
+          <span className={value ? 'text-primary font-semibold' : 'text-muted-foreground'}>
+            {value ? 'YES' : '—'}
+          </span>
+        </TableCell>
+      );
+    }
+    if (col.type === 'enum') {
+      return (
+        <TableCell className="text-center capitalize text-xs">
+          {String(value ?? '').replace(/_/g, ' ') || '—'}
+        </TableCell>
+      );
+    }
+    return <TableCell className="text-center">{Number(value ?? 0)}</TableCell>;
+  };
+
   const renderTable = (data: MatchRow[], isReadOnly = false) => (
     <div className="data-card overflow-hidden">
       {(isReadOnly ? allLoading : loading) ? (
@@ -342,14 +384,15 @@ export default function Spreadsheet() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
-              {/* Column-group header */}
+              {/* Column-group header. Spans follow the season's column counts,
+                  so a game with four TeleOp elements gets a four-wide TeleOp band. */}
               <TableRow className="border-b border-border/30">
                 {isAdmin && !isReadOnly && <TableHead className="w-10 p-0" />}
                 {isAdmin && !isReadOnly && <TableHead className="w-10 p-0" />}
                 <TableHead colSpan={3} className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-mono py-1 border-r border-border/40">Meta</TableHead>
-                <TableHead colSpan={4} className="text-[10px] uppercase tracking-[0.15em] text-primary font-mono py-1 text-center border-r border-border/40 bg-primary/5">Auto</TableHead>
-                <TableHead colSpan={3} className="text-[10px] uppercase tracking-[0.15em] text-secondary font-mono py-1 text-center border-r border-border/40 bg-secondary/5">TeleOp</TableHead>
-                <TableHead colSpan={3} className="text-[10px] uppercase tracking-[0.15em] text-accent font-mono py-1 text-center bg-accent/5">Endgame / Notes</TableHead>
+                <TableHead colSpan={columns.auto.length + 1} className="text-[10px] uppercase tracking-[0.15em] text-primary font-mono py-1 text-center border-r border-border/40 bg-primary/5">Auto</TableHead>
+                <TableHead colSpan={columns.teleop.length + 1} className="text-[10px] uppercase tracking-[0.15em] text-secondary font-mono py-1 text-center border-r border-border/40 bg-secondary/5">TeleOp</TableHead>
+                <TableHead colSpan={columns.endgame.length + 3} className="text-[10px] uppercase tracking-[0.15em] text-accent font-mono py-1 text-center bg-accent/5">Endgame / Notes</TableHead>
               </TableRow>
               <TableRow>
                 {isAdmin && !isReadOnly && <TableHead className="w-10"></TableHead>}
@@ -361,24 +404,19 @@ export default function Spreadsheet() {
                   Team<SortIcon column="team_number" />
                 </TableHead>
                 <TableHead className="font-semibold border-r border-border/40">Scouter</TableHead>
-                <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('auto_scored_close')}>
-                  Auto C<SortIcon column="auto_scored_close" />
-                </TableHead>
-                <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('auto_scored_far')}>
-                  Auto F<SortIcon column="auto_scored_far" />
-                </TableHead>
-                <TableHead className="font-semibold text-center">Fouls</TableHead>
-                <TableHead className="font-semibold text-center border-r border-border/40">Line</TableHead>
-                <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('teleop_scored_close')}>
-                  Tel C<SortIcon column="teleop_scored_close" />
-                </TableHead>
-                <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('teleop_scored_far')}>
-                  Tel F<SortIcon column="teleop_scored_far" />
-                </TableHead>
+
+                {columns.auto.map((col) => <ScoreHead key={col.key} col={col} />)}
+                <TableHead className="font-semibold text-center border-r border-border/40" title="Minor / major fouls">Fouls</TableHead>
+
+                {columns.teleop.map((col) => <ScoreHead key={col.key} col={col} />)}
                 <TableHead className="font-semibold text-center cursor-pointer select-none border-r border-border/40" onClick={() => handleSort('defense_rating')}>
                   Def<SortIcon column="defense_rating" />
                 </TableHead>
-                <TableHead className="font-semibold text-center">End</TableHead>
+
+                {columns.endgame.map((col) => <ScoreHead key={col.key} col={col} />)}
+                <TableHead className="font-semibold text-center cursor-pointer select-none" onClick={() => handleSort('__total')} title="Total points this match">
+                  Pts<SortIcon column="__total" />
+                </TableHead>
                 <TableHead className="font-semibold text-center">Pen</TableHead>
                 <TableHead className="font-semibold text-center">Notes</TableHead>
               </TableRow>
@@ -443,23 +481,20 @@ export default function Spreadsheet() {
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{entry.scouter_name}</TableCell>
-                  <TableCell className="text-center">{entry.auto_scored_close}</TableCell>
-                  <TableCell className="text-center">{entry.auto_scored_far}</TableCell>
-                  <TableCell className="text-center">
+
+                  {columns.auto.map((col) => <ScoreCell key={col.key} col={col} entry={entry} />)}
+                  <TableCell className="text-center border-r border-border/40">
                     <span className="text-warning">{entry.auto_fouls_minor}</span>
                     /
                     <span className="text-destructive">{entry.auto_fouls_major}</span>
                   </TableCell>
-                  <TableCell className="text-center">
-                    <span className={entry.on_launch_line ? 'text-primary font-semibold' : 'text-muted-foreground'}>
-                      {entry.on_launch_line ? 'ON' : 'OFF'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">{entry.teleop_scored_close}</TableCell>
-                  <TableCell className="text-center">{entry.teleop_scored_far}</TableCell>
-                  <TableCell className="text-center font-mono">{entry.defense_rating}</TableCell>
-                  <TableCell className="text-center capitalize text-xs">
-                    {entry.endgame_return.replace('_', ' ')}
+
+                  {columns.teleop.map((col) => <ScoreCell key={col.key} col={col} entry={entry} />)}
+                  <TableCell className="text-center font-mono border-r border-border/40">{entry.defense_rating}</TableCell>
+
+                  {columns.endgame.map((col) => <ScoreCell key={col.key} col={col} entry={entry} />)}
+                  <TableCell className="text-center font-mono font-semibold">
+                    {scoreEntry(season, entry).total}
                   </TableCell>
                   <TableCell className="text-center">{getPenaltyBadge(entry.penalty_status)}</TableCell>
                   <TableCell className="text-center">

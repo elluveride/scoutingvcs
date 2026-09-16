@@ -50,6 +50,12 @@ export interface CounterField {
   pointsEach?: number;
   /** Defaults to 'score'. */
   role?: FieldRole;
+  /**
+   * Compact header for dense tables (the Spreadsheet, match logs). One or two
+   * words. Derived from `label` when omitted, but spelling it out beats any
+   * abbreviation rule guessing wrong.
+   */
+  short?: string;
 }
 
 export interface ToggleField {
@@ -63,6 +69,8 @@ export interface ToggleField {
   pointsEach?: number;
   /** Defaults to 'score'. */
   role?: FieldRole;
+  /** Compact header for dense tables. See `CounterField.short`. */
+  short?: string;
 }
 
 export interface EnumOption {

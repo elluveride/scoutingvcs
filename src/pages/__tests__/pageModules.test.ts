@@ -25,6 +25,10 @@ const PAGES = [
   'MatchPlanner',
   'DataSharing',
   'EventSelect',
+  'Spreadsheet',
+  'TeamDetail',
+  'TeamCompare',
+  'PitDisplay',
 ] as const;
 
 describe('page modules import under the active season', () => {
