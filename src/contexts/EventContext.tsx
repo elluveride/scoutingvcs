@@ -11,6 +11,8 @@ interface Event {
   name: string;
   /** Season config id this event is scouted under (see src/seasons). */
   seasonId: string;
+  /** Season scoring field keys switched off for this event on /season-setup. */
+  disabledFields: string[];
 }
 
 interface EventContextType {
@@ -21,6 +23,8 @@ interface EventContextType {
   createEvent: (code: string, name: string, seasonId?: string) => Promise<{ error: Error | null }>;
   /** Repoint the current event at a different season. Admin-gated by RLS. */
   setEventSeason: (seasonId: string) => Promise<{ error: Error | null }>;
+  /** Turn season scoring fields on/off for this event. Admin-gated by RLS. */
+  setEventDisabledFields: (keys: string[]) => Promise<{ error: Error | null }>;
   eventExpired: boolean;
   clearExpired: () => void;
 }
@@ -34,7 +38,11 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (!stored) return null;
       const parsed = JSON.parse(stored) as Partial<Event>;
       // Events persisted before season_id existed have no seasonId.
-      return parsed.code ? { ...parsed, seasonId: parsed.seasonId ?? DEFAULT_SEASON_ID } as Event : null;
+      return parsed.code ? {
+        ...parsed,
+        seasonId: parsed.seasonId ?? DEFAULT_SEASON_ID,
+        disabledFields: parsed.disabledFields ?? [],
+      } as Event : null;
     } catch {
       return null;
     }
@@ -77,6 +85,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         code: e.code,
         name: e.name,
         seasonId: e.season_id ?? DEFAULT_SEASON_ID,
+        disabledFields: Array.isArray(e.disabled_fields) ? (e.disabled_fields as string[]) : [],
       }));
       setEvents(loadedEvents);
 
@@ -86,7 +95,9 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // season from another device mid-event, and every scout must follow.
       if (active) {
         const fresh = loadedEvents.find(e => e.code === active.code);
-        if (fresh && fresh.seasonId !== active.seasonId) {
+        const fieldsChanged =
+          fresh && fresh.disabledFields.join(',') !== (active.disabledFields ?? []).join(',');
+        if (fresh && (fresh.seasonId !== active.seasonId || fieldsChanged)) {
           setCurrentEvent(fresh);
         }
       }
@@ -156,6 +167,29 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return { error: null };
   }, [setCurrentEvent]);
 
+  // Same gate as the season switch: the `Admins can update events` RLS policy
+  // silently matches zero rows for a scout, so the write is read back and a
+  // zero-row result is reported as an error instead of a silent success.
+  const setEventDisabledFields = useCallback(async (keys: string[]) => {
+    const active = currentEventRef.current;
+    if (!active) return { error: new Error('No event selected.') };
+
+    const { data, error } = await supabase
+      .from('events')
+      .update({ disabled_fields: keys })
+      .eq('code', active.code)
+      .select('code, disabled_fields');
+
+    if (error) return { error: error as Error };
+    if (!data || data.length === 0) {
+      return { error: new Error('Only an admin can change the scouting fields for this event.') };
+    }
+
+    setCurrentEvent({ ...active, disabledFields: keys });
+    await loadEvents();
+    return { error: null };
+  }, [setCurrentEvent]);
+
   useEffect(() => {
     loadEvents();
 
@@ -195,6 +229,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         loadEvents,
         createEvent,
         setEventSeason,
+        setEventDisabledFields,
         eventExpired,
         clearExpired,
       }}
