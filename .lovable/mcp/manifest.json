@@ -35,7 +35,7 @@
       {
         "name": "list_event_teams",
         "title": "List scouted teams at an event",
-        "description": "List every team that has scouting data at an event, with how many matches were scouted and their average scored game pieces.",
+        "description": "List every team that has scouting data at an event, with how many matches were scouted and their average points, priced using the event's own season rules.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -60,7 +60,7 @@
       {
         "name": "get_team_scouting",
         "title": "Get team scouting data",
-        "description": "Return every match scouting entry and the pit scouting record for one FTC team at one event, plus simple per-match averages.",
+        "description": "Return every match scouting entry and the pit scouting record for one FTC team at one event, with per-match and average point totals priced using the event's own season rules.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
