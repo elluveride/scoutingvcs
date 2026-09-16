@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
@@ -11,7 +11,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFTCRankings } from '@/hooks/useFTCRankings';
 import { Loader2, Search, TrendingUp, Bot, Gamepad2, Flag, Settings2, Trophy, Save, CheckCircle2, Info, Users, ShieldAlert, Activity, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TeamStats, SortWeight, SortConfig } from '@/types/scouting';
+import type { SortWeight, SortConfig } from '@/types/scouting';
+import { useSeason } from '@/hooks/useSeason';
+import {
+  aggregateTeam, seasonMetrics, selectionScore,
+  type TeamSeasonStats, type SeasonMetric, type MetricCategory,
+} from '@/lib/seasonScoring';
+import { countersForPhase, togglesForPhase } from '@/seasons/fields';
 import {
   Tooltip,
   TooltipContent,
@@ -28,87 +34,55 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
-// Grouped weight categories for intuitive configuration
-interface WeightCategory {
-  id: string;
-  label: string;
-  weights: SortWeight[];
-}
-
-const defaultCategories: WeightCategory[] = [
+/**
+ * Ranking weights.
+ *
+ * Everything game-specific — which metrics exist, what they are worth, how they
+ * are described — comes from the active season (see `src/lib/seasonScoring.ts`).
+ * Only the official-API metrics are defined here, because the FTC API reports
+ * the same rank/average/record whatever the game is.
+ */
+const API_METRICS: SeasonMetric[] = [
   {
-    id: 'scoring',
-    label: 'Scoring',
-    weights: [
-      { id: 'autoClose', label: 'Auto Close', weight: 3, enabled: true },
-      { id: 'autoFar', label: 'Auto Far', weight: 4, enabled: true },
-      { id: 'teleopClose', label: 'TeleOp Close', weight: 2, enabled: true },
-      { id: 'teleopFar', label: 'TeleOp Far', weight: 3, enabled: true },
-    ],
+    id: 'apiRank', label: 'Official Rank (inverted)', category: 'api', defaultWeight: 0, defaultEnabled: false,
+    description: 'Official FTC rank, inverted so #1 scores highest. Formula: ((total teams − rank + 1) ÷ total) × weight × 10.',
+    value: () => 0,
   },
   {
-    id: 'auto',
-    label: 'Autonomous',
-    weights: [
-      { id: 'autoTotal', label: 'Auto Total', weight: 5, enabled: true },
-      { id: 'launchLine', label: 'Launch Line %', weight: 1, enabled: true },
-    ],
+    id: 'apiQualAvg', label: 'Qual Average', category: 'api', defaultWeight: 0, defaultEnabled: false,
+    description: 'Official qual point average from FTC. Formula: (qual avg ÷ 100) × weight × 10.',
+    value: () => 0,
   },
   {
-    id: 'endgame',
-    label: 'Endgame',
-    weights: [
-      { id: 'lift', label: 'Lift %', weight: 5, enabled: true },
-      { id: 'fullReturn', label: 'Full Return %', weight: 3, enabled: true },
-    ],
-  },
-  {
-    id: 'other',
-    label: 'Other Factors',
-    weights: [
-      { id: 'defense', label: 'Defense Rating', weight: 2, enabled: false },
-      { id: 'fouls', label: 'Fouls (penalty)', weight: -2, enabled: true },
-      { id: 'penalties', label: 'Card/Dead (penalty)', weight: -5, enabled: true },
-      { id: 'variance', label: 'Consistency', weight: -1, enabled: true },
-    ],
-  },
-  {
-    id: 'api',
-    label: 'Official Stats (API)',
-    weights: [
-      { id: 'apiRank', label: 'Official Rank (inverted)', weight: 0, enabled: false },
-      { id: 'apiQualAvg', label: 'Qual Average', weight: 0, enabled: false },
-      { id: 'apiWinRate', label: 'Win Rate %', weight: 0, enabled: false },
-    ],
+    id: 'apiWinRate', label: 'Win Rate %', category: 'api', defaultWeight: 0, defaultEnabled: false,
+    description: 'Win percentage from FTC records. Formula: (win % ÷ 100) × weight × 10.',
+    value: () => 0,
   },
 ];
 
-const weightDescriptions: Record<string, string> = {
-  autoClose: 'Multiplied by avg close-zone samples scored in Auto. E.g. weight 3, avg 2.5 → +7.5 pts.',
-  autoFar: 'Multiplied by avg far-zone samples scored in Auto. Higher weight = more emphasis on far scoring.',
-  autoTotal: 'Multiplied by total Auto avg (close + far combined). Use instead of individual close/far for simpler scoring.',
-  launchLine: 'Rewards teams starting on the launch line. Formula: (% on line ÷ 100) × weight × 10. At weight 1, 80% → +8 pts.',
-  teleopClose: 'Multiplied by avg close-zone samples in TeleOp. Same formula as Auto Close.',
-  teleopFar: 'Multiplied by avg far-zone samples in TeleOp. Same formula as Auto Far.',
-  defense: 'Based on avg defense rating (0–3 scale). Formula: rating × weight × 10. At weight 2, rating 2.5 → +50 pts.',
-  lift: 'Bonus for achieving Lift endgame. Formula: (lift % ÷ 100) × weight × 10. 100% lift at weight 5 → +50 pts.',
-  fullReturn: 'Bonus for Full Return endgame. Formula: (full return % ÷ 100) × weight × 10.',
-  fouls: 'Penalty per avg minor fouls. Negative weight means more fouls → lower score. At -2, avg 1.5 fouls → -3 pts.',
-  penalties: 'Penalty for yellow/red card or dead robot rate. Formula: (penalty rate % ÷ 100) × weight × 10.',
-  variance: 'Consistency factor. High variance = unpredictable scores. Negative weight rewards consistent teams.',
-  apiRank: 'Official FTC rank (inverted: #1 = max score). Formula: ((total teams − rank + 1) ÷ total) × weight × 10.',
-  apiQualAvg: 'Official qual point average from FTC. Formula: (qual avg ÷ 100) × weight × 10.',
-  apiWinRate: 'Win percentage from FTC records. Formula: (win % ÷ 100) × weight × 10.',
-};
-
-const getDefaultWeights = (): SortWeight[] =>
-  defaultCategories.flatMap(cat => cat.weights);
+const API_CATEGORY: MetricCategory = { id: 'api', label: 'Official Stats (API)', metrics: API_METRICS };
 
 export default function Dashboard() {
   const { user, profile, isAdmin } = useAuth();
   const { currentEvent } = useEvent();
   const navigate = useNavigate();
-  const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
+  const season = useSeason();
+
+  // Metric catalogue for the active season, plus the game-independent API block.
+  const categories = useMemo<MetricCategory[]>(
+    () => [...seasonMetrics(season), API_CATEGORY],
+    [season],
+  );
+  const metrics = useMemo(
+    () => new Map(categories.flatMap(c => c.metrics).map(m => [m.id, m])),
+    [categories],
+  );
+  const getDefaultWeights = useCallback((): SortWeight[] =>
+    categories.flatMap(c => c.metrics).map(m => ({
+      id: m.id, label: m.label, weight: m.defaultWeight, enabled: m.defaultEnabled,
+    })), [categories]);
+
+  const [teamStats, setTeamStats] = useState<TeamSeasonStats[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAllTeamsData, setShowAllTeamsData] = useState(false);
@@ -119,14 +93,27 @@ export default function Dashboard() {
 
   const { rankings: apiRankings, getRankForTeam, getRecordForTeam, getTeamName } = useFTCRankings();
 
-  const [config1, setConfig1] = useState<SortConfig>({
+  const [config1, setConfig1] = useState<SortConfig>(() => ({
     name: 'List 1',
-    weights: JSON.parse(JSON.stringify(getDefaultWeights())),
-  });
-  const [config2, setConfig2] = useState<SortConfig>({
+    weights: [],
+  }));
+  const [config2, setConfig2] = useState<SortConfig>(() => ({
     name: 'List 2',
-    weights: JSON.parse(JSON.stringify(getDefaultWeights())),
-  });
+    weights: [],
+  }));
+
+  // Seed (or re-seed) the sliders whenever the season's metric list changes.
+  // Weights the new season does not define are dropped; ones it adds come in at
+  // their defaults, so a mid-event switch never leaves an empty config panel.
+  useEffect(() => {
+    const reconcile = (weights: SortWeight[]): SortWeight[] =>
+      getDefaultWeights().map(d => {
+        const saved = weights.find(w => w.id === d.id);
+        return saved ? { ...d, weight: saved.weight, enabled: saved.enabled } : d;
+      });
+    setConfig1(c => ({ ...c, weights: reconcile(c.weights) }));
+    setConfig2(c => ({ ...c, weights: reconcile(c.weights) }));
+  }, [getDefaultWeights]);
 
   // Load dashboard configs from server
   useEffect(() => {
@@ -220,6 +207,49 @@ export default function Dashboard() {
     }
   }, [currentEvent?.code, showAllTeamsData]);
 
+  /**
+   * Per-phase card tiles. `detail` names the two highest-scoring fields of that
+   * phase for the team, which is what a strategist actually reads off a card.
+   */
+  const phaseTiles = useMemo(() => {
+    // "TeleOp Hive Tips" → "Hive Tips". The phase prefix is already the tile
+    // heading, and the full label is on the tile's title attribute.
+    const shortLabel = (label: string) =>
+      label.replace(/^(Auto|TeleOp|Endgame)\s+/i, '').split(' ').slice(0, 2).join(' ');
+
+    const spec = [
+      { id: 'auto', label: 'Auto', icon: Bot, tone: 'text-primary', points: (t: TeamSeasonStats) => t.avgAuto },
+      { id: 'teleop', label: 'TeleOp', icon: Gamepad2, tone: 'text-secondary', points: (t: TeamSeasonStats) => t.avgTeleop },
+      { id: 'endgame', label: 'End', icon: Flag, tone: 'text-accent', points: (t: TeamSeasonStats) => t.avgEndgame },
+    ] as const;
+
+    return spec.map(({ id, label, icon, tone, points }) => {
+      const counters = countersForPhase(season, id);
+      const toggles = togglesForPhase(season, id);
+      return {
+        id, label, icon, tone, points,
+        detail: (t: TeamSeasonStats) => {
+          const parts = [
+            ...counters.map(c => ({
+              text: `${shortLabel(c.label)} ${t.avg[c.key] ?? 0}`,
+              weight: (t.avg[c.key] ?? 0) * (c.pointsEach ?? 0),
+            })),
+            ...toggles.map(tg => ({
+              text: `${shortLabel(tg.label)} ${t.rate[tg.key] ?? 0}%`,
+              weight: ((t.rate[tg.key] ?? 0) / 100) * (tg.pointsEach ?? 0),
+            })),
+          ];
+          return parts
+            .sort((a, b) => b.weight - a.weight)
+            .slice(0, 2)
+            .map(p => p.text)
+            .join(' · ');
+        },
+      };
+    });
+  }, [season]);
+
+
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
@@ -264,11 +294,8 @@ export default function Dashboard() {
     });
 
     if (data.length > 0) {
-      // Deduplicate: when multiple scouters scout the same match/team,
-      // average their values per match first, then average across matches
-      const teamMap = new Map<number, typeof data>();
-
-      // Group by team first
+      // Deduplicate: when several scouters cover the same match/team, keep only
+      // the most recently created entry for that match before averaging.
       const rawTeamMap = new Map<number, typeof data>();
       data.forEach(entry => {
         const existing = rawTeamMap.get(entry.team_number) || [];
@@ -276,7 +303,8 @@ export default function Dashboard() {
         rawTeamMap.set(entry.team_number, existing);
       });
 
-      // Deduplicate per match_number within each team
+      const stats: TeamSeasonStats[] = [];
+
       rawTeamMap.forEach((entries, teamNumber) => {
         const matchGroups = new Map<number, typeof data>();
         entries.forEach(e => {
@@ -285,116 +313,48 @@ export default function Dashboard() {
           matchGroups.set(e.match_number, group);
         });
 
-        // For each match, keep only the most recently created/edited entry
         const deduped: typeof data = [];
-        matchGroups.forEach((group) => {
-          // Sort by created_at descending and take the latest entry
+        matchGroups.forEach(group => {
           group.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
           deduped.push(group[0]);
         });
 
-        teamMap.set(teamNumber, deduped);
-      });
-
-      const stats: TeamStats[] = [];
-
-      teamMap.forEach((entries, teamNumber) => {
-        const matchesPlayed = entries.length;
-
-        const avgAutoClose = entries.reduce((sum, e) => sum + e.auto_scored_close, 0) / matchesPlayed;
-        const avgAutoFar = entries.reduce((sum, e) => sum + e.auto_scored_far, 0) / matchesPlayed;
-        const autoTotalAvg = avgAutoClose + avgAutoFar;
-
-        const avgTeleopClose = entries.reduce((sum, e) => sum + e.teleop_scored_close, 0) / matchesPlayed;
-        const avgTeleopFar = entries.reduce((sum, e) => sum + e.teleop_scored_far, 0) / matchesPlayed;
-        const teleopTotalAvg = avgTeleopClose + avgTeleopFar;
-
-        const avgFoulsMinor = entries.reduce((sum, e) => sum + e.auto_fouls_minor, 0) / matchesPlayed;
-        const avgFoulsMajor = entries.reduce((sum, e) => sum + e.auto_fouls_major, 0) / matchesPlayed;
-
-        const onLaunchLinePercent = (entries.filter(e => e.on_launch_line).length / matchesPlayed) * 100;
-        const avgDefense = entries.reduce((sum, e) => sum + e.defense_rating, 0) / matchesPlayed;
-
-        const liftPercent = (entries.filter(e => e.endgame_return === 'lift').length / matchesPlayed) * 100;
-        const fullReturnPercent = (entries.filter(e => e.endgame_return === 'full').length / matchesPlayed) * 100;
-        const partialReturnPercent = (entries.filter(e => e.endgame_return === 'partial').length / matchesPlayed) * 100;
-
-        const penaltyRate = (entries.filter(e => e.penalty_status !== 'none').length / matchesPlayed) * 100;
-
-        const autoVariance = entries.reduce((sum, e) => {
-          const autoTotal = e.auto_scored_close + e.auto_scored_far;
-          return sum + Math.pow(autoTotal - autoTotalAvg, 2);
-        }, 0) / matchesPlayed;
-        const varianceScore = Math.sqrt(autoVariance);
-
-        stats.push({
-          teamNumber,
-          matchesPlayed,
-          avgAutoClose: Math.round(avgAutoClose * 10) / 10,
-          avgAutoFar: Math.round(avgAutoFar * 10) / 10,
-          autoTotalAvg: Math.round(autoTotalAvg * 10) / 10,
-          avgTeleopClose: Math.round(avgTeleopClose * 10) / 10,
-          avgTeleopFar: Math.round(avgTeleopFar * 10) / 10,
-          teleopTotalAvg: Math.round(teleopTotalAvg * 10) / 10,
-          avgFoulsMinor: Math.round(avgFoulsMinor * 10) / 10,
-          avgFoulsMajor: Math.round(avgFoulsMajor * 10) / 10,
-          onLaunchLinePercent: Math.round(onLaunchLinePercent),
-          avgDefense: Math.round(avgDefense * 10) / 10,
-          liftPercent: Math.round(liftPercent),
-          fullReturnPercent: Math.round(fullReturnPercent),
-          partialReturnPercent: Math.round(partialReturnPercent),
-          penaltyRate: Math.round(penaltyRate),
-          varianceScore: Math.round(varianceScore * 10) / 10,
-          selectionScore: 0,
-        });
+        // All averaging and point pricing happens in seasonScoring, so the
+        // Dashboard and the Match Planner cannot drift apart.
+        stats.push(aggregateTeam(season, teamNumber, deduped as unknown as Record<string, unknown>[]));
       });
 
       setTeamStats(stats);
+    } else {
+      setTeamStats([]);
     }
 
     setLoading(false);
   };
 
-  const calculateScore = (team: TeamStats, weights: SortWeight[]): number => {
-    let score = 0;
+  /**
+   * Weighted pick score. Season metrics read straight off the team's stats;
+   * the three official-API metrics need the rankings table, so they arrive
+   * through the `extra` hook instead.
+   */
+  const calculateScore = (team: TeamSeasonStats, weights: SortWeight[]): number => {
     const apiData = getApiDataForTeam(team.teamNumber);
     const totalTeams = apiRankings.length || 1;
 
-    weights.forEach(w => {
-      if (!w.enabled) return;
-      switch (w.id) {
-        case 'autoClose': score += team.avgAutoClose * w.weight; break;
-        case 'autoFar': score += team.avgAutoFar * w.weight; break;
-        case 'autoTotal': score += team.autoTotalAvg * w.weight; break;
-        case 'launchLine': score += (team.onLaunchLinePercent / 100) * w.weight * 10; break;
-        case 'teleopClose': score += team.avgTeleopClose * w.weight; break;
-        case 'teleopFar': score += team.avgTeleopFar * w.weight; break;
-        case 'defense': score += team.avgDefense * w.weight * 10; break;
-        case 'lift': score += (team.liftPercent / 100) * w.weight * 10; break;
-        case 'fullReturn': score += (team.fullReturnPercent / 100) * w.weight * 10; break;
-        case 'fouls': score += team.avgFoulsMinor * w.weight; break;
-        case 'penalties': score += (team.penaltyRate / 100) * w.weight * 10; break;
-        case 'variance': score += team.varianceScore * w.weight; break;
-        case 'apiRank':
-          if (apiData) score += ((totalTeams - apiData.rank + 1) / totalTeams) * w.weight * 10;
-          break;
-        case 'apiQualAvg':
-          if (apiData) score += (apiData.qualAverage / 100) * w.weight * 10;
-          break;
-        case 'apiWinRate':
-          if (apiData) score += (apiData.winRate / 100) * w.weight * 10;
-          break;
+    return selectionScore(team, weights, metrics, (id) => {
+      if (!apiData) return null;
+      switch (id) {
+        case 'apiRank': return ((totalTeams - apiData.rank + 1) / totalTeams) * 10;
+        case 'apiQualAvg': return (apiData.qualAverage / 100) * 10;
+        case 'apiWinRate': return (apiData.winRate / 100) * 10;
+        default: return null;
       }
     });
-    return Math.round(score * 10) / 10;
   };
 
   const getSortedTeams = (weights: SortWeight[]) => {
-    return [...teamStats]
-      .map(team => ({
-        ...team,
-        selectionScore: calculateScore(team, weights),
-      }))
+    return teamStats
+      .map(team => ({ ...team, selectionScore: calculateScore(team, weights) }))
       .filter(team => team.teamNumber.toString().includes(searchTerm))
       .sort((a, b) => b.selectionScore - a.selectionScore);
   };
@@ -425,14 +385,16 @@ export default function Dashboard() {
     }));
   };
 
-  const getWeightsByCategory = (weights: SortWeight[]) => {
-    return defaultCategories.map(cat => ({
-      ...cat,
-      weights: cat.weights.map(defaultW =>
-        weights.find(w => w.id === defaultW.id) || defaultW
+  /** Pair each season metric with its current slider setting. */
+  const getWeightsByCategory = (weights: SortWeight[]) =>
+    categories.map(cat => ({
+      id: cat.id,
+      label: cat.label,
+      weights: cat.metrics.map(m =>
+        weights.find(w => w.id === m.id)
+          ?? { id: m.id, label: m.label, weight: m.defaultWeight, enabled: m.defaultEnabled },
       ),
     }));
-  };
 
   const renderConfigPanel = (config: SortConfig, setConfig: React.Dispatch<React.SetStateAction<SortConfig>>) => {
     const categorizedWeights = getWeightsByCategory(config.weights);
@@ -462,7 +424,7 @@ export default function Dashboard() {
                         onCheckedChange={() => toggleWeight(setConfig, w.id)}
                       />
                       <span className={cn("text-sm", !w.enabled && "text-muted-foreground")}>{w.label}</span>
-                      {weightDescriptions[w.id] && (
+                      {metrics.get(w.id)?.description && (
                         <Tooltip delayDuration={0}>
                           <TooltipTrigger asChild>
                             <button type="button" className="shrink-0 p-1 -m-1">
@@ -470,7 +432,7 @@ export default function Dashboard() {
                             </button>
                           </TooltipTrigger>
                           <TooltipContent side="bottom" align="center" className="max-w-[240px] z-50">
-                            <p className="text-xs">{weightDescriptions[w.id]}</p>
+                            <p className="text-xs">{metrics.get(w.id)?.description}</p>
                           </TooltipContent>
                         </Tooltip>
                       )}
@@ -499,15 +461,16 @@ export default function Dashboard() {
     );
   };
 
-  const TeamCard = ({ team, rank }: { team: TeamStats; rank: number }) => {
+  const TeamCard = ({ team, rank }: { team: TeamSeasonStats; rank: number }) => {
     const officialRank = getRankForTeam(team.teamNumber);
     const teamName = getTeamName(team.teamNumber);
 
-    // Reliability: combine sample size + variance into a 0–100 score.
-    // Sample weight maxes at ~6 matches; lower variance = higher reliability.
+    // Reliability: sample size × consistency, both 0–1.
+    // Consistency is variance *relative to the team's own average*, which is what
+    // keeps this comparable across seasons — a ±10 pt swing means something very
+    // different when a single hive tip is worth 20.
     const sampleWeight = Math.min(1, team.matchesPlayed / 6);
-    const varianceFactor = Math.max(0, 1 - team.varianceScore / 20); // var 0 = 1, var 20+ = 0
-    const reliability = Math.round(sampleWeight * varianceFactor * 100);
+    const reliability = Math.round(sampleWeight * (team.consistency / 100) * 100);
     const reliabilityTier =
       reliability >= 70 ? { label: 'Stable', color: 'text-accent', bg: 'bg-accent/15 border-accent/30' } :
       reliability >= 40 ? { label: 'Mixed', color: 'text-warning', bg: 'bg-warning/15 border-warning/30' } :
@@ -577,7 +540,8 @@ export default function Dashboard() {
             <TooltipContent side="bottom" className="max-w-[240px]">
               <p className="text-xs">
                 Reliability = sample coverage × consistency.
-                {' '}{team.matchesPlayed} match{team.matchesPlayed === 1 ? '' : 'es'} scouted, variance ±{team.varianceScore.toFixed(1)}.
+                {' '}{team.matchesPlayed} match{team.matchesPlayed === 1 ? '' : 'es'} scouted,
+                {' '}±{team.varianceScore.toFixed(1)} pts around a {team.avgTotal} pt average.
               </p>
             </TooltipContent>
           </Tooltip>
@@ -602,34 +566,30 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stat grid */}
+        {/* Stat grid — one tile per phase, filled from the season's own fields.
+            The headline number is the phase's predicted points; the line under it
+            is the two biggest contributors, so the card says *why* without
+            listing every column. */}
         <div className="grid grid-cols-3 gap-2 text-xs">
-          <div className="bg-muted/40 rounded-md p-2.5 min-h-[64px]">
-            <div className="flex items-center gap-1 mb-1">
-              <Bot className="w-3.5 h-3.5 text-primary" />
-              <span className="text-muted-foreground text-[10px] uppercase tracking-wider">Auto</span>
+          {phaseTiles.map(tile => (
+            <div key={tile.id} className="bg-muted/40 rounded-md p-2.5 min-h-[64px]">
+              <div className="flex items-center gap-1 mb-1">
+                <tile.icon className={cn('w-3.5 h-3.5', tile.tone)} />
+                <span className="text-muted-foreground text-[10px] uppercase tracking-wider">{tile.label}</span>
+              </div>
+              <div className="font-mono font-semibold text-sm">{tile.points(team)} pts</div>
+              <div className="text-muted-foreground text-[10px] truncate" title={tile.detail(team)}>
+                {tile.detail(team) || '—'}
+              </div>
             </div>
-            <div className="font-mono font-semibold text-sm">{team.autoTotalAvg}</div>
-            <div className="text-muted-foreground text-[10px]">{team.avgAutoClose}C / {team.avgAutoFar}F · LL {team.onLaunchLinePercent}%</div>
-          </div>
+          ))}
+        </div>
 
-          <div className="bg-muted/40 rounded-md p-2.5 min-h-[64px]">
-            <div className="flex items-center gap-1 mb-1">
-              <Gamepad2 className="w-3.5 h-3.5 text-secondary" />
-              <span className="text-muted-foreground text-[10px] uppercase tracking-wider">TeleOp</span>
-            </div>
-            <div className="font-mono font-semibold text-sm">{team.teleopTotalAvg}</div>
-            <div className="text-muted-foreground text-[10px]">{team.avgTeleopClose}C / {team.avgTeleopFar}F · Def {team.avgDefense}</div>
-          </div>
-
-          <div className="bg-muted/40 rounded-md p-2.5 min-h-[64px]">
-            <div className="flex items-center gap-1 mb-1">
-              <Flag className="w-3.5 h-3.5 text-accent" />
-              <span className="text-muted-foreground text-[10px] uppercase tracking-wider">End</span>
-            </div>
-            <div className="font-mono font-semibold text-sm">Lift {team.liftPercent}%</div>
-            <div className="text-muted-foreground text-[10px]">Full {team.fullReturnPercent}% · Part {team.partialReturnPercent}%</div>
-          </div>
+        {/* Total + defense strip */}
+        <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+          <span>Def {team.avgDefense}/3</span>
+          <span>Consistency {team.consistency}%</span>
+          <span className="text-foreground">{team.avgTotal} pts/match</span>
         </div>
       </button>
     );
@@ -663,7 +623,7 @@ export default function Dashboard() {
     <AppLayout>
       <PageHeader
         title="Team Dashboard"
-        description="Dual team ranking lists with configurable weights"
+        description={`Dual ranking lists, weighted and scored with ${season.name} point values`}
       />
 
       <div className="flex items-center justify-between gap-3 mb-4">
@@ -711,7 +671,8 @@ export default function Dashboard() {
             </div>
             <div className="text-muted-foreground font-mono">
               <span className="text-foreground">sample × consistency</span>. Sample maxes at 6+ matches.
-              Variance ±0 = full consistency, ±20+ = none.
+              Consistency is 1 − (score spread ÷ average score), so it means the same thing
+              whatever the season's point values are.
             </div>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <span className="px-1.5 py-0.5 rounded border border-accent/30 bg-accent/15 text-accent font-mono">Stable ≥70%</span>

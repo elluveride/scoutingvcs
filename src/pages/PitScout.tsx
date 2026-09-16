@@ -33,24 +33,17 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DriveType, ConsistencyLevel, AutoLeaveStatus } from '@/types/scouting';
-import { CURRENT_SEASON } from '@/seasons';
-
-// Pit field labels and option lists come from the active season config.
-// Swap seasons by editing src/seasons/index.ts — no edits to this file needed.
-const pitCfg = CURRENT_SEASON.pit;
-const driveOptions = pitCfg.driveOptions.map((o) => ({ value: o.value as DriveType, label: o.label }));
-const consistencyOptions = pitCfg.consistencyOptions.map((o) => ({ value: o.value as ConsistencyLevel, label: o.label }));
-const autoLeaveOptions = pitCfg.autoLeaveOptions.map((o) => ({ value: o.value as AutoLeaveStatus, label: o.label }));
-const preferredStartOptions = pitCfg.preferredStartOptions.map((o) => ({ value: o.value as 'close' | 'far', label: o.label }));
+import { useSeason } from '@/hooks/useSeason';
+import { EntryQRCard } from '@/components/scout/EntryQRCard';
+import type { SeasonConfig } from '@/seasons/types';
 
 type PitRow = Tables<'pit_entries'>;
-type CapabilityKey = 'scores_motifs' | 'scores_artifacts' | 'scores_depot' | 'has_autonomous';
-const CAPABILITY_KEYS: CapabilityKey[] = ['scores_motifs', 'scores_artifacts', 'scores_depot', 'has_autonomous'];
 
 interface PitForm {
   teamName: string;
   driveType: DriveType;
-  caps: Record<CapabilityKey, boolean>;
+  /** Keyed by the active season's capability column names. */
+  caps: Record<string, boolean>;
   autoConsistency: ConsistencyLevel;
   reliableAutoLeave: AutoLeaveStatus;
   preferredStart: 'close' | 'far';
@@ -69,10 +62,10 @@ interface PhotoState {
   removed: boolean;
 }
 
-const emptyForm = (): PitForm => ({
+const emptyForm = (season: SeasonConfig): PitForm => ({
   teamName: '',
   driveType: 'tank',
-  caps: { scores_motifs: false, scores_artifacts: false, scores_depot: false, has_autonomous: false },
+  caps: Object.fromEntries(season.pit.capabilities.map((c) => [c.key, false])),
   autoConsistency: 'low',
   reliableAutoLeave: 'no',
   preferredStart: 'close',
@@ -82,22 +75,17 @@ const emptyForm = (): PitForm => ({
 
 const emptyPhoto = (): PhotoState => ({ savedPath: null, previewUrl: null, pendingBlob: null, removed: false });
 
-function rowToForm(row: CachedPitRow | PitRow): PitForm {
-  const r = row as Partial<PitRow>;
+function rowToForm(row: CachedPitRow | PitRow, season: SeasonConfig): PitForm {
+  const r = row as Record<string, unknown>;
   return {
-    teamName: r.team_name ?? '',
+    teamName: (r.team_name as string) ?? '',
     driveType: (r.drive_type as DriveType) ?? 'tank',
-    caps: {
-      scores_motifs: !!r.scores_motifs,
-      scores_artifacts: !!r.scores_artifacts,
-      scores_depot: !!r.scores_depot,
-      has_autonomous: !!r.has_autonomous,
-    },
+    caps: Object.fromEntries(season.pit.capabilities.map((c) => [c.key, !!r[c.key]])),
     autoConsistency: (r.auto_consistency as ConsistencyLevel) ?? 'low',
     reliableAutoLeave: (r.reliable_auto_leave as AutoLeaveStatus) ?? 'no',
     preferredStart: (r.preferred_start as 'close' | 'far') === 'far' ? 'far' : 'close',
     endgameConsistency: (r.endgame_consistency as ConsistencyLevel) ?? 'low',
-    autoPaths: normalizePaths(r.auto_paths),
+    autoPaths: normalizePaths(r.auto_paths as Json),
   };
 }
 
@@ -112,11 +100,12 @@ export default function PitScout() {
   const { toast } = useToast();
   const { rankings } = useFTCRankings();
   const isOnline = useOnlineStatus();
+  const season = useSeason();
 
   const [teamNumber, setTeamNumber] = useState('');
   /** Team whose data is currently in the form. Save is blocked until the typed team matches. */
   const [loadedTeam, setLoadedTeam] = useState<number | null>(null);
-  const [form, setForm] = useState<PitForm>(emptyForm);
+  const [form, setForm] = useState<PitForm>(() => emptyForm(season));
   const [photo, setPhoto] = useState<PhotoState>(emptyPhoto);
   const [dirty, setDirty] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
@@ -127,6 +116,8 @@ export default function PitScout() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  /** The row just saved, held so the scout can hand it over by QR. */
+  const [savedRow, setSavedRow] = useState<Record<string, unknown> | null>(null);
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -141,6 +132,16 @@ export default function PitScout() {
     setForm((f) => ({ ...f, ...changes }));
     setDirty(true);
   }, []);
+
+  // A season switch reshapes the capability list. Re-key the form so the
+  // toggles on screen are the ones that get saved, keeping any answer the two
+  // games have in common rather than silently writing every capability false.
+  useEffect(() => {
+    setForm((f) => ({
+      ...f,
+      caps: Object.fromEntries(season.pit.capabilities.map((c) => [c.key, !!f.caps[c.key]])),
+    }));
+  }, [season]);
 
   /*──────────────── event-wide data (team list + scouted set + offline cache) ────────────────*/
   const refreshEventData = useCallback(async () => {
@@ -212,12 +213,13 @@ export default function PitScout() {
 
     setLoading(true);
     setTeamNumber(String(teamNum));
-    setForm(emptyForm());
+    setForm(emptyForm(season));
     setPhoto(emptyPhoto());
     setPreviewObjectUrl(null);
     setExistingId(null);
     setLastEditInfo(null);
     setDirty(false);
+    setSavedRow(null);
 
     let source: typeof loadedFrom = 'new';
     let row: CachedPitRow | PitRow | null = null;
@@ -258,7 +260,7 @@ export default function PitScout() {
     }
 
     if (row) {
-      const loaded = rowToForm(row);
+      const loaded = rowToForm(row, season);
       setForm(loaded);
       const r = row as Partial<PitRow>;
       if (r.id) setExistingId(r.id);
@@ -304,7 +306,7 @@ export default function PitScout() {
     setLoadedFrom(source);
     setLoadedTeam(teamNum);
     setLoading(false);
-  }, [eventCode, dirty, loadedTeam, rankings, toast]);
+  }, [eventCode, dirty, loadedTeam, rankings, toast, season]);
 
   const handleLoadClick = () => {
     if (parsedTeam === null) {
@@ -378,10 +380,8 @@ export default function PitScout() {
       team_number: parsedTeam,
       team_name: teamName,
       drive_type: form.driveType,
-      scores_motifs: form.caps.scores_motifs,
-      scores_artifacts: form.caps.scores_artifacts,
-      scores_depot: form.caps.scores_depot,
-      has_autonomous: form.caps.has_autonomous,
+      // Capability columns are whatever the active season declares.
+      ...Object.fromEntries(season.pit.capabilities.map((c) => [c.key, !!form.caps[c.key]])),
       auto_consistency: form.autoConsistency,
       reliable_auto_leave: form.reliableAutoLeave,
       preferred_start: form.preferredStart,
@@ -400,7 +400,11 @@ export default function PitScout() {
         setDirty(false);
         setLoadedFrom('queue');
         setLastEditInfo('Saved offline on this device — will sync when online.');
-        toast({ title: 'Saved Offline', description: `Pit data for Team ${parsedTeam} queued. Will sync when online.` });
+        setSavedRow(row);
+        toast({
+          title: 'Saved Offline',
+          description: `Pit data for Team ${parsedTeam} queued — sync on reconnect, or hand it over by QR.`,
+        });
         return;
       }
 
@@ -431,6 +435,7 @@ export default function PitScout() {
       setDirty(false);
       setLoadedFrom('cloud');
       setLastEditInfo(`Last edited by you on ${new Date().toLocaleString()}`);
+      setSavedRow(row);
       toast({ title: 'Saved!', description: `Pit data for Team ${parsedTeam} saved.` });
     } catch (err) {
       toast({
@@ -444,10 +449,24 @@ export default function PitScout() {
   };
 
   /*──────────────── derived UI bits ────────────────*/
-  const capabilityToggles = useMemo(
-    () => pitCfg.capabilities.filter((c): c is { key: CapabilityKey; label: string } =>
-      CAPABILITY_KEYS.includes(c.key as CapabilityKey)),
-    [],
+  const capabilityToggles = season.pit.capabilities;
+
+  // Option lists follow the active season, so a switch reshapes the form without a reload.
+  const driveOptions = useMemo(
+    () => season.pit.driveOptions.map((o) => ({ value: o.value as DriveType, label: o.label })),
+    [season],
+  );
+  const consistencyOptions = useMemo(
+    () => season.pit.consistencyOptions.map((o) => ({ value: o.value as ConsistencyLevel, label: o.label })),
+    [season],
+  );
+  const autoLeaveOptions = useMemo(
+    () => season.pit.autoLeaveOptions.map((o) => ({ value: o.value as AutoLeaveStatus, label: o.label })),
+    [season],
+  );
+  const preferredStartOptions = useMemo(
+    () => season.pit.preferredStartOptions.map((o) => ({ value: o.value as 'close' | 'far', label: o.label })),
+    [season],
   );
 
   const remainingTeams = useMemo(
@@ -471,7 +490,10 @@ export default function PitScout() {
       {/* `alliance-swap` flips every red/blue element on this page to follow the
           selected alliance theme (see index.css). */}
       <div className="alliance-swap">
-        <PageHeader title="Pit Scouting" description="Record team capabilities and robot info" />
+        <PageHeader
+          title="Pit Scouting"
+          description={`Record team capabilities and robot info — ${season.name}`}
+        />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Team picker */}
@@ -746,6 +768,23 @@ export default function PitScout() {
               {!isOnline ? 'Save Offline' : existingId || loadedFrom === 'queue' ? 'Update Pit Data' : 'Save Pit Data'}
               {dirty && <span className="ml-1 w-2 h-2 rounded-full bg-warning" title="Unsaved changes" />}
             </Button>
+          </div>
+
+          {/* Hand-off by QR: the pit scout's phone shows it, the lead's phone reads it.
+              The robot photo is not in the payload — it would not fit in a QR code —
+              so it uploads on the next sync instead. */}
+          <div className="pb-8">
+            {savedRow && !dirty && (
+              <EntryQRCard
+                season={season}
+                kind="pit"
+                eventCode={currentEvent.code}
+                rows={[savedRow]}
+                title="Hand Off This Team"
+                caption={`Team ${savedRow.team_number} · ${savedRow.team_name}`}
+                onDismiss={() => setSavedRow(null)}
+              />
+            )}
           </div>
         </form>
       </div>

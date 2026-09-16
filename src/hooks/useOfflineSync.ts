@@ -64,8 +64,10 @@ export function useOfflineSync() {
       const unsynced = await getUnsyncedEntries();
       for (const entry of unsynced) {
         const { localId, synced: _synced, created_at: _createdAt, ...data } = entry;
+        // Columns are whatever the season the entry was scouted under writes, so
+        // the row passes through untouched rather than being re-listed here.
         const { error } = await supabase.from('match_entries').upsert(
-          [{ ...data, endgame_return: data.endgame_return as never, penalty_status: data.penalty_status as never }],
+          [data as never],
           { onConflict: 'event_code,team_number,match_number,scouter_id' },
         );
         if (!error) {
@@ -93,14 +95,7 @@ export function useOfflineSync() {
           }
 
           const { error } = await supabase.from('pit_entries').upsert(
-            {
-              ...row,
-              drive_type: row.drive_type as never,
-              auto_consistency: row.auto_consistency as never,
-              reliable_auto_leave: row.reliable_auto_leave as never,
-              endgame_consistency: row.endgame_consistency as never,
-              auto_paths: row.auto_paths as Json,
-            },
+            { ...row, auto_paths: row.auto_paths as Json } as never,
             { onConflict: 'event_code,team_number' },
           );
           if (error) throw error;

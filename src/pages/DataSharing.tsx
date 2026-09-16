@@ -14,12 +14,16 @@ import {
   CheckCircle2, AlertTriangle, ArrowRightLeft,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { ImportFileSchema, MatchEntryImportSchema } from '@/lib/importValidation';
+import {
+  importFileSchema, entrySchema, exportColumns, IMPORT_FORMAT_VERSION, type ValidatedEntry,
+} from '@/lib/importValidation';
+import { useSeason } from '@/hooks/useSeason';
 
 export default function DataSharing() {
   const { user } = useAuth();
   const { currentEvent } = useEvent();
   const { toast } = useToast();
+  const season = useSeason();
 
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -44,44 +48,33 @@ export default function DataSharing() {
       return;
     }
 
-    // Standardized export format
+    // Standardized export format — columns come from the active season, so a
+    // file always carries exactly what the scout app collects.
+    const columns = exportColumns(season, 'match');
     const shareData = {
-      format_version: '1.0',
+      format_version: IMPORT_FORMAT_VERSION,
+      season_id: season.id,
       event_code: currentEvent.code,
       event_name: currentEvent.name,
       exported_at: new Date().toISOString(),
-      entries: data.map(e => ({
-        team_number: e.team_number,
-        match_number: e.match_number,
-        auto_scored_close: e.auto_scored_close,
-        auto_scored_far: e.auto_scored_far,
-        auto_fouls_minor: e.auto_fouls_minor,
-        auto_fouls_major: e.auto_fouls_major,
-        on_launch_line: e.on_launch_line,
-        teleop_scored_close: e.teleop_scored_close,
-        teleop_scored_far: e.teleop_scored_far,
-        defense_rating: e.defense_rating,
-        endgame_return: e.endgame_return,
-        penalty_status: e.penalty_status,
-      })),
+      entries: (data as unknown as Record<string, unknown>[]).map(e =>
+        Object.fromEntries(columns.map(c => [c, e[c]]))
+      ),
     };
 
     if (format === 'json') {
       downloadBlob(JSON.stringify(shareData, null, 2), `${currentEvent.code}_shared_data.json`, 'application/json');
     } else {
-      const headers = [
-        'team_number', 'match_number',
-        'auto_scored_close', 'auto_scored_far', 'auto_fouls_minor', 'auto_fouls_major',
-        'on_launch_line', 'teleop_scored_close', 'teleop_scored_far',
-        'defense_rating', 'endgame_return', 'penalty_status',
-      ];
       const rows = shareData.entries.map(e =>
-        headers.map(h => {
-          const val = (e as any)[h];
-          return typeof val === 'boolean' ? (val ? 'true' : 'false') : val;
+        columns.map(h => {
+          const val = e[h];
+          if (typeof val === 'boolean') return val ? 'true' : 'false';
+          // Notes can contain commas; quote every text cell rather than guess.
+          if (typeof val === 'string') return `"${val.replace(/"/g, '""')}"`;
+          return val ?? '';
         })
       );
-      const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+      const csv = [columns, ...rows].map(r => r.join(',')).join('\n');
       downloadBlob(csv, `${currentEvent.code}_shared_data.csv`, 'text/csv');
     }
 
@@ -95,27 +88,38 @@ export default function DataSharing() {
 
     try {
       const text = await file.text();
-      let entries: any[];
+      let entries: ValidatedEntry[];
 
       // Enforce import size limit
       if (text.length > 5 * 1024 * 1024) {
         throw new Error('File too large. Maximum file size is 5MB.');
       }
 
+      const rowSchema = entrySchema(season, 'match');
+      const keepValid = (rows: unknown[]): ValidatedEntry[] =>
+        rows
+          .map((item) => rowSchema.safeParse(item))
+          .filter((r): r is { success: true; data: ValidatedEntry } => r.success)
+          .map((r) => r.data);
+
       if (file.name.endsWith('.json')) {
         const parsed = JSON.parse(text);
-        // Try parsing as full export format first, then as raw array
-        const fileResult = ImportFileSchema.safeParse(parsed);
+        const fileResult = importFileSchema(season, 'match').safeParse(parsed);
         if (fileResult.success) {
-          entries = fileResult.data.entries;
+          // A file exported under another game keeps only its shared columns —
+          // say so rather than quietly importing a half-empty entry.
+          if (fileResult.data.season_id && fileResult.data.season_id !== season.id) {
+            toast({
+              title: 'Different season',
+              description: `File is from '${fileResult.data.season_id}', this event runs '${season.id}'. Only columns both games share were imported.`,
+              variant: 'destructive',
+            });
+          }
+          entries = fileResult.data.entries as ValidatedEntry[];
         } else {
           const rawArray = Array.isArray(parsed) ? parsed : parsed.entries;
           if (!Array.isArray(rawArray)) throw new Error('Invalid JSON format: expected entries array');
-          // Validate each entry individually, skip invalid ones
-          entries = rawArray.map((item: unknown) => {
-            const result = MatchEntryImportSchema.safeParse(item);
-            return result.success ? result.data : null;
-          }).filter(Boolean);
+          entries = keepValid(rawArray);
           if (entries.length === 0) throw new Error('No valid entries found in file');
         }
       } else if (file.name.endsWith('.csv')) {
@@ -124,21 +128,17 @@ export default function DataSharing() {
         const headers = lines[0].split(',').map(h => h.trim());
         const rawEntries = lines.slice(1).filter(l => l.trim()).map(line => {
           const values = line.split(',');
-          const obj: any = {};
+          const obj: Record<string, unknown> = {};
           headers.forEach((h, i) => {
-            const v = values[i]?.trim();
+            const v = values[i]?.trim().replace(/^"|"$/g, '');
             if (v === 'true') obj[h] = true;
             else if (v === 'false') obj[h] = false;
-            else if (!isNaN(Number(v)) && v !== '') obj[h] = Number(v);
+            else if (v !== '' && v !== undefined && !isNaN(Number(v))) obj[h] = Number(v);
             else obj[h] = v;
           });
           return obj;
         });
-        // Validate each parsed CSV row
-        entries = rawEntries.map((item: unknown) => {
-          const result = MatchEntryImportSchema.safeParse(item);
-          return result.success ? result.data : null;
-        }).filter(Boolean);
+        entries = keepValid(rawEntries);
         if (entries.length === 0) throw new Error('No valid entries found in CSV');
       } else {
         throw new Error('Unsupported file format. Use JSON or CSV.');
@@ -160,21 +160,10 @@ export default function DataSharing() {
         }
 
         const { error } = await supabase.from('match_entries').upsert({
+          ...entry,
           event_code: currentEvent.code,
-          team_number: entry.team_number,
-          match_number: entry.match_number,
-          auto_scored_close: entry.auto_scored_close || 0,
-          auto_scored_far: entry.auto_scored_far || 0,
-          auto_fouls_minor: entry.auto_fouls_minor || 0,
-          auto_fouls_major: entry.auto_fouls_major || 0,
-          on_launch_line: entry.on_launch_line ?? false,
-          teleop_scored_close: entry.teleop_scored_close || 0,
-          teleop_scored_far: entry.teleop_scored_far || 0,
-          defense_rating: entry.defense_rating || 0,
-          endgame_return: entry.endgame_return || 'not_returned',
-          penalty_status: entry.penalty_status || 'none',
           scouter_id: user.id,
-        }, { onConflict: 'event_code,team_number,match_number,scouter_id' });
+        } as never, { onConflict: 'event_code,team_number,match_number,scouter_id' });
 
         if (error) {
           if (error.code === '23505') duplicates++;

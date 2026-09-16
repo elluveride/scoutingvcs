@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Calendar, Plus, Loader2, AlertCircle, CheckCircle2, RefreshCw, Star, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { SEASON_LIST, DEFAULT_SEASON_ID } from '@/seasons';
 import cipherLogo from '@/assets/apex-scout-badge.png';
 
 interface CachedEvent {
@@ -34,6 +35,7 @@ export default function EventSelect() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [eventCode, setEventCode] = useState('');
   const [eventName, setEventName] = useState('');
+  const [seasonId, setSeasonId] = useState(DEFAULT_SEASON_ID);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [validating, setValidating] = useState(false);
@@ -145,7 +147,7 @@ export default function EventSelect() {
     setError('');
     setCreating(true);
 
-    const { error: createError } = await createEvent(eventCode.toUpperCase(), eventName);
+    const { error: createError } = await createEvent(eventCode.toUpperCase(), eventName, seasonId);
     
     if (createError) {
       if (createError.message.includes('duplicate')) {
@@ -157,6 +159,7 @@ export default function EventSelect() {
       setShowCreateDialog(false);
       setEventCode('');
       setEventName('');
+      setSeasonId(DEFAULT_SEASON_ID);
       setValidationResult(null);
       await loadEvents();
     }
@@ -380,6 +383,22 @@ export default function EventSelect() {
                 maxLength={100}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="seasonId">Season</Label>
+              <select
+                id="seasonId"
+                value={seasonId}
+                onChange={(e) => setSeasonId(e.target.value)}
+                className="w-full h-12 rounded-md bg-background border border-input px-3 font-mono text-sm"
+              >
+                {SEASON_LIST.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Sets the game everyone scouts this event under. Changeable later from Season Setup.
+              </p>
             </div>
             <Button type="submit" className="w-full h-12" disabled={creating}>
               {creating && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}

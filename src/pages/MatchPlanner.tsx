@@ -21,7 +21,8 @@ import {
   PolarAngleAxis, PolarRadiusAxis, Radar,
 } from 'recharts';
 
-import { POINTS, predictTeam, type TeamPrediction, type MatchEntryLite as MatchEntry } from '@/lib/prediction';
+import { predictTeam, type TeamPrediction, type MatchEntryLite as MatchEntry } from '@/lib/prediction';
+import { useSeason } from '@/hooks/useSeason';
 import { MissingDataBanner, type TeamMissingInputs } from '@/components/shared/MissingDataBanner';
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
@@ -36,6 +37,7 @@ export default function MatchPlanner() {
   const { currentEvent } = useEvent();
   const { matches } = useFTCMatches();
   const { getTeamName } = useFTCRankings();
+  const season = useSeason();
 
   const [allEntries, setAllEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,10 +74,10 @@ export default function MatchPlanner() {
 
     const preds = new Map<number, TeamPrediction>();
     teamMap.forEach((entries, teamNumber) => {
-      preds.set(teamNumber, predictTeam(teamNumber, entries));
+      preds.set(teamNumber, predictTeam(season, teamNumber, entries));
     });
     return preds;
-  }, [allEntries]);
+  }, [allEntries, season]);
 
   useEffect(() => {
     if (!selectedMatch || matches.length === 0) return;
@@ -147,13 +149,25 @@ export default function MatchPlanner() {
     { metric: 'Consistency', ...Object.fromEntries(allPreds.map(p => [p.teamNumber, p.consistency / 10])) },
   ];
 
+  // Point reference panel — every scored field of the active season.
+  const pointReference = [
+    ...season.counters
+      .filter(c => (c.role ?? 'score') === 'score' && c.pointsEach)
+      .map(c => ({ key: c.key, label: c.label, points: c.pointsEach as number })),
+    ...season.toggles
+      .filter(t => (t.role ?? 'score') === 'score' && t.pointsEach)
+      .map(t => ({ key: t.key, label: t.label, points: t.pointsEach as number })),
+    { key: '__minor', label: 'Minor Foul', points: season.points.MINOR_FOUL },
+    { key: '__major', label: 'Major Foul', points: season.points.MAJOR_FOUL },
+  ];
+
   const radarColors = ['hsl(var(--primary))', 'hsl(var(--alliance-blue) / 0.6)', 'hsl(var(--alliance-red))', 'hsl(var(--alliance-red) / 0.6)'];
 
   return (
     <AppLayout>
       <PageHeader
         title="Match Planner"
-        description="Predict scores using BIOBUZZ point values"
+        description={`Predict scores using ${season.name} point values`}
       />
 
       {loading ? (
@@ -262,18 +276,16 @@ export default function MatchPlanner() {
                   </div>
                 </div>
 
-                {/* Point value reference */}
+                {/* Point value reference — read straight off the season config,
+                    so it can never drift from what the prediction actually used. */}
                 <div className="mt-4 pt-4 border-t border-border/40">
-                  <p className="text-xs text-muted-foreground font-mono mb-2">BIOBUZZ Point Values Used:</p>
+                  <p className="text-xs text-muted-foreground font-mono mb-2">
+                    {season.name} point values used:
+                  </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-xs font-mono text-muted-foreground">
-                    <span>Leave: {POINTS.LEAVE}pts</span>
-                    <span>Auto Park: {POINTS.AUTO_PARK}pts</span>
-                    <span>Hive Tip: {POINTS.HIVE_TIP}pts</span>
-                    <span>Cell Element: {POINTS.CELL_REMAINING}pts</span>
-                    <span>Flower: {POINTS.FLOWER}pts</span>
-                    <span>Bottom Nectar: {POINTS.BOTTOM_NECTAR_BONUS}pts</span>
-                    <span>Garden: {POINTS.GARDEN}pt</span>
-                    <span>Endgame Park: {POINTS.TELEOP_PARK}pts</span>
+                    {pointReference.map((ref) => (
+                      <span key={ref.key}>{ref.label}: {ref.points}pts</span>
+                    ))}
                   </div>
                 </div>
               </PitSection>
@@ -289,58 +301,33 @@ export default function MatchPlanner() {
                       <span className="text-xs font-mono text-muted-foreground ml-auto">{pred.matchCount} matches</span>
                     </div>
 
-                    {/* Score Breakdown */}
+                    {/* Score breakdown — one row per scoring field the season
+                        defines, biggest contributor first. */}
                     <div className="space-y-2 text-xs font-mono">
-                      <div className="flex justify-between items-center pb-1 border-b border-border/30">
-                        <span className="text-muted-foreground font-semibold">AUTO</span>
-                        <span className="font-bold text-primary">{pred.predictedAuto} pts</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Leave ({pred.leaveRate}%)</span>
-                        <span>{pred.autoLeavePoints}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Auto Park ({pred.autoParkRate}%)</span>
-                        <span>{pred.autoParkPoints}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Hive Tips × {POINTS.HIVE_TIP}</span>
-                        <span>{pred.autoHivePoints}</span>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-1 pb-1 border-b border-border/30">
-                        <span className="text-muted-foreground font-semibold">TELEOP</span>
-                        <span className="font-bold text-primary">{pred.predictedTeleop} pts</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Hive Tips × {POINTS.HIVE_TIP}</span>
-                        <span>{pred.teleopHivePoints}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Cell Elements × {POINTS.CELL_REMAINING}</span>
-                        <span>{pred.teleopCellPoints}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Flower × {POINTS.FLOWER}</span>
-                        <span>{pred.teleopFlowerPoints}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Bottom Nectar × {POINTS.BOTTOM_NECTAR_BONUS}</span>
-                        <span>{pred.teleopNectarPoints}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Garden × {POINTS.GARDEN}</span>
-                        <span>{pred.teleopGardenPoints}</span>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-1 pb-1 border-b border-border/30">
-                        <span className="text-muted-foreground font-semibold">ENDGAME</span>
-                        <span className="font-bold text-primary">{pred.predictedEndgame} pts</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-muted-foreground">Park ({pred.fullReturnRate}%)</span>
-                        <span>{round1(pred.fullReturnRate / 100 * POINTS.TELEOP_PARK)}</span>
-                      </div>
+                      {([
+                        { id: 'auto' as const, label: 'AUTO', total: pred.predictedAuto },
+                        { id: 'teleop' as const, label: 'TELEOP', total: pred.predictedTeleop },
+                        { id: 'endgame' as const, label: 'ENDGAME', total: pred.predictedEndgame },
+                      ]).map((phase) => {
+                        const lines = pred.breakdown[phase.id];
+                        if (lines.length === 0) return null;
+                        return (
+                          <React.Fragment key={phase.id}>
+                            <div className="flex justify-between items-center pt-1 pb-1 border-b border-border/30">
+                              <span className="text-muted-foreground font-semibold">{phase.label}</span>
+                              <span className="font-bold text-primary">{phase.total} pts</span>
+                            </div>
+                            {lines.map((line) => (
+                              <div key={line.key} className="flex justify-between pl-3">
+                                <span className="text-muted-foreground truncate" title={line.label}>
+                                  {line.label} <span className="opacity-60">({line.detail})</span>
+                                </span>
+                                <span className="shrink-0 pl-2">{line.points}</span>
+                              </div>
+                            ))}
+                          </React.Fragment>
+                        );
+                      })}
 
                       <div className="flex justify-between items-center pt-2 border-t border-border/40">
                         <span className="font-semibold">TOTAL</span>
@@ -419,7 +406,7 @@ export default function MatchPlanner() {
             <div className="data-card text-center py-8 text-muted-foreground">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>Enter team numbers above to see predictions.</p>
-              <p className="text-xs mt-1">Predictions use official DECODE point values.</p>
+              <p className="text-xs mt-1">Predictions use official {season.name} point values.</p>
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
@@ -12,102 +12,85 @@ import { useToast } from '@/hooks/use-toast';
 import { useFTCMatches } from '@/hooks/useFTCMatches';
 import { useFTCRankings } from '@/hooks/useFTCRankings';
 import { useOnlineStatus } from '@/hooks/useOfflineSync';
+import { useSeason } from '@/hooks/useSeason';
 import { queueMatchEntry } from '@/lib/offlineDb';
+import { scoreEntry } from '@/lib/seasonScoring';
+import { validateMatchScoutForm } from '@/lib/matchScoutValidation';
+import {
+  matchFields, countersForPhase, togglesForPhase, enumsForPhase, foulCounters, emptyRecord,
+} from '@/seasons/fields';
 
 import { MatchInfoSection } from '@/components/match-scout/MatchInfoSection';
 import { PitSection } from '@/components/match-scout/PitSection';
 import { OptionSelector } from '@/components/match-scout/OptionSelector';
-import { Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil, Crosshair, WifiOff } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { EntryQRCard } from '@/components/scout/EntryQRCard';
+import {
+  Loader2, Save, RotateCcw, Bot, Gamepad2, Flag, AlertTriangle, Pencil, Crosshair,
+  WifiOff, QrCode, Calculator,
+} from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import type { EndgameReturnStatus, PenaltyStatus } from '@/types/scouting';
-import { CURRENT_SEASON } from '@/seasons';
 
-// All field labels and option lists for the active FTC season come from the
-// season config. To shift to a new season, edit src/seasons/<season>.ts and
-// repoint CURRENT_SEASON — no edits to this file required for label/option swaps.
-const season = CURRENT_SEASON;
-const findEnum = (key: string) => season.enums.find((e) => e.key === key)!;
-const findCounter = (key: string) => season.counters.find((c) => c.key === key)!;
-const findToggle = (key: string) => season.toggles.find((t) => t.key === key)!;
+type FieldValue = number | boolean | string;
+type ScoutForm = Record<string, FieldValue>;
 
-const endgameOptions = findEnum('endgame_return').options.map((o) => ({
-  value: o.value as EndgameReturnStatus,
-  label: o.label,
-}));
-const penaltyOptions = findEnum('penalty_status').options.map((o) => ({
-  value: o.value as PenaltyStatus,
-  label: o.label,
-  color: o.color,
-}));
-const defenseOptions = findEnum('defense_rating').options.map((o) => ({
-  value: parseInt(o.value, 10),
-  label: o.label,
-  sublabel: o.sublabel,
-}));
-const launchLineCfg = findToggle('on_launch_line');
-const autoCloseCfg = findCounter('auto_scored_close');
-const autoFarCfg = findCounter('auto_scored_far');
-const teleopCloseCfg = findCounter('teleop_scored_close');
-const teleopFarCfg = findCounter('teleop_scored_far');
+const PHASES = [
+  { id: 'auto', title: 'Autonomous', icon: Bot, variant: 'blue' as const },
+  { id: 'teleop', title: 'TeleOp', icon: Gamepad2, variant: 'red' as const },
+  { id: 'endgame', title: 'Endgame', icon: Flag, variant: undefined },
+] as const;
 
 export default function MatchScout() {
   const { user, profile, isApproved } = useAuth();
   const { currentEvent } = useEvent();
-  
+  const season = useSeason();
+
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const { matches, loading: matchesLoading, refetch: refetchMatches } = useFTCMatches();
   const { getTeamName } = useFTCRankings();
   const isOnline = useOnlineStatus();
-  
+
   const isAdmin = profile?.role === 'admin';
   const editId = searchParams.get('edit');
 
-  // Match selection
+  // Every scored field of the active season, and the blank entry it implies.
+  // Rebuilt when the event's season changes, so a switch reshapes the form
+  // without a reload.
+  const fields = useMemo(() => matchFields(season), [season]);
+  const blankForm = useMemo(
+    () => emptyRecord(fields.filter((f) => f.key !== 'team_number' && f.key !== 'match_number')),
+    [fields],
+  );
+
   const [matchType, setMatchType] = useState<'Q' | 'P'>('Q');
   const [selectedPosition, setSelectedPosition] = useState('');
   const [teamNumber, setTeamNumber] = useState('');
   const [matchNumber, setMatchNumber] = useState('');
   const [editingEntry, setEditingEntry] = useState<{ id: string; scouterId: string } | null>(null);
   const [loadingEdit, setLoadingEdit] = useState(false);
-  
-  // Autonomous
-  const [autoScoredClose, setAutoScoredClose] = useState(0);
-  const [autoScoredFar, setAutoScoredFar] = useState(0);
-  const [onLaunchLine, setOnLaunchLine] = useState(true);
-  
-  // TeleOp
-  const [teleopScoredClose, setTeleopScoredClose] = useState(0);
-  const [teleopScoredFar, setTeleopScoredFar] = useState(0);
-  const [defenseRating, setDefenseRating] = useState(0);
-  
-  // Endgame
-  const [endgameReturn, setEndgameReturn] = useState<EndgameReturnStatus>('not_returned');
-  const [penaltyStatus, setPenaltyStatus] = useState<PenaltyStatus>('none');
-  
-  // General counters
-  const [fouls, setFouls] = useState(0);
-  
-  // Notes
-  const [notes, setNotes] = useState('');
-  
+  const [form, setForm] = useState<ScoutForm>(blankForm);
   const [saving, setSaving] = useState(false);
+  /** The row just saved, held so the scout can hand it over by QR. */
+  const [savedRow, setSavedRow] = useState<Record<string, unknown> | null>(null);
 
-  // Handle match type change - refetch schedule
+  useEffect(() => { setForm(blankForm); }, [blankForm]);
+
+  const set = (key: string, value: FieldValue) => setForm((f) => ({ ...f, [key]: value }));
+  const numberAt = (key: string) => (typeof form[key] === 'number' ? (form[key] as number) : 0);
+  const boolAt = (key: string) => form[key] === true;
+  const stringAt = (key: string) => (typeof form[key] === 'string' ? (form[key] as string) : '');
+
   const handleMatchTypeChange = (type: 'Q' | 'P') => {
     setMatchType(type);
     setSelectedPosition('');
     refetchMatches(type);
   };
 
-  // Handle position selection - auto-fill team number
   const handlePositionSelect = (position: string, team: number) => {
     setSelectedPosition(position);
     setTeamNumber(team.toString());
   };
 
-  // Load entry for editing (admin only)
   useEffect(() => {
     if (editId && isAdmin && currentEvent) {
       loadEntryForEdit(editId);
@@ -121,62 +104,49 @@ export default function MatchScout() {
       .select('*')
       .eq('id', id)
       .maybeSingle();
-    
+
     if (data && !error) {
-      setTeamNumber(data.team_number.toString());
-      setMatchNumber(data.match_number.toString());
-      setAutoScoredClose(data.auto_scored_close);
-      setAutoScoredFar(data.auto_scored_far);
-      setOnLaunchLine(data.on_launch_line);
-      setTeleopScoredClose(data.teleop_scored_close);
-      setTeleopScoredFar(data.teleop_scored_far);
-      setDefenseRating(data.defense_rating);
-      setEndgameReturn(data.endgame_return as EndgameReturnStatus);
-      setPenaltyStatus(data.penalty_status as PenaltyStatus);
-      setFouls(data.auto_fouls_minor + data.auto_fouls_major);
-      setNotes(data.notes || '');
+      const row = data as Record<string, unknown>;
+      setTeamNumber(String(row.team_number ?? ''));
+      setMatchNumber(String(row.match_number ?? ''));
+      setForm(
+        Object.fromEntries(
+          Object.entries(blankForm).map(([key, fallback]) => [
+            key,
+            (row[key] ?? fallback) as FieldValue,
+          ]),
+        ),
+      );
       setEditingEntry({ id: data.id, scouterId: data.scouter_id });
     } else {
-      toast({
-        title: 'Error',
-        description: 'Could not load entry for editing.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Could not load entry for editing.', variant: 'destructive' });
       setSearchParams({});
     }
     setLoadingEdit(false);
   };
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  if (!currentEvent) {
-    return <Navigate to="/event-select" replace />;
-  }
+  if (!user) return <Navigate to="/auth" replace />;
+  if (!currentEvent) return <Navigate to="/event-select" replace />;
 
   const resetForm = () => {
     setMatchType('Q');
     setSelectedPosition('');
     setTeamNumber('');
     setMatchNumber('');
-    setAutoScoredClose(0);
-    setAutoScoredFar(0);
-    setOnLaunchLine(true);
-    setTeleopScoredClose(0);
-    setTeleopScoredFar(0);
-    setDefenseRating(0);
-    setEndgameReturn('not_returned');
-    setPenaltyStatus('none');
-    setFouls(0);
-    setNotes('');
+    setForm(blankForm);
     setEditingEntry(null);
+    setSavedRow(null);
     setSearchParams({});
   };
 
+  /** Live point total for what is on screen — the scout's own sanity check. */
+  const liveScore = scoreEntry(season, form);
+
+  const validation = validateMatchScoutForm({ matchNumber, teamNumber });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isApproved) {
       toast({
         title: 'Account Pending',
@@ -186,10 +156,10 @@ export default function MatchScout() {
       return;
     }
 
-    if (!teamNumber || !matchNumber) {
+    if (!validation.valid) {
       toast({
         title: 'Missing Information',
-        description: 'Please enter team and match numbers.',
+        description: `Needs ${validation.missing.join(', ').toLowerCase()}.`,
         variant: 'destructive',
       });
       return;
@@ -198,55 +168,42 @@ export default function MatchScout() {
     setSaving(true);
 
     const entryData = {
+      ...form,
+      notes: stringAt('notes').trim(),
       event_code: currentEvent.code,
-      team_number: parseInt(teamNumber),
-      match_number: parseInt(matchNumber),
-      auto_scored_close: autoScoredClose,
-      auto_scored_far: autoScoredFar,
-      auto_fouls_minor: fouls,
-      auto_fouls_major: 0,
-      on_launch_line: onLaunchLine,
-      teleop_scored_close: teleopScoredClose,
-      teleop_scored_far: teleopScoredFar,
-      defense_rating: defenseRating,
-      endgame_return: endgameReturn,
-      penalty_status: penaltyStatus,
-      notes: notes.trim(),
+      team_number: parseInt(teamNumber, 10),
+      match_number: parseInt(matchNumber, 10),
     };
 
-    let error;
+    let error: unknown;
 
-    // ── CLOUD MODES (edit, offline queue, or direct upsert) ──
     if (editingEntry && isAdmin) {
       const { error: updateError } = await supabase
         .from('match_entries')
-        .update(entryData)
+        .update(entryData as never)
         .eq('id', editingEntry.id);
       error = updateError;
     } else if (!isOnline) {
-      // Offline: queue locally in IndexedDB
       try {
         await queueMatchEntry({
           ...entryData,
+          notes: String(entryData.notes ?? ''),
           scouter_id: user.id,
         });
         setSaving(false);
+        setSavedRow(entryData);
         toast({
           title: 'Saved Offline',
-          description: `Match ${matchNumber} data queued. Will sync when online.`,
+          description: `Match ${matchNumber} queued — sync on reconnect, or hand it over by QR.`,
         });
-        resetForm();
         return;
       } catch (e) {
         error = e;
       }
     } else {
       const { error: upsertError } = await supabase.from('match_entries').upsert(
-        {
-          ...entryData,
-          scouter_id: user.id,
-        },
-        { onConflict: 'event_code,team_number,match_number,scouter_id' }
+        { ...entryData, scouter_id: user.id } as never,
+        { onConflict: 'event_code,team_number,match_number,scouter_id' },
       );
       error = upsertError;
     }
@@ -256,16 +213,19 @@ export default function MatchScout() {
     if (error) {
       toast({
         title: 'Error',
-        description: (error instanceof Error ? error.message : (error as { message?: string })?.message) || 'Failed to save match data.',
+        description:
+          (error instanceof Error ? error.message : (error as { message?: string })?.message) ||
+          'Failed to save match data.',
         variant: 'destructive',
       });
-    } else {
-      toast({
-        title: editingEntry ? 'Updated!' : 'Saved!',
-        description: `Match ${matchNumber} data for Team ${teamNumber} ${editingEntry ? 'updated' : 'saved'}.`,
-      });
-      resetForm();
+      return;
     }
+
+    setSavedRow(entryData);
+    toast({
+      title: editingEntry ? 'Updated!' : 'Saved!',
+      description: `Match ${matchNumber} for Team ${teamNumber} ${editingEntry ? 'updated' : 'saved'} — ${liveScore.total} pts.`,
+    });
   };
 
   if (loadingEdit) {
@@ -278,25 +238,25 @@ export default function MatchScout() {
     );
   }
 
+  const fouls = foulCounters(season);
+
   return (
     <AppLayout>
       {/* `alliance-swap` flips every red/blue element on this page to follow the
           selected alliance theme (see index.css). */}
       <div className="alliance-swap">
-      {/* Header */}
       <div className="mb-4">
         <div className="flex items-center gap-3">
           <h1 className="font-display text-2xl tracking-wide text-glow">
-            {editingEntry ? "Edit Entry" : "Match Scout"}
+            {editingEntry ? 'Edit Entry' : 'Match Scout'}
           </h1>
+          <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded border border-primary/40 bg-primary/10 text-primary">
+            {season.name}
+          </span>
         </div>
-        <p className="text-sm text-muted-foreground font-mono mt-1">
-          {currentEvent.name}
-        </p>
-        {teamNumber && getTeamName(parseInt(teamNumber)) && (
-          <p className="text-sm text-primary font-mono mt-1">
-            {getTeamName(parseInt(teamNumber))}
-          </p>
+        <p className="text-sm text-muted-foreground font-mono mt-1">{currentEvent.name}</p>
+        {teamNumber && getTeamName(parseInt(teamNumber, 10)) && (
+          <p className="text-sm text-primary font-mono mt-1">{getTeamName(parseInt(teamNumber, 10))}</p>
         )}
       </div>
 
@@ -304,19 +264,11 @@ export default function MatchScout() {
         <div className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg flex items-center gap-2">
           <Pencil className="w-4 h-4 text-warning" />
           <span className="text-sm font-mono">Editing existing entry</span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="ml-auto h-8"
-            onClick={resetForm}
-          >
-            Cancel
-          </Button>
+          <Button variant="ghost" size="sm" className="ml-auto h-8" onClick={resetForm}>Cancel</Button>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Match Info */}
         <PitSection title="Match Info" icon={Crosshair}>
           <MatchInfoSection
             matchType={matchType}
@@ -333,119 +285,148 @@ export default function MatchScout() {
           />
         </PitSection>
 
-        {/* Autonomous */}
-        <PitSection title="Autonomous" icon={Bot} variant="blue">
-          <div className="grid grid-cols-2 gap-4">
-            <IntegerStepper
-              value={autoScoredClose}
-              onChange={setAutoScoredClose}
-              label={autoCloseCfg.label}
-            />
-            <IntegerStepper
-              value={autoScoredFar}
-              onChange={setAutoScoredFar}
-              label={autoFarCfg.label}
-            />
-          </div>
-          <div className="mt-4">
-            <ToggleButton
-              value={onLaunchLine}
-              onChange={setOnLaunchLine}
-              label={launchLineCfg.label}
-              onLabel="ON"
-              offLabel="OFF"
-              invertColors={launchLineCfg.destructive}
-            />
-          </div>
-        </PitSection>
+        {/* One section per phase, built from the season config. A new game needs
+            no edits here — only a new file under src/seasons. */}
+        {PHASES.map(({ id, title, icon, variant }) => {
+          const counters = countersForPhase(season, id);
+          const toggles = togglesForPhase(season, id);
+          const enums = enumsForPhase(season, id);
+          if (counters.length === 0 && toggles.length === 0 && enums.length === 0) return null;
 
-        {/* TeleOp */}
-        <PitSection title="TeleOp" icon={Gamepad2} variant="red">
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <IntegerStepper
-              value={teleopScoredClose}
-              onChange={setTeleopScoredClose}
-              label={teleopCloseCfg.label}
-            />
-            <IntegerStepper
-              value={teleopScoredFar}
-              onChange={setTeleopScoredFar}
-              label={teleopFarCfg.label}
-            />
-          </div>
+          return (
+            <PitSection key={id} title={title} icon={icon} variant={variant}>
+              {counters.length > 0 && (
+                <div className="grid grid-cols-2 gap-4">
+                  {counters.map((c) => (
+                    <IntegerStepper
+                      key={c.key}
+                      value={numberAt(c.key)}
+                      onChange={(v) => set(c.key, v)}
+                      label={c.label}
+                      min={c.min ?? 0}
+                      max={c.max ?? 999}
+                    />
+                  ))}
+                </div>
+              )}
 
-          <OptionSelector
-            label={findEnum('defense_rating').label}
-            options={defenseOptions}
-            value={defenseRating}
-            onChange={setDefenseRating}
-            columns={4}
-          />
-        </PitSection>
+              {toggles.length > 0 && (
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${counters.length > 0 ? 'mt-4' : ''}`}>
+                  {toggles.map((t) => (
+                    <ToggleButton
+                      key={t.key}
+                      value={boolAt(t.key)}
+                      onChange={(v) => set(t.key, v)}
+                      label={t.label}
+                      onLabel="YES"
+                      offLabel="NO"
+                      invertColors={t.destructive}
+                    />
+                  ))}
+                </div>
+              )}
 
-        {/* Endgame */}
-        <PitSection title="Endgame" icon={Flag}>
-          <div className="space-y-4">
-            <OptionSelector
-              label={findEnum('endgame_return').label}
-              options={endgameOptions}
-              value={endgameReturn}
-              onChange={setEndgameReturn}
-              columns={4}
-            />
+              {enums.map((e) => {
+                // Numeric enums (defense 0–3) are stored as integers.
+                const numeric = e.options.every((o) => /^\d+$/.test(o.value));
+                return (
+                  <div key={e.key} className={counters.length > 0 || toggles.length > 0 ? 'mt-4' : ''}>
+                    <OptionSelector
+                      label={e.label}
+                      options={e.options.map((o) => ({
+                        value: numeric ? parseInt(o.value, 10) : o.value,
+                        label: o.label,
+                        sublabel: o.sublabel,
+                        color: o.color,
+                      }))}
+                      value={numeric ? numberAt(e.key) : stringAt(e.key)}
+                      onChange={(v) => set(e.key, v as FieldValue)}
+                      columns={4}
+                    />
+                  </div>
+                );
+              })}
 
-            <OptionSelector
-              label={findEnum('penalty_status').label}
-              options={penaltyOptions}
-              value={penaltyStatus}
-              onChange={setPenaltyStatus}
-              columns={4}
-            />
-          </div>
-        </PitSection>
+              {/* Hints live below the controls so the grid stays tidy. */}
+              {[...counters, ...toggles].some((f) => f.hint) && (
+                <div className="mt-3 space-y-0.5">
+                  {[...counters, ...toggles].filter((f) => f.hint).map((f) => (
+                    <p key={f.key} className="text-[11px] font-mono text-muted-foreground">
+                      {f.label}: {f.hint}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </PitSection>
+          );
+        })}
 
-        {/* Fouls */}
-        <PitSection title="Fouls" icon={AlertTriangle} variant="warning">
-          <IntegerStepper
-            value={fouls}
-            onChange={setFouls}
-            label="Total Fouls"
-          />
-        </PitSection>
+        {fouls.length > 0 && (
+          <PitSection title="Fouls" icon={AlertTriangle} variant="warning">
+            <div className="grid grid-cols-2 gap-4">
+              {fouls.map((c) => (
+                <IntegerStepper
+                  key={c.key}
+                  value={numberAt(c.key)}
+                  onChange={(v) => set(c.key, v)}
+                  label={c.label}
+                  min={c.min ?? 0}
+                  max={c.max ?? 99}
+                />
+              ))}
+            </div>
+            <p className="text-[11px] font-mono text-muted-foreground mt-3">
+              Worth {liveScore.foulsGiven} pts to the opposing alliance.
+            </p>
+          </PitSection>
+        )}
 
-        {/* Notes */}
         <PitSection title="Notes" icon={Pencil}>
           <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            value={stringAt('notes')}
+            onChange={(e) => set('notes', e.target.value)}
             placeholder="Optional observations — e.g. robot disconnected, gripper broke, alliance blocked..."
             className="min-h-[80px] bg-background border-border font-mono text-sm resize-none"
             maxLength={500}
           />
-          <p className="text-xs text-muted-foreground mt-1">{notes.length}/500</p>
+          <p className="text-xs text-muted-foreground mt-1">{stringAt('notes').length}/500</p>
         </PitSection>
 
-        {/* Validation summary — surfaces missing fields before save */}
-        {(() => {
-          const issues: string[] = [];
-          if (!matchNumber) issues.push('match number');
-          if (!teamNumber) issues.push('team number');
-          else if (isNaN(parseInt(teamNumber)) || parseInt(teamNumber) < 1) issues.push('valid team number');
-          if (!isApproved) issues.push('account approval');
-          if (issues.length === 0) return null;
-          return (
-            <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2.5 flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
-              <div className="text-xs font-mono">
-                <span className="text-warning font-semibold">Before saving:</span>
-                <span className="text-muted-foreground"> needs {issues.join(', ')}.</span>
+        {/* Running total — catches a mis-tapped stepper before it reaches the DB. */}
+        <PitSection title="This Match" icon={Calculator}>
+          <div className="grid grid-cols-4 gap-2 text-center">
+            {[
+              { label: 'Auto', value: liveScore.auto },
+              { label: 'TeleOp', value: liveScore.teleop },
+              { label: 'Endgame', value: liveScore.endgame },
+              { label: 'Total', value: liveScore.total },
+            ].map((cell) => (
+              <div key={cell.label} className="bg-muted/40 rounded-md p-2.5">
+                <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{cell.label}</p>
+                <p className="font-display text-xl">{cell.value}</p>
               </div>
-            </div>
-          );
-        })()}
+            ))}
+          </div>
+          <p className="text-[11px] font-mono text-muted-foreground mt-2 text-center">
+            Priced with {season.name} point values.
+          </p>
+        </PitSection>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-2 pb-8">
+        {!validation.valid || !isApproved ? (
+          <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2.5 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+            <div className="text-xs font-mono">
+              <span className="text-warning font-semibold">Before saving:</span>
+              <span className="text-muted-foreground">
+                {' '}needs {[...validation.missing, ...(isApproved ? [] : ['account approval'])]
+                  .join(', ')
+                  .toLowerCase()}.
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="flex gap-3 pt-2">
           <Button
             type="button"
             variant="outline"
@@ -458,17 +439,33 @@ export default function MatchScout() {
           <Button
             type="submit"
             className="flex-1 h-14 text-base gap-2 font-display bg-primary text-primary-foreground hover:bg-primary/90 bg-glow"
-            disabled={saving || !isApproved || !teamNumber || !matchNumber}
+            disabled={saving || !isApproved || !validation.valid}
           >
-            {saving ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : !isOnline ? (
-              <WifiOff className="w-5 h-5" />
-            ) : (
-              <Save className="w-5 h-5" />
-            )}
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" />
+              : !isOnline ? <WifiOff className="w-5 h-5" />
+              : <Save className="w-5 h-5" />}
             {isOnline ? 'Save Match' : 'Save Offline'}
           </Button>
+        </div>
+
+        {/* Hand-off by QR: the scout's phone shows it, the lead's phone reads it. */}
+        <div className="pb-8">
+          {savedRow ? (
+            <EntryQRCard
+              season={season}
+              kind="match"
+              eventCode={currentEvent.code}
+              rows={[savedRow]}
+              title="Hand Off This Entry"
+              caption={`Team ${savedRow.team_number} · Match ${savedRow.match_number} · ${liveScore.total} pts`}
+              onDismiss={resetForm}
+            />
+          ) : (
+            <p className="flex items-center justify-center gap-2 text-xs font-mono text-muted-foreground">
+              <QrCode className="w-3.5 h-3.5" />
+              Save to get a QR code for handing this entry to the lead device.
+            </p>
+          )}
         </div>
       </form>
       </div>

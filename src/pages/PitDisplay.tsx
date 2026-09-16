@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { POINTS, predictTeam, type TeamPrediction, type MatchEntryLite } from '@/lib/prediction';
+import { useSeason } from '@/hooks/useSeason';
 import { computeOPR } from '@/lib/opr';
 import { MissingDataBanner, type TeamMissingInputs } from '@/components/shared/MissingDataBanner';
 import type { Tables } from '@/integrations/supabase/types';
@@ -124,6 +125,7 @@ function computeTeamConfidenceDebug(prediction?: TeamPrediction, allianceTotal?:
 export default function PitDisplay() {
   const { user, profile } = useAuth();
   const { currentEvent } = useEvent();
+  const season = useSeason();
   const { toast } = useToast();
   const { rankings, matchScores, refetch: refetchRankings } = useFTCRankings(true);
   const { matches: ftcMatches, refetch: refetchMatches } = useFTCMatches();
@@ -288,9 +290,9 @@ export default function PitDisplay() {
       teamMap.set(e.team_number, arr);
     });
     const preds = new Map<number, TeamPrediction>();
-    teamMap.forEach((entries, team) => preds.set(team, predictTeam(team, entries)));
+    teamMap.forEach((entries, team) => preds.set(team, predictTeam(season, team, entries)));
     return preds;
-  }, [scoutingEntries]);
+  }, [scoutingEntries, season]);
 
   const pitMap = useMemo(() => {
     const m = new Map<number, PitRow>();

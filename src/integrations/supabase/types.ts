@@ -139,6 +139,7 @@ export type Database = {
           created_by: string | null
           id: string
           name: string
+          season_id: string
         }
         Insert: {
           archived?: boolean
@@ -147,6 +148,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           name: string
+          season_id?: string
         }
         Update: {
           archived?: boolean
@@ -155,6 +157,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           name?: string
+          season_id?: string
         }
         Relationships: []
       }
