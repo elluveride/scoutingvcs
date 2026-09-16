@@ -137,6 +137,7 @@ export type Database = {
           code: string
           created_at: string
           created_by: string | null
+          disabled_fields: Json
           id: string
           name: string
           season_id: string
@@ -146,6 +147,7 @@ export type Database = {
           code: string
           created_at?: string
           created_by?: string | null
+          disabled_fields?: Json
           id?: string
           name: string
           season_id?: string
@@ -155,6 +157,7 @@ export type Database = {
           code?: string
           created_at?: string
           created_by?: string | null
+          disabled_fields?: Json
           id?: string
           name?: string
           season_id?: string
