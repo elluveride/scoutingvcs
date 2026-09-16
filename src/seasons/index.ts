@@ -34,4 +34,23 @@ export function seasonById(id: string | null | undefined): SeasonConfig {
   return (id && SEASONS[id]) || SEASONS[DEFAULT_SEASON_ID];
 }
 
+/**
+ * A season with the scoring fields an event switched off removed. A disabled
+ * field is treated as if it were never part of the game: it vanishes from the
+ * scout form, the spreadsheet columns, QR payloads, and the ranking. Fouls,
+ * ratings, and unscored fields are always kept.
+ */
+export function applyDisabledFields(
+  season: SeasonConfig,
+  disabled: string[] | null | undefined,
+): SeasonConfig {
+  if (!disabled || disabled.length === 0) return season;
+  const off = new Set(disabled);
+  return {
+    ...season,
+    counters: season.counters.filter((c) => !(off.has(c.key) && (c.role ?? 'score') === 'score')),
+    toggles: season.toggles.filter((t) => !(off.has(t.key) && (t.role ?? 'score') === 'score')),
+  };
+}
+
 export type { SeasonConfig } from './types';
