@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent } from '@/contexts/EventContext';
 import { useSeason } from '@/hooks/useSeason';
+import { useToast } from '@/hooks/use-toast';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PitSection } from '@/components/match-scout/PitSection';
 import { SwitchSeasonButton } from '@/components/season/SwitchSeasonButton';
+import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { SEASON_LIST } from '@/seasons';
+import { SEASON_LIST, seasonById } from '@/seasons';
 import type { SeasonConfig } from '@/seasons/types';
 import { matchFields, pitFields } from '@/seasons/fields';
 import { cn } from '@/lib/utils';
@@ -23,8 +25,25 @@ const PHASE_META = {
   endgame: { label: 'Endgame', icon: Flag },
 } as const;
 
-/** Every scored field of a season, grouped by phase, with its point value. */
-function ScoringTable({ season }: { season: SeasonConfig }) {
+/**
+ * Every scored field of a season, grouped by phase, with its point value and
+ * an on/off switch. Switched-off fields stop appearing in the scout form,
+ * spreadsheet, QR payloads, and ranking for this event.
+ */
+function ScoringTable({
+  season,
+  disabled,
+  onToggle,
+  canEdit,
+  savingKey,
+}: {
+  season: SeasonConfig;
+  disabled: string[];
+  onToggle: (key: string, enabled: boolean) => void;
+  canEdit: boolean;
+  savingKey: string | null;
+}) {
+  const off = new Set(disabled);
   const phases = (['auto', 'teleop', 'endgame'] as const).map((phase) => {
     const counters = season.counters.filter(
       (c) => c.phase === phase && (c.role ?? 'score') === 'score' && c.pointsEach,
@@ -52,13 +71,31 @@ function ScoringTable({ season }: { season: SeasonConfig }) {
             {rows.length === 0 ? (
               <p className="text-xs text-muted-foreground font-mono">No scored fields.</p>
             ) : (
-              <div className="space-y-1.5">
-                {rows.map((r) => (
-                  <div key={r.key} className="flex items-baseline justify-between gap-2 text-xs font-mono">
-                    <span className="text-muted-foreground truncate">{r.label}</span>
-                    <span className="shrink-0 font-semibold">{r.points}</span>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                {rows.map((r) => {
+                  const isOff = off.has(r.key);
+                  return (
+                    <div
+                      key={r.key}
+                      className={cn(
+                        'flex items-center justify-between gap-2 text-xs font-mono transition-opacity',
+                        isOff && 'opacity-50',
+                      )}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Switch
+                          checked={!isOff}
+                          disabled={!canEdit || savingKey === r.key}
+                          onCheckedChange={(v) => onToggle(r.key, v)}
+                          aria-label={`${isOff ? 'Enable' : 'Disable'} ${r.label}`}
+                          className="shrink-0"
+                        />
+                        <span className={cn('truncate', isOff && 'line-through')}>{r.label}</span>
+                      </div>
+                      <span className="shrink-0 font-semibold">{r.points}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
