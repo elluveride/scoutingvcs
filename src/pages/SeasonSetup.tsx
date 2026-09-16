@@ -161,7 +161,7 @@ export default function SeasonSetup() {
         </PitSection>
 
         {/* Point values */}
-        <PitSection title="Scoring" icon={ListChecks}>
+        <PitSection title="Scoring" icon={ListChecks} collapsible>
           <p className="text-sm text-muted-foreground mb-3">
             These are the values the Dashboard ranking and the Match Planner prediction run on.
             They come from the season config, so both screens always agree.
@@ -182,7 +182,7 @@ export default function SeasonSetup() {
         </PitSection>
 
         {/* What the scout sees */}
-        <PitSection title="Match Scout Fields" icon={ListChecks}>
+        <PitSection title="Match Scout Fields" icon={ListChecks} collapsible>
           <div className="flex flex-wrap gap-1.5">
             {scoutFields.map((f) => (
               <span
@@ -196,7 +196,7 @@ export default function SeasonSetup() {
           </div>
         </PitSection>
 
-        <PitSection title="Pit Scout Capabilities" icon={Wrench}>
+        <PitSection title="Pit Scout Capabilities" icon={Wrench} collapsible>
           <div className="flex flex-wrap gap-1.5">
             {capabilities.map((c) => (
               <span
@@ -211,7 +211,7 @@ export default function SeasonSetup() {
         </PitSection>
 
         {/* QR compatibility */}
-        <PitSection title="QR Transfer" icon={QrCode}>
+        <PitSection title="QR Transfer" icon={QrCode} collapsible>
           <p className="text-sm text-muted-foreground">
             QR codes carry the season id, so a code scouted under a different game is rejected with
             a reason instead of importing the wrong columns. Every device scanning into this event
