@@ -2,11 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Airstrike Laser';
+  src: url('/fonts/airstrike-laser.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Valley Christian Schools brand system
    Primary: PMS 293 C (#003DA5) · Navy PMS 648 C (#002E5D)
    Silver PMS 431 C (#5B6770) · White · Black
    Fonts: Source Sans 3 (Myriad Pro substitute), Libre Caslon Text
-   (Adobe Caslon Pro substitute), Cinzel (Trajan Pro substitute)
+   (Adobe Caslon Pro substitute), Airstrike Laser (headings)
 */
 
 @layer base {
@@ -101,7 +109,7 @@
 
     /* VCS fonts */
     --font-sans: "Source Sans 3", "Myriad Pro", ui-sans-serif, system-ui, sans-serif;
-    --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+    --font-display: "Airstrike Laser", "Source Sans 3", sans-serif;
     --font-serif: "Libre Caslon Text", "Adobe Caslon Pro", Georgia, serif;
     --font-mono: "Roboto Mono", ui-monospace, monospace;
 
@@ -254,7 +262,7 @@
 
   .dark {
     --font-sans: "Source Sans 3", "Myriad Pro", ui-sans-serif, system-ui, sans-serif;
-    --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+    --font-display: "Airstrike Laser", "Source Sans 3", sans-serif;
     --font-serif: "Libre Caslon Text", "Adobe Caslon Pro", Georgia, serif;
 
     --font-mono: "Roboto Mono", ui-monospace, monospace;
@@ -265,6 +273,17 @@
 @layer base {
   * {
     @apply border-border;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .font-display {
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
   }
 
   body {
