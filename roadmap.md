@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Apply Airstrike Laser headings and refresh the Apex Scout logo and app icons.
+- [x] Apply Airstrike Laser headings and refresh the Apex Scout logo and app icons.
 
 - [x] APEX SCOUT wordmark logo (PMS 293 blue), replace favicon + splash/PWA icons
 - [x] PitDisplay: use real FTC rankings instead of "last scored + 1" fallback
