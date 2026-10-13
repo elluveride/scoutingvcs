@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import cipherLogo from '@/assets/apex-scout-badge.png';
+import apexLogo from '@/assets/apex-scout-badge.png';
 import { lovable } from '@/integrations/lovable/index';
 import { z } from 'zod';
 
@@ -151,8 +151,8 @@ export default function Auth() {
       <div className="hidden lg:flex flex-1 bg-card/80 items-center justify-center p-12 relative overflow-hidden border-r border-border/60">
         <div className="absolute inset-0 bg-gradient-to-br from-vcs-navy/35 via-primary/10 to-vcs-silver/10 pointer-events-none" />
         <div className="max-w-md text-center relative">
-          <img src={cipherLogo} alt="Apex Scout" className="w-20 h-20 rounded-2xl mx-auto mb-8" />
-          <h1 className="text-4xl font-bold mb-3 text-glow">Apex Scout</h1>
+          <img src={apexLogo} alt="Apex Scout logo" className="w-20 h-20 object-contain mx-auto mb-8" />
+          <h1 className="font-display text-4xl font-bold mb-3 text-foreground">Apex Scout</h1>
           <p className="text-base text-muted-foreground mb-1">
             Competition-grade FTC scouting
           </p>
@@ -179,15 +179,15 @@ export default function Auth() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <img src={cipherLogo} alt="Scouting App" className="w-12 h-12 rounded-xl" />
-            <div>
-              <h1 className="font-bold text-xl">2844 × 12841</h1>
-              <p className="text-xs text-muted-foreground">Scouting App</p>
+            <img src={apexLogo} alt="Apex Scout logo" className="w-12 h-12 object-contain shrink-0" />
+            <div className="min-w-0">
+              <h1 className="font-display font-bold text-xl text-foreground">Apex Scout</h1>
+              <p className="text-xs text-muted-foreground font-mono">Teams 2844 × 12841</p>
             </div>
           </div>
 
           <div className="data-card">
-            <h2 className="text-2xl font-bold mb-2">
+            <h2 className="font-display text-2xl font-bold mb-2 text-foreground">
               {isForgotPassword ? 'Reset Password' : isSignUp ? 'Create Account' : 'Welcome Back'}
             </h2>
             <p className="text-muted-foreground mb-6">

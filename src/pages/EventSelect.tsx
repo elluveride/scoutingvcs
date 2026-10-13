@@ -15,7 +15,7 @@ import {
 import { Calendar, Plus, Loader2, AlertCircle, CheckCircle2, RefreshCw, Star, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { SEASON_LIST, DEFAULT_SEASON_ID } from '@/seasons';
-import cipherLogo from '@/assets/apex-scout-badge.png';
+import apexLogo from '@/assets/apex-scout-badge.png';
 
 interface CachedEvent {
   code: string;
@@ -180,11 +180,12 @@ export default function EventSelect() {
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <img
-            src={cipherLogo}
+            src={apexLogo}
             alt="Apex Scout logo"
-            className="w-16 h-16 rounded-2xl mx-auto mb-4"
+            className="w-16 h-16 object-contain mx-auto mb-4"
           />
-          <h1 className="text-3xl font-bold mb-2">Select Event</h1>
+          <p className="font-display text-lg text-foreground mb-3">Apex Scout</p>
+          <h1 className="font-display text-3xl font-bold mb-2 text-foreground">Select Event</h1>
           <p className="text-muted-foreground">
             Choose an event to start scouting
           </p>
@@ -236,7 +237,7 @@ export default function EventSelect() {
         {events.length === 0 ? (
           <div className="data-card text-center py-12">
             <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No Events Yet</h2>
+            <h2 className="font-display text-xl font-semibold mb-2">No Events Yet</h2>
             <p className="text-muted-foreground mb-6">
               {isAdmin
                 ? 'Sync from the FTC API or create an event manually'
@@ -286,7 +287,7 @@ export default function EventSelect() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-lg truncate">{event.name}</h3>
+                        <h3 className="font-display font-semibold text-lg min-w-0 break-words">{event.name}</h3>
                         {isTeamEvent && userTeam && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-accent/20 text-accent font-mono font-medium shrink-0">
                             #{userTeam}
@@ -328,7 +329,7 @@ export default function EventSelect() {
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Event</DialogTitle>
+            <DialogTitle className="font-display">Create Event</DialogTitle>
             <DialogDescription>
               Set up a new event for scouting.
             </DialogDescription>
