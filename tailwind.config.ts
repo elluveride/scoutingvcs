@@ -22,10 +22,9 @@ export default {
           'sans-serif'
         ],
         display: [
-          '"Cinzel"',
-          '"Trajan Pro"',
-          'Georgia',
-          'serif'
+          '"Airstrike Laser"',
+          '"Source Sans 3"',
+          'sans-serif'
         ],
         serif: [
           '"Libre Caslon Text"',
