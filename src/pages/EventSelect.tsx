@@ -284,6 +284,7 @@ export default function EventSelect() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  disableRipple
                   aria-label="Clear event search"
                   onClick={() => setSearchQuery('')}
                   className="absolute right-0 top-0 h-12 w-12"
