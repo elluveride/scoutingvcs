@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Calendar, Plus, Loader2, AlertCircle, CheckCircle2, RefreshCw, Star, X } from 'lucide-react';
+import { Calendar, Plus, Loader2, AlertCircle, CheckCircle2, RefreshCw, Star, X, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { SEASON_LIST, DEFAULT_SEASON_ID } from '@/seasons';
 import apexLogo from '@/assets/apex-scout-badge.png';
@@ -42,6 +42,7 @@ export default function EventSelect() {
   const [validationResult, setValidationResult] = useState<'valid' | 'invalid' | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [cachedEvents, setCachedEvents] = useState<CachedEvent[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Load cached events for team priority sorting
   useEffect(() => {
@@ -175,6 +176,12 @@ export default function EventSelect() {
     return parts.length > 0 ? parts.join(', ') : null;
   };
 
+  const query = searchQuery.trim().toLocaleLowerCase();
+  const filteredEvents = sortedEvents.filter(event =>
+    [event.name, event.code, getEventLocation(event.code) ?? '']
+      .some(value => value.toLocaleLowerCase().includes(query)),
+  );
+
   return (
     <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
       <div className="w-full max-w-2xl">
@@ -262,13 +269,48 @@ export default function EventSelect() {
           </div>
         ) : (
           <div className="space-y-4">
+            <div className="relative">
+              <Label htmlFor="event-search" className="sr-only">Search events</Label>
+              <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+              <Input
+                id="event-search"
+                type="search"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search by event name, code, or location"
+                className="h-12 pl-12 pr-14 [&::-webkit-search-cancel-button]:appearance-none"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Clear event search"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-0 top-0 h-12 w-12"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+            <p role="status" className="text-sm text-muted-foreground">
+              {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'}{query ? ' found' : ''}
+            </p>
             {cachedEvents.length === 0 && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted border border-border">
                 <Calendar className="w-5 h-5 text-muted-foreground shrink-0" />
                 <p className="text-sm text-muted-foreground font-mono">No FTC events happening today</p>
               </div>
             )}
-            {sortedEvents.map((event) => {
+            {filteredEvents.length === 0 && (
+              <div className="text-center py-8">
+                <Search className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                <h2 className="font-display text-xl mb-2">No matching events</h2>
+                <Button variant="outline" onClick={() => setSearchQuery('')} className="min-h-12">
+                  Clear Search
+                </Button>
+              </div>
+            )}
+            {filteredEvents.map((event) => {
               const isTeamEvent = isUserTeamEvent(event.code);
               const location = getEventLocation(event.code);
 

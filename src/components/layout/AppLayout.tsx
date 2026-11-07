@@ -36,7 +36,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import cipherLogo from '@/assets/apex-scout-badge.png';
+import apexLogo from '@/assets/apex-scout-badge.png';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -121,9 +121,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Logo */}
       <div className="p-4 md:p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <img src={cipherLogo} alt="Apex Scout" className="w-10 h-10 rounded-xl" />
-          <div>
-            <h1 className="font-bold text-lg text-sidebar-foreground">Apex Scout</h1>
+          <img src={apexLogo} alt="Apex Scout logo" className="w-12 h-12 object-contain shrink-0" />
+          <div className="min-w-0">
+            <p className="font-display text-lg text-sidebar-foreground leading-tight">Apex Scout</p>
             <p className="text-xs text-muted-foreground">12841×2844</p>
           </div>
         </div>
@@ -250,8 +250,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Mobile Header */}
         <header className="sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-sidebar border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <img src={cipherLogo} alt="Apex Scout" className="w-8 h-8 rounded-lg" />
-            <span className="font-bold text-sidebar-foreground">Apex Scout</span>
+            <img src={apexLogo} alt="Apex Scout logo" className="w-10 h-10 object-contain shrink-0" />
+            <span className="font-display text-sidebar-foreground">Apex Scout</span>
           </div>
           
           <Sheet open={open} onOpenChange={setOpen}>

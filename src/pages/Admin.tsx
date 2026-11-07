@@ -182,7 +182,7 @@ export default function Admin() {
           {/* Team Change Requests */}
           {teamRequests.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <h2 className="font-display text-lg mb-4 flex items-center gap-2">
                 <ArrowRightLeft className="w-5 h-5 text-primary" />
                 Team Change Requests ({teamRequests.length})
               </h2>
@@ -219,7 +219,7 @@ export default function Admin() {
           {/* Bug Reports */}
           {bugReports.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <h2 className="font-display text-lg mb-4 flex items-center gap-2">
                 <Bug className="w-5 h-5 text-destructive" />
                 Bug Reports ({bugReports.length})
               </h2>
@@ -260,7 +260,7 @@ export default function Admin() {
 
 
           <div>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h2 className="font-display text-lg mb-4 flex items-center gap-2">
               <User className="w-5 h-5 text-warning" />
               Pending Approval ({pendingUsers.length})
             </h2>
@@ -315,7 +315,7 @@ export default function Admin() {
 
           {/* Approved Users */}
           <div>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h2 className="font-display text-lg mb-4 flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
               Approved Users ({approvedUsers.length})
             </h2>
