@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Add event search and apply shared Apex Scout branding to scouting, dashboard, and admin screens.
+
 - [x] Apply Airstrike Laser headings and refresh the Apex Scout logo and app icons.
 
 - [x] APEX SCOUT wordmark logo (PMS 293 blue), replace favicon + splash/PWA icons

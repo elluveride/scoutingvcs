@@ -412,7 +412,7 @@ export default function Dashboard() {
         <div className="space-y-6">
           {categorizedWeights.map(category => (
             <div key={category.id} className="space-y-3">
-              <h4 className="text-sm font-semibold text-primary border-b border-border pb-1">
+              <h4 className="font-display text-sm text-primary border-b border-border pb-1">
                 {category.label}
               </h4>
               {category.weights.map(w => (
@@ -726,7 +726,7 @@ export default function Dashboard() {
           {/* List 1 */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{config1.name}</h2>
+              <h2 className="font-display text-lg">{config1.name}</h2>
               {isAdmin && (
                 <Sheet>
                   <SheetTrigger asChild>
@@ -757,7 +757,7 @@ export default function Dashboard() {
           {/* List 2 */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{config2.name}</h2>
+              <h2 className="font-display text-lg">{config2.name}</h2>
               {isAdmin && (
                 <Sheet>
                   <SheetTrigger asChild>

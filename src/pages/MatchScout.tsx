@@ -246,8 +246,8 @@ export default function MatchScout() {
           selected alliance theme (see index.css). */}
       <div className="alliance-swap">
       <div className="mb-4">
-        <div className="flex items-center gap-3">
-          <h1 className="font-display text-2xl tracking-wide text-glow">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-display text-2xl text-foreground">
             {editingEntry ? 'Edit Entry' : 'Match Scout'}
           </h1>
           <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded border border-primary/40 bg-primary/10 text-primary">
