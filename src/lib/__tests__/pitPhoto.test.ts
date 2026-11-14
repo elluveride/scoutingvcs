@@ -3,7 +3,16 @@ import { robotPhotoPath, storagePathFromStored } from '@/lib/pitPhoto';
 
 describe('pitPhoto', () => {
   it('builds a deterministic jpg path per event+team', () => {
-    expect(robotPhotoPath('USMIACMP', 12841)).toBe('12841/USMIACMP_12841.jpg');
+    expect(robotPhotoPath('USMIACMP', 12841, 2844)).toBe('2844/USMIACMP_12841.jpg');
+  });
+
+  it('keeps another robot photo in the owning scouting team folder', () => {
+    expect(robotPhotoPath('USAZGIQ', 99998, 12841)).toBe('12841/USAZGIQ_99998.jpg');
+  });
+
+  it('rejects missing or unsafe ownership folders', () => {
+    expect(() => robotPhotoPath('USAZGIQ', 2844, '')).toThrow();
+    expect(() => robotPhotoPath('USAZGIQ', 2844, '../2844')).toThrow();
   });
 
   it('accepts bare storage paths', () => {

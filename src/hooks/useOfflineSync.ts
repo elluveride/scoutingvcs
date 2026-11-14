@@ -10,7 +10,7 @@ import {
   cleanupOldEntries,
   QUEUE_CHANGED_EVENT,
 } from '@/lib/offlineDb';
-import { ROBOT_PHOTO_BUCKET } from '@/lib/pitPhoto';
+import { ROBOT_PHOTO_BUCKET, robotPhotoPath } from '@/lib/pitPhoto';
 import { useToast } from '@/hooks/use-toast';
 
 export function useOnlineStatus() {
@@ -88,6 +88,14 @@ export function useOfflineSync() {
         try {
           // Upload first: the row has to point at an object that exists.
           if (photo_blob && row.robot_photo_url) {
+            // Re-home legacy queued paths under the original scout's team,
+            // never under the observed robot or a different signed-in user.
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user || user.id !== row.last_edited_by) throw new Error('Sign in as the scout who queued this photo to sync it.');
+            const { data: profile, error: profileError } = await supabase.from('profiles')
+              .select('team_number').eq('id', user.id).single();
+            if (profileError || !profile?.team_number) throw new Error('Your scouting team number is required to sync photos.');
+            row.robot_photo_url = robotPhotoPath(row.event_code, row.team_number, profile.team_number);
             const { error: upErr } = await supabase.storage
               .from(ROBOT_PHOTO_BUCKET)
               .upload(row.robot_photo_url, photo_blob, { upsert: true, contentType: 'image/jpeg' });

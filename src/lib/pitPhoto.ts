@@ -9,8 +9,11 @@
 export const ROBOT_PHOTO_BUCKET = 'robot-photos';
 
 /** Bucket-relative path for a team's photo at an event. Always JPEG (we compress client-side). */
-export function robotPhotoPath(eventCode: string, teamNumber: number | string): string {
-  return `${teamNumber}/${eventCode}_${teamNumber}.jpg`;
+export function robotPhotoPath(eventCode: string, teamNumber: number | string, scoutingTeam: number | string): string {
+  if (!/^[1-9]\d{0,4}$/.test(String(scoutingTeam))) {
+    throw new Error('Your scouting team number is required to upload photos.');
+  }
+  return `${scoutingTeam}/${eventCode}_${teamNumber}.jpg`;
 }
 
 /** Extract the bucket-relative path from a stored value (path, public URL, or signed URL). */

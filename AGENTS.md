@@ -5,3 +5,4 @@
 - Generate the remote MCP function through the SDK Vite plugin; .well-known discovery advertises its canonical function URL and native OAuth issuer, never the app's HTML /mcp path.
 - Exclude .well-known metadata from PWA navigation fallback so OAuth discovery cannot return cached application HTML.
 - Keep robot shot observations separate from official alliance scoring; hidden scouting counters remain in season transport/scoring definitions to preserve historical data.
+- Store robot photos under the owning scouting team's folder, not the observed robot's number; online and offline uploads use the same path helper and private storage policies.

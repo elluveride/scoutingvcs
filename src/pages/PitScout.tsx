@@ -95,7 +95,7 @@ function parseTeam(value: string): number | null {
 }
 
 export default function PitScout() {
-  const { user, isApproved } = useAuth();
+  const { user, profile, isApproved } = useAuth();
   const { currentEvent } = useEvent();
   const { toast } = useToast();
   const { rankings } = useFTCRankings();
@@ -370,8 +370,14 @@ export default function PitScout() {
       return;
     }
 
+    if (photo.pendingBlob && !profile?.teamNumber) {
+      toast({ title: 'Team number required', description: 'Add your scouting team number to your profile before uploading photos.', variant: 'destructive' });
+      return;
+    }
     setSaving(true);
-    const photoPath = robotPhotoPath(currentEvent.code, parsedTeam);
+    const photoPath = photo.pendingBlob && profile?.teamNumber
+      ? robotPhotoPath(currentEvent.code, parsedTeam, profile.teamNumber)
+      : photo.savedPath;
     const nextPhotoPath = photo.pendingBlob ? photoPath : photo.removed ? null : photo.savedPath;
     const removePath = photo.removed && photo.savedPath && photo.savedPath !== nextPhotoPath ? photo.savedPath : null;
 

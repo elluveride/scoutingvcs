@@ -29,6 +29,13 @@
       "when": 1794698372089,
       "tag": "0003_add_biobuzz_robot_shot_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794698672717,
+      "tag": "0004_fix_private_robot_photo_permissions",
+      "breakpoints": true
     }
   ]
 }

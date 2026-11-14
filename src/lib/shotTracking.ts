@@ -12,6 +12,11 @@ export function updateShotCount(
   const madeKey = `${match[1]}_shots_made`;
   const attempted = Number(next[attemptedKey] ?? 0);
   const made = Number(next[madeKey] ?? 0);
+  const madeIncrease = made - Number(form[madeKey] ?? 0);
+  if (match[2] === 'made' && madeIncrease > 0) {
+    next[attemptedKey] = Math.min(999, Math.max(made, attempted + madeIncrease));
+    return next;
+  }
   if (made > attempted) {
     if (match[2] === 'made') next[attemptedKey] = made;
     else next[madeKey] = attempted;
