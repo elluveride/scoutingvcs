@@ -1,0 +1,7 @@
+{
+  "resource": "https://aigdnfpfcixaeyxaefmt.supabase.co/functions/v1/mcp",
+  "resource_name": "DECODE Scout Hub",
+  "authorization_servers": ["https://aigdnfpfcixaeyxaefmt.supabase.co/auth/v1"],
+  "bearer_methods_supported": ["header"],
+  "resource_documentation": "https://scout.vcs-robotics.com/docs"
+}

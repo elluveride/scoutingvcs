@@ -259,7 +259,7 @@ export default function PitDisplay() {
     return { eventKey: eventKey || '', dataAsOfTime: Date.now(), matches: synth };
   }, [data, ftcMatches, matchScores, eventKey]);
 
-  const usingFallback = !!fallback && !data?.status?.matches?.length;
+  const usingFallback = ftcMatches.length > 0 && !data?.status?.matches?.length;
   const status = usingFallback ? fallback : data?.status;
   const matches = status?.matches || [];
 
@@ -381,8 +381,11 @@ export default function PitDisplay() {
                 {usingFallback && (
                   <span className="text-[10px] font-mono uppercase tracking-wider text-warning inline-flex items-center gap-1.5">
                     <AlertTriangle className="w-3 h-3" />
-                    Nexus unavailable — using FTC schedule fallback
+                    Nexus unavailable — FTC schedule (queue estimated)
                   </span>
+                )}
+                {usingFallback && !fallback && (
+                  <span className="text-xs text-muted-foreground">All qualification results posted</span>
                 )}
               </div>
             </div>

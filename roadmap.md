@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Test authenticated FTC rankings, scores, schedules, and Pit Display refresh/fallback.
+- [x] Add MCP discovery under .well-known and verify generated MCP metadata (7 tools); hosted activation awaits republishing.
+
 - [x] Add event search and apply shared Apex Scout branding to scouting, dashboard, and admin screens.
 
 - [x] Apply Airstrike Laser headings and refresh the Apex Scout logo and app icons.

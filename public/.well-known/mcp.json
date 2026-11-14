@@ -1,0 +1,11 @@
+{
+  "name": "decode-scout-hub",
+  "title": "DECODE Scout Hub",
+  "description": "Apex Scout FTC scouting tools, protected by OAuth and the signed-in user's team permissions.",
+  "url": "https://aigdnfpfcixaeyxaefmt.supabase.co/functions/v1/mcp",
+  "transport": "streamable-http",
+  "authentication": {
+    "type": "oauth2",
+    "protected_resource_metadata": "https://scout.vcs-robotics.com/.well-known/oauth-protected-resource"
+  }
+}
