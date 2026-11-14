@@ -1,7 +1,7 @@
 # Roadmap
 
-- [ ] Fix pit photo upload rejection and verify private photo save/reload and team isolation.
-- [ ] Increase total shots with every increase in shots made.
+- [x] Fix pit photo upload rejection; verify save/reload/replacement and non-admin own-team uploads with cross-team uploads blocked.
+- [x] Increase total shots with every increase in shots made; tested in the scouting form.
 
 - [x] Replace Match Scout hive inputs with custom BIOBUZZ shots attempted/made; preserve scoring and check API availability.
 
