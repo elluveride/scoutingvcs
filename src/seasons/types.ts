@@ -56,6 +56,8 @@ export interface CounterField {
    * abbreviation rule guessing wrong.
    */
   short?: string;
+  /** Retain official/historical scoring fields without asking individual scouts to attribute them. */
+  hiddenFromScout?: boolean;
 }
 
 export interface ToggleField {

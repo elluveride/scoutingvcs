@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Replace Match Scout hive inputs with custom BIOBUZZ shots attempted/made; preserve scoring and check API availability.
+
 - [x] Test authenticated FTC rankings, scores, schedules, and Pit Display refresh/fallback.
 - [x] Add MCP discovery under .well-known and verify generated MCP metadata (7 tools); hosted activation awaits republishing.
 

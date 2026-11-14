@@ -94,7 +94,7 @@ export function pitFields(season: SeasonConfig): FieldSpec[] {
 export function countersForPhase(season: SeasonConfig, phase: 'auto' | 'teleop' | 'endgame') {
   const enumKeys = new Set(season.enums.map((e) => e.key));
   return season.counters.filter(
-    (c) => c.phase === phase && c.role !== 'foul_minor' && c.role !== 'foul_major' && !enumKeys.has(c.key),
+    (c) => c.phase === phase && !c.hiddenFromScout && c.role !== 'foul_minor' && c.role !== 'foul_major' && !enumKeys.has(c.key),
   );
 }
 

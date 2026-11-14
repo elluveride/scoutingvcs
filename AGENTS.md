@@ -4,3 +4,4 @@
 - Reuse the shared Apex Scout logo asset across screens and derive favicon and PWA sizes from the same artwork, so brand changes remain consistent.
 - Generate the remote MCP function through the SDK Vite plugin; .well-known discovery advertises its canonical function URL and native OAuth issuer, never the app's HTML /mcp path.
 - Exclude .well-known metadata from PWA navigation fallback so OAuth discovery cannot return cached application HTML.
+- Keep robot shot observations separate from official alliance scoring; hidden scouting counters remain in season transport/scoring definitions to preserve historical data.

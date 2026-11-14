@@ -495,8 +495,11 @@ var biobuzz = {
       phase: "auto",
       min: 0,
       hint: "20 pts each",
-      pointsEach: BIOBUZZ_POINTS.HIVE_TIP
+      pointsEach: BIOBUZZ_POINTS.HIVE_TIP,
+      hiddenFromScout: true
     },
+    { key: "auto_shots_attempted", short: "Attempts", label: "Auto Shots Attempted", phase: "auto", min: 0, role: "rating" },
+    { key: "auto_shots_made", short: "Made", label: "Auto Shots Made", phase: "auto", min: 0, role: "rating" },
     {
       key: "auto_fouls_minor",
       short: "Minor",
@@ -524,8 +527,11 @@ var biobuzz = {
       phase: "teleop",
       min: 0,
       hint: "20 pts each",
-      pointsEach: BIOBUZZ_POINTS.HIVE_TIP
+      pointsEach: BIOBUZZ_POINTS.HIVE_TIP,
+      hiddenFromScout: true
     },
+    { key: "teleop_shots_attempted", short: "Attempts", label: "TeleOp Shots Attempted", phase: "teleop", min: 0, role: "rating" },
+    { key: "teleop_shots_made", short: "Made", label: "TeleOp Shots Made", phase: "teleop", min: 0, role: "rating" },
     {
       key: "teleop_cell_remaining",
       short: "Cell",

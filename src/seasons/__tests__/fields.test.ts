@@ -69,7 +69,8 @@ describe('pitFields', () => {
 describe('phase grouping', () => {
   it('keeps fouls out of the phase sections and in their own group', () => {
     const autoKeys = countersForPhase(biobuzz, 'auto').map((c) => c.key);
-    expect(autoKeys).toContain('auto_hive_tips');
+    expect(autoKeys).toContain('auto_shots_attempted');
+    expect(autoKeys).toContain('auto_shots_made');
     expect(autoKeys).not.toContain('auto_fouls_minor');
 
     expect(foulCounters(biobuzz).map((c) => c.key))

@@ -243,6 +243,8 @@ export type Database = {
           auto_pattern_matches: number
           auto_scored_close: number
           auto_scored_far: number
+          auto_shots_attempted: number | null
+          auto_shots_made: number | null
           created_at: string
           defense_rating: number
           endgame_return: Database["public"]["Enums"]["endgame_return_status"]
@@ -265,6 +267,8 @@ export type Database = {
           teleop_pattern_matches: number
           teleop_scored_close: number
           teleop_scored_far: number
+          teleop_shots_attempted: number | null
+          teleop_shots_made: number | null
         }
         Insert: {
           auto_fouls_major?: number
@@ -275,6 +279,8 @@ export type Database = {
           auto_pattern_matches?: number
           auto_scored_close?: number
           auto_scored_far?: number
+          auto_shots_attempted?: number | null
+          auto_shots_made?: number | null
           created_at?: string
           defense_rating?: number
           endgame_return?: Database["public"]["Enums"]["endgame_return_status"]
@@ -297,6 +303,8 @@ export type Database = {
           teleop_pattern_matches?: number
           teleop_scored_close?: number
           teleop_scored_far?: number
+          teleop_shots_attempted?: number | null
+          teleop_shots_made?: number | null
         }
         Update: {
           auto_fouls_major?: number
@@ -307,6 +315,8 @@ export type Database = {
           auto_pattern_matches?: number
           auto_scored_close?: number
           auto_scored_far?: number
+          auto_shots_attempted?: number | null
+          auto_shots_made?: number | null
           created_at?: string
           defense_rating?: number
           endgame_return?: Database["public"]["Enums"]["endgame_return_status"]
@@ -329,6 +339,8 @@ export type Database = {
           teleop_pattern_matches?: number
           teleop_scored_close?: number
           teleop_scored_far?: number
+          teleop_shots_attempted?: number | null
+          teleop_shots_made?: number | null
         }
         Relationships: []
       }
@@ -344,6 +356,8 @@ export type Database = {
           auto_pattern_matches: number
           auto_scored_close: number
           auto_scored_far: number
+          auto_shots_attempted: number | null
+          auto_shots_made: number | null
           created_at: string
           defense_rating: number
           endgame_return: Database["public"]["Enums"]["endgame_return_status"]
@@ -366,6 +380,8 @@ export type Database = {
           teleop_pattern_matches: number
           teleop_scored_close: number
           teleop_scored_far: number
+          teleop_shots_attempted: number | null
+          teleop_shots_made: number | null
         }
         Insert: {
           archive_reason?: string
@@ -378,6 +394,8 @@ export type Database = {
           auto_pattern_matches?: number
           auto_scored_close?: number
           auto_scored_far?: number
+          auto_shots_attempted?: number | null
+          auto_shots_made?: number | null
           created_at?: string
           defense_rating?: number
           endgame_return?: Database["public"]["Enums"]["endgame_return_status"]
@@ -400,6 +418,8 @@ export type Database = {
           teleop_pattern_matches?: number
           teleop_scored_close?: number
           teleop_scored_far?: number
+          teleop_shots_attempted?: number | null
+          teleop_shots_made?: number | null
         }
         Update: {
           archive_reason?: string
@@ -412,6 +432,8 @@ export type Database = {
           auto_pattern_matches?: number
           auto_scored_close?: number
           auto_scored_far?: number
+          auto_shots_attempted?: number | null
+          auto_shots_made?: number | null
           created_at?: string
           defense_rating?: number
           endgame_return?: Database["public"]["Enums"]["endgame_return_status"]
@@ -434,6 +456,8 @@ export type Database = {
           teleop_pattern_matches?: number
           teleop_scored_close?: number
           teleop_scored_far?: number
+          teleop_shots_attempted?: number | null
+          teleop_shots_made?: number | null
         }
         Relationships: []
       }

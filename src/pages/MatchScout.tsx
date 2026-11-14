@@ -15,6 +15,7 @@ import { useOnlineStatus } from '@/hooks/useOfflineSync';
 import { useSeason } from '@/hooks/useSeason';
 import { queueMatchEntry } from '@/lib/offlineDb';
 import { scoreEntry } from '@/lib/seasonScoring';
+import { updateShotCount } from '@/lib/shotTracking';
 import { validateMatchScoutForm } from '@/lib/matchScoutValidation';
 import {
   matchFields, countersForPhase, togglesForPhase, enumsForPhase, foulCounters, emptyRecord,
@@ -58,8 +59,9 @@ export default function MatchScout() {
   // without a reload.
   const fields = useMemo(() => matchFields(season), [season]);
   const blankForm = useMemo(
-    () => emptyRecord(fields.filter((f) => f.key !== 'team_number' && f.key !== 'match_number')),
-    [fields],
+    () => emptyRecord(fields.filter((f) => f.key !== 'team_number' && f.key !== 'match_number'
+      && !season.counters.some((c) => c.key === f.key && c.hiddenFromScout))),
+    [fields, season],
   );
 
   const [matchType, setMatchType] = useState<'Q' | 'P'>('Q');
@@ -75,7 +77,7 @@ export default function MatchScout() {
 
   useEffect(() => { setForm(blankForm); }, [blankForm]);
 
-  const set = (key: string, value: FieldValue) => setForm((f) => ({ ...f, [key]: value }));
+  const set = (key: string, value: FieldValue) => setForm((f) => updateShotCount(f, key, value));
   const numberAt = (key: string) => (typeof form[key] === 'number' ? (form[key] as number) : 0);
   const boolAt = (key: string) => form[key] === true;
   const stringAt = (key: string) => (typeof form[key] === 'string' ? (form[key] as string) : '');
@@ -310,6 +312,15 @@ export default function MatchScout() {
                 </div>
               )}
 
+              {counters.some((c) => c.key === `${id}_shots_attempted`) && (
+                <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs font-mono text-muted-foreground">
+                  <span>{Math.max(0, numberAt(`${id}_shots_attempted`) - numberAt(`${id}_shots_made`))} missed</span>
+                  <span>{numberAt(`${id}_shots_attempted`) > 0
+                    ? `${Math.round(numberAt(`${id}_shots_made`) / numberAt(`${id}_shots_attempted`) * 100)}% accuracy`
+                    : 'Accuracy —'}</span>
+                </div>
+              )}
+
               {toggles.length > 0 && (
                 <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${counters.length > 0 ? 'mt-4' : ''}`}>
                   {toggles.map((t) => (
@@ -408,7 +419,9 @@ export default function MatchScout() {
             ))}
           </div>
           <p className="text-[11px] font-mono text-muted-foreground mt-2 text-center">
-            Priced with {season.name} point values.
+            {season.id === 'biobuzz'
+              ? 'Tracked points only — shots are observations, not Hive Tip points.'
+              : `Priced with ${season.name} point values.`}
           </p>
         </PitSection>
 
