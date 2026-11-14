@@ -1,0 +1,7 @@
+{
+  "resource": "https://aigdnfpfcixaeyxaefmt.supabase.co/functions/v1/mcp",
+  "authorization_servers": [
+    "https://aigdnfpfcixaeyxaefmt.supabase.co/functions/v1/mcp-oauth"
+  ],
+  "bearer_methods_supported": ["header"]
+}
