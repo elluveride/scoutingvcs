@@ -61,7 +61,7 @@ export default function Auth() {
     } catch {
       consentReturn = null;
     }
-    if (consentReturn && consentReturn.startsWith('/mcp/consent')) {
+    if (consentReturn && (consentReturn.startsWith('/mcp/consent') || consentReturn.startsWith('/.lovable/oauth/consent'))) {
       return <Navigate to={consentReturn} replace />;
     }
     return <Navigate to="/event-select" replace />;

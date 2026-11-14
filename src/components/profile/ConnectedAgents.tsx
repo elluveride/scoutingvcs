@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PitSection } from '@/components/match-scout/PitSection';
+import { ConnectionCheck } from '@/components/profile/ConnectionCheck';
 import { Bot, Loader2, Unplug, RefreshCw, Copy, Check } from 'lucide-react';
 
 interface Connection {
@@ -13,8 +14,8 @@ interface Connection {
   last_used_at: string | null;
 }
 
-/** The MCP endpoint a client connects to. Served by the app itself (see src/lib/mcp). */
-const MCP_SERVER_URL = `${window.location.origin}/mcp`;
+/** The hosted MCP endpoint a client connects to (generated from src/lib/mcp). */
+const MCP_SERVER_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/mcp`;
 
 /**
  * Profile → "Connected Agents": list and revoke MCP connections, and show the
@@ -101,6 +102,8 @@ export function ConnectedAgents() {
             </Button>
           </div>
         </div>
+
+        <ConnectionCheck serverUrl={MCP_SERVER_URL} />
 
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">Active connections</p>

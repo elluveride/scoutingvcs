@@ -20,3 +20,12 @@ describe('MCP discovery boundaries', () => {
     expect(resource.authorization_servers).toEqual([new URL('/auth/v1', resource.resource).href]);
   });
 });
+describe('OAuth authorization server mirror', () => {
+  it('matches the protected resource issuer so Claude trusts it', () => {
+    const resource = readMetadata('oauth-protected-resource');
+    const as = readMetadata('oauth-authorization-server');
+    expect(as.issuer).toBe(resource.authorization_servers[0]);
+    expect(as.code_challenge_methods_supported).toContain('S256');
+    expect(as.registration_endpoint).toBeTruthy();
+  });
+});

@@ -24,6 +24,7 @@ import ProfileSettings from '@/pages/ProfileSettings';
 import NotFound from '@/pages/NotFound';
 import CompleteProfile from '@/pages/CompleteProfile';
 import McpConsent from '@/pages/McpConsent';
+import OAuthConsent from '@/pages/OAuthConsent';
 import LandingHome from '@/pages/landing/LandingHome';
 import LandingFeatures from '@/pages/landing/LandingFeatures';
 import LandingAbout from '@/pages/landing/LandingAbout';
@@ -42,6 +43,7 @@ export function AnimatedRoutes() {
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/complete-profile" element={<PageTransition><CompleteProfile /></PageTransition>} />
+        <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="/mcp/consent" element={<PageTransition><McpConsent /></PageTransition>} />
         <Route path="/event-select" element={<ApprovalGate><PageTransition><EventSelect /></PageTransition></ApprovalGate>} />
         <Route path="/season-setup" element={<ApprovalGate><PageTransition><SeasonSetup /></PageTransition></ApprovalGate>} />
